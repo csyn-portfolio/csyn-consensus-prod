@@ -80,27 +80,33 @@ jobs:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER_PLAN }}
           service_account: ledger-apply@csyn-platform.iam.gserviceaccount.com
 
-      - name: Mint git token for the shared module (cloud-syndicate-platform)
-        # modules/ledger-service git-sources modules/service-project from the
-        # (private) substrate repo by pinned tag. A short-lived GitHub App
-        # installation token (Contents:Read, that repo only) authorizes the
-        # `tofu init` fetch — NOT a long-lived PAT (matches WIF/SoD posture).
+      - name: Mint git token for the module repos (sibling + substrate)
+        # CONSPLIT2: ledger-workloads roots git-source modules/ledger-{service,node}
+        # from the (private) sibling practice repo (csyn-consensus-infra) by pinned
+        # tag; ledger-service then git-sources modules/service-project from the
+        # (private) substrate repo (cloud-syndicate-platform@v0.1.0). One short-lived
+        # GitHub App installation token (Contents:Read, those two repos only)
+        # authorizes both `tofu init` fetches — NOT a long-lived PAT (WIF/SoD posture).
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ secrets.MODULE_READER_CLIENT_ID }}
           private-key: ${{ secrets.MODULE_READER_APP_PRIVATE_KEY }}
           owner: csyn-portfolio
-          repositories: cloud-syndicate-platform
+          repositories: |
+            cloud-syndicate-platform
+            csyn-consensus-infra
 
       - name: Configure git to use the app token for the module fetch
-        # Narrowly rewrite only the substrate repo's https URL to carry the token,
-        # so go-getter (tofu's module fetcher) can clone the pinned ref. Scoped to
-        # the one repo — does not touch any other github.com URL.
+        # Narrowly rewrite only the two module repos' https URLs to carry the token,
+        # so go-getter (tofu's module fetcher) can clone the pinned refs. Scoped to
+        # those repos — does not touch any other github.com URL.
         run: |
-          git config --global \
-            url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/csyn-portfolio/cloud-syndicate-platform".insteadOf \
-            "https://github.com/csyn-portfolio/cloud-syndicate-platform"
+          for repo in cloud-syndicate-platform csyn-consensus-infra; do
+            git config --global \
+              url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/csyn-portfolio/$repo".insteadOf \
+              "https://github.com/csyn-portfolio/$repo"
+          done
 
       - uses: opentofu/setup-opentofu@847eaa4afeb791b06daa46e8eafa8b1b68d7cfb4 # v2.0.1
         with:
