@@ -159,10 +159,15 @@ resource "google_cloud_run_v2_job_iam_member" "scheduler_invoke" {
 }
 
 resource "google_cloud_scheduler_job" "poller" {
-  count     = var.poller_image_digest == "" ? 0 : 1
-  project   = module.validator.project_id
-  name      = "xrpl-validations-poll"
-  region    = "us-south1"
+  count   = var.poller_image_digest == "" ? 0 : 1
+  project = module.validator.project_id
+  name    = "xrpl-validations-poll"
+  # Cloud Scheduler is NOT available in us-south1 (verified 2026-06-20: gcloud
+  # scheduler locations list — Error 400 'Location us-south1 is not a valid
+  # location' on apply). Run the scheduler in us-central1 (us-only per
+  # gcp.resourceLocations); it POSTs to the GLOBAL run.googleapis.com Admin API,
+  # so its region is independent of the Cloud Run job's us-south1 region.
+  region    = "us-central1"
   schedule  = "*/10 * * * *"
   time_zone = "Etc/UTC"
 
