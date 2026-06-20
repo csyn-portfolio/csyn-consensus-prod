@@ -6,6 +6,16 @@ resource "google_project_iam_member" "validator_log_writer" {
   member  = "serviceAccount:${module.validator.workload_sa}"
 }
 
+# The on-VM monitoring sidecar (ledger-node module) writes custom metrics as the
+# VM workload SA over the restricted VIP. metricWriter covers timeSeries.create
+# for custom metrics. Granted in this PRIOR apply so it propagates before the VM
+# reset that starts the sidecar container.
+resource "google_project_iam_member" "validator_metric_writer" {
+  project = module.validator.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${module.validator.workload_sa}"
+}
+
 # Cross-project image pull (CONSVAL1-A5): the validator runs the dev-vetted rippled
 # image from host-dev's AR repo (validator.tf image_ref =
 # us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/...). A cross-project
