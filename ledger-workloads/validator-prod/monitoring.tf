@@ -157,10 +157,12 @@ resource "google_monitoring_alert_policy" "validator_stuck" {
   }
 }
 
-# --- Poller-down: heartbeat absent (mirror of the log-metric gap lesson) -------
+# --- Sidecar-down: heartbeat absent (mirror of the log-metric gap lesson) ------
+# poller_heartbeat is now emitted by the on-VM sidecar (resource label kept to
+# preserve metric/alert continuity through the poller→sidecar cutover).
 resource "google_monitoring_alert_policy" "poller_down" {
   project      = module.validator.project_id
-  display_name = "XRPL agreement poller — DOWN (no heartbeat)"
+  display_name = "XRPL sidecar — DOWN (no heartbeat)"
   combiner     = "OR"
 
   conditions {

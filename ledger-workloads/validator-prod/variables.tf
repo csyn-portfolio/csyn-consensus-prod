@@ -16,4 +16,6 @@ variable "image_digest" {
 variable "sidecar_image_digest" {
   type        = string
   description = "Digest (sha256:...) of the xrpl-sidecar image to pin on the validator VM."
+  # No default (unlike image_digest): the first sidecar deploy requires an explicit
+  # pin; add the built digest after the first build-sidecar-image.yml run.
 }
