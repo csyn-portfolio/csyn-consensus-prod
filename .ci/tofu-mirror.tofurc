@@ -1,0 +1,23 @@
+# OpenTofu CLI config — route ALL provider installs through the CS-owned
+# provider mirror (TOFU1 supply-chain control). Consumed in CI + locally via
+# the TF_CLI_CONFIG_FILE env var.
+#
+# CRITICAL: the env var is TF_CLI_CONFIG_FILE (Terraform-compat name), NOT
+# TOFU_CLI_CONFIG_FILE — OpenTofu silently ignores the TOFU_-prefixed name and
+# falls back to direct-from-registry with no error. The CI `tofu init` step has
+# a fail-loud guardrail (grep for "signed, key ID") that catches that bypass.
+#
+# network_mirror serves the static layout at
+#   https://storage.googleapis.com/csyn-tofu-provider-mirror/registry.opentofu.org/<ns>/<type>/
+# direct{exclude} forbids any public-registry fallback for the mirrored set, so
+# a provider/version missing from the mirror fails `tofu init` loudly (by design
+# — add it to the mirror, don't silently pull from the internet).
+provider_installation {
+  network_mirror {
+    url     = "https://storage.googleapis.com/csyn-tofu-provider-mirror/"
+    include = ["registry.opentofu.org/*/*"]
+  }
+  direct {
+    exclude = ["registry.opentofu.org/*/*"]
+  }
+}

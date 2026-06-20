@@ -1,0 +1,218 @@
+name: terraform-plan
+
+# Runs on EVERY PR to main. detect-changes decides which (if any) ledger roots
+# to plan; the heavy `plan` matrix is skipped when nothing relevant changed, and
+# the always-run `plan-gate` job reports one stable status for branch
+# protection. Posts the plan as a PR comment for review. No state changes; safe
+# to run automatically.
+#
+# Why no `paths:` filter: `plan-gate` is a REQUIRED status check. A workflow
+# skipped by a paths filter never reports its required contexts, leaving a
+# docs-only PR's required check pending forever (admin-merge deadlock). Running
+# on all PRs and gating the heavy work inside `detect-changes` keeps the gate
+# always-reporting. (CONSPLIT1 Task 8 — fixes the substrate repo's latent
+# matrix/paths deadlock; do not reintroduce a bare `terraform-plan` required
+# context, whose name never matches the matrix check-runs.)
+#
+# Ledger-only prod repo (CONSPLIT2): every CI-applicable root lives under
+# ledger-workloads/* (validator-prod and future prod) and applies as the
+# folder-scoped ledger-apply SA. There is no bootstrap/shared estate here —
+# those stay in cloud-syndicate-platform. Practice roots are in sibling repo.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write   # WIF
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      configs: ${{ steps.changes.outputs.configs }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0   # need origin/main for the diff below
+      - id: changes
+        run: |
+          set -euo pipefail
+          # Compute which ledger roots changed; produce a JSON array for the matrix.
+          # Each ledger-workloads/<root> is an independent root (own state prefix).
+          diff=$(git diff --name-only origin/main...HEAD)
+          changed=$(echo "$diff" | awk -F/ '
+            /^ledger-workloads\//{print $1"/"$2}
+          ' | sort -u | jq -R . | jq -s -c .)
+          if [ "$changed" = "[]" ] && echo "$diff" | grep -qE '^modules/'; then
+            # Modules changed → re-plan every ledger root. ledger-workloads/* roots
+            # consume modules/ledger-service (which git-sources the shared
+            # modules/service-project from cloud-syndicate-platform@v0.1.0), so a
+            # module change re-plans them all. Keep this list in sync as roots are
+            # added.
+            changed='["ledger-workloads/validator-prod"]'
+          fi
+          echo "configs=$changed" >> "$GITHUB_OUTPUT"
+
+  plan:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.configs != '[]'
+    runs-on: ubuntu-latest
+    env:
+      # Route provider installs through the CS-owned mirror (TOFU1). Must be
+      # TF_CLI_CONFIG_FILE — TOFU_CLI_CONFIG_FILE is silently ignored by tofu.
+      TF_CLI_CONFIG_FILE: ${{ github.workspace }}/.ci/tofu-mirror.tofurc
+    strategy:
+      fail-fast: false
+      matrix:
+        config: ${{ fromJSON(needs.detect-changes.outputs.configs) }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          # Constant ledger identity: every root here lives under the ledger/
+          # folder, which only the folder-scoped ledger-apply SA can read. The
+          # PLAN provider is unpinned (runs on PR branches); plan is read-only, so
+          # no ref-pin is needed (apply stays main-pinned in apply.yml).
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_PLAN }}
+          service_account: ledger-apply@csyn-platform.iam.gserviceaccount.com
+
+      - name: Mint git token for the shared module (cloud-syndicate-platform)
+        # modules/ledger-service git-sources modules/service-project from the
+        # (private) substrate repo by pinned tag. A short-lived GitHub App
+        # installation token (Contents:Read, that repo only) authorizes the
+        # `tofu init` fetch — NOT a long-lived PAT (matches WIF/SoD posture).
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.MODULE_READER_CLIENT_ID }}
+          private-key: ${{ secrets.MODULE_READER_APP_PRIVATE_KEY }}
+          owner: csyn-portfolio
+          repositories: cloud-syndicate-platform
+
+      - name: Configure git to use the app token for the module fetch
+        # Narrowly rewrite only the substrate repo's https URL to carry the token,
+        # so go-getter (tofu's module fetcher) can clone the pinned ref. Scoped to
+        # the one repo — does not touch any other github.com URL.
+        run: |
+          git config --global \
+            url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/csyn-portfolio/cloud-syndicate-platform".insteadOf \
+            "https://github.com/csyn-portfolio/cloud-syndicate-platform"
+
+      - uses: opentofu/setup-opentofu@847eaa4afeb791b06daa46e8eafa8b1b68d7cfb4 # v2.0.1
+        with:
+          tofu_version: 1.12.0
+          tofu_wrapper: false
+
+      - name: tofu fmt check
+        working-directory: ${{ matrix.config }}
+        run: tofu fmt -check -recursive
+
+      - name: tofu init (mirror-enforced)
+        working-directory: ${{ matrix.config }}
+        run: |
+          set -o pipefail
+          tofu init -input=false 2>&1 | tee /tmp/tofu-init.log
+          # Supply-chain guardrail: providers MUST install from the CS mirror
+          # ("verified checksum"), never the public registry ("signed, key ID").
+          # Fails loudly if the mirror config is not in effect (e.g. a wrong/
+          # absent TF_CLI_CONFIG_FILE silently falling back to registry).
+          if grep -q 'signed, key ID' /tmp/tofu-init.log; then
+            echo "::error::Provider installed from the public registry, not the CS mirror. The provider_installation mirror config is not in effect — check TF_CLI_CONFIG_FILE (must be TF_, not TOFU_)."
+            exit 1
+          fi
+
+      - name: tofu validate
+        working-directory: ${{ matrix.config }}
+        run: tofu validate
+
+      - name: tofu plan
+        working-directory: ${{ matrix.config }}
+        id: plan
+        # pipefail propagates tofu's exit code through `| tee` — without it a
+        # failing plan still exits 0 (silently green, empty plan.txt).
+        # -lock=false: plan is read-only and the plan SA holds only objectViewer
+        # on csyn-tf-state; lock acquisition would need objectAdmin (wider write).
+        shell: bash
+        run: |
+          set -euo pipefail
+          tofu plan -input=false -no-color -lock=false -out=plan.tfplan | tee plan.txt
+          # Two-step (no pipe) so head doesn't SIGPIPE tofu-show on large plans.
+          tofu show -no-color plan.tfplan > plan-show.txt
+          {
+            echo "summary<<EOF"
+            head -200 plan-show.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Sanitize artifact name
+        id: safe
+        # actions/upload-artifact rejects '/' in the name (NTFS-safe rule).
+        env:
+          MATRIX_CONFIG: ${{ matrix.config }}
+        run: echo "name=${MATRIX_CONFIG//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: terraform-plan-${{ steps.safe.outputs.name }}-${{ github.sha }}
+          path: |
+            ${{ matrix.config }}/plan.tfplan
+            ${{ matrix.config }}/plan.txt
+          # Plan artifacts can carry sensitive resource attributes; only useful
+          # for the PR's lifetime. 7d minimizes the exposure window.
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Comment plan on PR
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        # Pass via env vars — direct ${{ }} interpolation into the script body
+        # breaks on plan output containing backticks/${ (and is a JS-injection
+        # surface).
+        env:
+          CONFIG: ${{ matrix.config }}
+          SUMMARY: ${{ steps.plan.outputs.summary }}
+        with:
+          script: |
+            const config = process.env.CONFIG;
+            const summary = process.env.SUMMARY;
+            const body = `### Terraform plan — \`${config}\`\n\n<details><summary>Show plan</summary>\n\n\`\`\`hcl\n${summary}\n\`\`\`\n\n</details>`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });
+
+  # Single stable status for branch protection (CONSPLIT1 Task 8). The `plan`
+  # matrix emits per-config check-runs whose names vary, and the whole matrix is
+  # skipped on PRs that touch no ledger root — a required bare `plan` context
+  # would deadlock in both cases. This job always runs and reports ONE
+  # `plan-gate` context: green when every planned root succeeded (or nothing
+  # needed planning), red if any plan failed or a prerequisite errored.
+  # Require THIS context (not `plan` or `terraform-plan`) in branch protection.
+  plan-gate:
+    needs: [detect-changes, plan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate on plan results
+        env:
+          DETECT_RESULT: ${{ needs.detect-changes.result }}
+          PLAN_RESULT: ${{ needs.plan.result }}
+        run: |
+          set -euo pipefail
+          echo "detect-changes=$DETECT_RESULT  plan=$PLAN_RESULT"
+          if [ "$DETECT_RESULT" != "success" ]; then
+            echo "::error::detect-changes did not succeed ($DETECT_RESULT)."
+            exit 1
+          fi
+          # plan is "skipped" when no ledger root changed (configs == []) — that
+          # is a pass. Only a real failure/cancellation should block the merge.
+          case "$PLAN_RESULT" in
+            success|skipped) echo "plan-gate: OK" ;;
+            *) echo "::error::One or more ledger-root plans failed ($PLAN_RESULT)."; exit 1 ;;
+          esac

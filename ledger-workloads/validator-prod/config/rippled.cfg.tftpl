@@ -1,0 +1,120 @@
+# xrpld 3.2.0 — XRPL MAINNET VALIDATOR.
+#
+# IMPORTANT: [validator_token] is NOT present in this file.
+# The signing token is injected at every boot by the ledger-node module
+# (token_secret_name -> Secret Manager) — see Task 6 / Phase 2 key ceremony.
+# This config is valid and loads cleanly without a signing key; the node
+# runs as a non-signing tracking node until the token is present.
+#
+# IMPORTANT: Every comment MUST be on its OWN line. xrpld does NOT strip
+# trailing inline "# ..." from value lines — a trailing comment after any
+# value causes beast::BadLexicalCast and crashes the daemon on load.
+# (Empirically confirmed in this repo, 2026-06-15.)
+#
+# No $${...} template interpolations are used — this file is rendered with
+# an empty var map {}.
+
+[server]
+port_rpc_admin_local
+port_peer
+
+# Admin RPC — localhost only; the sidecar agent polls here.
+[port_rpc_admin_local]
+port = 5005
+ip = 127.0.0.1
+admin = 127.0.0.1
+protocol = http
+
+# P2P peer port — bound on all interfaces so inbound peer connections
+# are accepted (peer_private=1 suppresses address advertisement but does
+# NOT block inbound; the GCP VPC firewall limits actual ingress).
+[port_peer]
+port = 51235
+ip = 0.0.0.0
+protocol = peer
+
+# c3-highmem-8 = 8 vCPU / 64 GB RAM. xrpld size matrix: huge >= 32 GB RAM.
+[node_size]
+huge
+
+# NuDB is the recommended on-disk ledger store for validators.
+# online_delete keeps a rolling 2 000-ledger window (validator does not
+# need deep history — Clio feeders carry that burden).
+[node_db]
+type=NuDB
+path=/var/lib/rippled/db/nudb
+online_delete=2000
+advisory_delete=0
+
+[database_path]
+/var/lib/rippled/db
+
+# Rolling history window aligned with online_delete above.
+[ledger_history]
+2000
+
+# Validator hiding: suppress address advertisement to the overlay so
+# the validator's IP is not broadcast to untrusted peers.
+# Canon baseline for validators (cs-ledger:rippled). The testnet tracking
+# node relaxed this to 0 — do NOT propagate that deviation here.
+[peer_private]
+1
+
+# Curated mainnet hub peers for outbound bootstrap reliability.
+# peer_private=1 suppresses advertisement but does not block outbound;
+# [ips_fixed] peers bypass slot accounting and stay connected regardless
+# of slot pressure. Validator accepts inbound peers through the GCP firewall
+# (port 51235/tcp) — do NOT set peers_in_max=0 (that is testnet-only).
+#
+# Hubs VERIFIED 2026-06-17 against:
+#   https://xrpl.org/docs/infrastructure/configuration/server-modes/run-xrpld-as-a-validator
+#   (xrpl.org lists r.ripple.com, sahyadri.isrdc.in, hubs.xrpkuwait.com,
+#   hub.xrpl-commons.org as recommended public hubs; doc warns list may
+#   evolve — re-verify at upgrade time against xrpld-example.cfg in
+#   https://github.com/XRPLF/rippled/blob/master/cfg/xrpld-example.cfg)
+# CONSVAL1 peer-redundancy: ALL FOUR vetted hubs pinned. With only the first two,
+# the proposing validator held a single live peer (35.158.172.184) — a single
+# point of failure for both sync and validation relay. Four fixed hubs across
+# distinct operators/regions removes that; [ips_fixed] peers ignore slot pressure.
+[ips_fixed]
+r.ripple.com 51235
+hub.xrpl-commons.org 51235
+sahyadri.isrdc.in 51235
+hubs.xrpkuwait.com 51235
+
+# Mainnet network identifier (prevents cross-network peer confusion).
+[network_id]
+main
+
+# UNL statically pinned — runtime fetch via [validator_list_sites] is
+# intentionally absent (egress deny-floor blocks HTTPS to UNL endpoints).
+# Both canonical publisher keys are listed for redundancy; see validators.txt
+# for the full rationale and verification record.
+#
+# Keys VERIFIED 2026-06-17 against:
+#   https://github.com/XRPLF/rippled/blob/master/cfg/validators-example.txt
+[validator_list_keys]
+ED2677ABFFD1B33AC6FBC3062B71F1E8397C1505E1C42C64D11AD1B28FF73F4734
+ED42AEC58B701EEBB77356FFFEC26F83C1F0407263530F068C7C73D392C7E06FD1
+
+# Threshold auto-computed from key count (0 = auto).
+[validator_list_threshold]
+0
+
+# Route xrpld's log output to the container's stdout so the gcplogs driver ships it
+# to Cloud Logging. WITHOUT this, gcplogs (enable_gcplogs=true) captures only the
+# pre-init startup banner — xrpld's ongoing journal never surfaces past the docker
+# stdout pipe even at log_level info (proposing+healthy yet silent; confirmed on this
+# validator 2026-06-19). The file sink flushes deterministically. Fix proven on
+# svc-rippled-dev (200 ongoing log lines/5min) before this roll-out.
+[debug_logfile]
+/dev/stdout
+
+# info-level logging for mainnet operational visibility. The testnet tracking
+# node used `warning` which hid the consensus narrative (dev readiness gap #11).
+# A validator needs `info` to surface proposal/validation events in Cloud Logging.
+[rpc_startup]
+${"{"}  "command": "log_level", "severity": "info" ${"}"}
+
+[ssl_verify]
+1

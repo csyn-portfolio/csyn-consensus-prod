@@ -1,0 +1,25 @@
+#
+# XRPL MAINNET UNL — statically pinned.
+# Runtime fetch via [validator_list_sites] is intentionally ABSENT: the
+# validator's egress deny-floor (GCP org policy) blocks outbound HTTPS to
+# external UNL endpoints; a runtime fetch would fail silently and the node
+# would eventually stop tracking consensus once the cached list expires.
+#
+# Both canonical publisher keys are listed so the node accepts lists signed
+# by EITHER publisher. xrpld uses [validator_list_threshold] = 0 (auto),
+# which computes floor(N/2)+1 = 1 when N < 3, so a single valid list is
+# sufficient — but having both eliminates a single-publisher SPOF.
+#
+# Keys VERIFIED 2026-06-17 against:
+#   https://github.com/XRPLF/rippled/blob/master/cfg/validators-example.txt
+#   (the authoritative shipped default — live endpoint cross-check confirmed
+#   unl.xrplf.org returns ED42AEC...; vl.ripple.com returns ED2677AB...)
+#
+# Re-verify at EVERY xrpld major-version upgrade — a publisher key rotation
+# would silently break UNL tracking without an obvious error.
+#
+[validator_list_keys]
+#vl.ripple.com
+ED2677ABFFD1B33AC6FBC3062B71F1E8397C1505E1C42C64D11AD1B28FF73F4734
+#unl.xrplf.org
+ED42AEC58B701EEBB77356FFFEC26F83C1F0407263530F068C7C73D392C7E06FD1
