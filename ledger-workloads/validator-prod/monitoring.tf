@@ -157,38 +157,12 @@ resource "google_monitoring_alert_policy" "validator_stuck" {
   }
 }
 
-# --- Agreement-low: validator missing/disagreeing on validations ---------------
-# 0.99 is a STARTING floor — tune to the observed baseline after a few days
-# (spec §7). 30-min duration absorbs the benign ~2-min post-reset resync.
-resource "google_monitoring_alert_policy" "agreement_low" {
-  project      = module.validator.project_id
-  display_name = "XRPL validator agreement DEGRADED (<0.99 for 30m)"
-  combiner     = "OR"
-
-  conditions {
-    display_name = "agreement_1h < 0.99 sustained"
-    condition_threshold {
-      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/agreement_1h\" AND resource.type=\"generic_task\""
-      comparison      = "COMPARISON_LT"
-      threshold_value = 0.99
-      duration        = "1800s"
-      aggregations {
-        alignment_period   = "600s"
-        per_series_aligner = "ALIGN_MEAN"
-      }
-      trigger { count = 1 }
-    }
-  }
-
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
-  alert_strategy { auto_close = "1800s" }
-  depends_on = [google_monitoring_metric_descriptor.agreement_1h]
-}
-
-# --- Poller-down: heartbeat absent (mirror of the log-metric gap lesson) -------
+# --- Sidecar-down: heartbeat absent (mirror of the log-metric gap lesson) ------
+# poller_heartbeat is now emitted by the on-VM sidecar (resource label kept to
+# preserve metric/alert continuity through the poller→sidecar cutover).
 resource "google_monitoring_alert_policy" "poller_down" {
   project      = module.validator.project_id
-  display_name = "XRPL agreement poller — DOWN (no heartbeat)"
+  display_name = "XRPL sidecar — DOWN (no heartbeat)"
   combiner     = "OR"
 
   conditions {
@@ -213,7 +187,7 @@ resource "google_monitoring_alert_policy" "poller_down" {
 # enabled=false with majority set, the ~2-week activation clock is running: a
 # validator NOT on a supporting xrpld binary becomes amendment-blocked and stops
 # validating at activation (rollback impossible). This is the lead-time alert —
-# act before activation. Threshold-on-custom-metric (mirrors agreement_low).
+# act before activation. Threshold-on-custom-metric (amendments_in_majority_window GAUGE).
 resource "google_monitoring_alert_policy" "amendment_in_majority" {
   project      = module.validator.project_id
   display_name = "XRPL amendment in majority window — confirm validator on a supporting binary"
@@ -243,4 +217,38 @@ resource "google_monitoring_alert_policy" "amendment_in_majority" {
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.amendments_in_majority_window]
+}
+
+# --- Amendment-blocked: the validator has STOPPED validating ------------------
+# server_info.amendment_blocked == true means the node is on a binary that does
+# not support an activated amendment; it stops validating and cannot roll back.
+# Page immediately. The amendment_in_majority alert above is the lead-time warning;
+# this is the failsafe if that window was missed.
+resource "google_monitoring_alert_policy" "amendment_blocked" {
+  project      = module.validator.project_id
+  display_name = "XRPL validator AMENDMENT-BLOCKED — node stopped validating"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "amendment_blocked == 1"
+    condition_threshold {
+      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/amendment_blocked\" AND resource.type=\"generic_task\""
+      comparison      = "COMPARISON_GT"
+      threshold_value = 0.5
+      duration        = "0s"
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MAX"
+      }
+      trigger { count = 1 }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  alert_strategy { auto_close = "86400s" }
+  documentation {
+    content   = "The validator is AMENDMENT-BLOCKED: it is on a binary that does not support an amendment the network has activated, so it has stopped validating and CANNOT roll back. Upgrade the xrpld binary to a supporting release immediately. Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
+    mime_type = "text/markdown"
+  }
+  depends_on = [google_monitoring_metric_descriptor.amendment_blocked]
 }

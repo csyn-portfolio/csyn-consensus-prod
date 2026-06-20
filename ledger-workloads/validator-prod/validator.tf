@@ -12,7 +12,7 @@ module "validator" {
   # CONSPLIT2: modules' one home is the sibling practice repo (csyn-consensus-infra);
   # this prod repo references them by pinned git tag. ledger-service transitively
   # git-sources modules/service-project from cloud-syndicate-platform@v0.1.0.
-  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-service?ref=v0.1.0"
+  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-service?ref=v0.2.0"
 
   tenant              = "ldg"
   env                 = "prod"
@@ -32,9 +32,7 @@ module "validator" {
     "serviceusage.googleapis.com",
     "iam.googleapis.com",
     "iap.googleapis.com",              # IAP tunnel IAM (iam.tf validator_ops_ssh) reads/writes the tunnelinstance IAM policy — 403 "IAP API not used" at apply without it (CONSVAL1-A7)
-    "run.googleapis.com",              # Cloud Run job (poller)
-    "cloudscheduler.googleapis.com",   # fires the poller job
-    "artifactregistry.googleapis.com", # poller image pull from csyn-ldg-images
+    "artifactregistry.googleapis.com", # image pull from csyn-ldg-images (xrpld + sidecar)
   ]
 
   machine_type       = "n2d-highmem-8" # CONSVAL1 mainnet standard; non-confidential (us-south1 offers no Confidential VM, verified 2026-06-18)
@@ -69,13 +67,14 @@ resource "time_sleep" "apis" {
 
 locals {
   validator_image = "us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/rippled@${var.image_digest}"
+  sidecar_image   = "us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/xrpl-sidecar@${var.sidecar_image_digest}"
   validator_cfg   = templatefile("${path.module}/config/rippled.cfg.tftpl", {})
   validators      = file("${path.module}/config/validators.txt")
 }
 
 module "node" {
   # CONSPLIT2: pinned git tag from the sibling practice repo (one home). Self-contained.
-  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-node?ref=v0.1.0"
+  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-node?ref=v0.2.0"
 
   name       = "csyn-ldg-validator"
   project_id = module.validator.project_id
@@ -115,6 +114,9 @@ module "node" {
   rippled_cfg       = local.validator_cfg
   validators_txt    = local.validators
   token_secret_name = google_secret_manager_secret.validator_token.secret_id
+
+  sidecar_image_ref       = local.sidecar_image
+  sidecar_metric_location = "us-south1"
 
   # Telemetry-first observability (CONSVAL1 Task 12): ship the xrpld container's
   # stdout/stderr to Cloud Logging. Validator-only — the workload SA already holds

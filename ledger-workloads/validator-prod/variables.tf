@@ -13,18 +13,10 @@ variable "image_digest" {
   default = "sha256:ba7a6ddabb23d785868fd88277950c10db131be3e725d27e8cb1e254b023ed39"
 }
 
-variable "poller_image_digest" {
-  description = "Pinned digest (sha256:...) of the xrpl-poller image in csyn-ldg-images. Empty => Cloud Run job not yet created (staged, like firehose image_digest)."
+variable "sidecar_image_digest" {
   type        = string
-  # xrpl-poller 0.2.0 (agreement + amendment-activation watch), built from
-  # csyn-consensus-infra@main via build-poller-image.yml 2026-06-20. Pinning this
-  # flips the count-gate: creates the Cloud Run job + scheduler (activates the
-  # agreement poller) and starts emitting the amendment metrics the alert reads.
-  default = "sha256:b95d9a26b2d9f5e902a8b523b01dec8d8955fe43f17613954956ea2dc45b9c69"
-}
-
-variable "validator_pubkey" {
-  description = "Our published validation public key (from the domain TOML) used to query validations.xrpl.org. PUBLIC — not a secret."
-  type        = string
-  default     = "nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq"
+  description = "Immutable digest of the xrpl-sidecar image in csyn-ldg-images. Pin by digest, not tag. Default lets CI apply.yml apply without a -var; re-pin after any rebuild (a new build = a new digest even for the same version tag)."
+  # Captured from AR after build-sidecar-image.yml (sidecar_version=1.0.0), 2026-06-20:
+  #   us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/xrpl-sidecar:1.0.0
+  default = "sha256:fed843fc468f9ab788686330593305ad0251e2a943788a13c9296602d8f4647c"
 }
