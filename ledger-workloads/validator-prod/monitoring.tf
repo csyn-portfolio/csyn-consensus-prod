@@ -207,3 +207,40 @@ resource "google_monitoring_alert_policy" "poller_down" {
   alert_strategy { auto_close = "1800s" } # condition_absent needs NO notification_rate_limit
   depends_on = [google_monitoring_metric_descriptor.poller_heartbeat]
 }
+
+# --- Amendment in majority window: the ~14-day upgrade deadline ----------------
+# Proactive amendment-blocked defense (poller >= 0.2.0). When >=1 amendment is
+# enabled=false with majority set, the ~2-week activation clock is running: a
+# validator NOT on a supporting xrpld binary becomes amendment-blocked and stops
+# validating at activation (rollback impossible). This is the lead-time alert —
+# act before activation. Threshold-on-custom-metric (mirrors agreement_low).
+resource "google_monitoring_alert_policy" "amendment_in_majority" {
+  project      = module.validator.project_id
+  display_name = "XRPL amendment in majority window — confirm validator on a supporting binary"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "amendments_in_majority_window >= 1 (≈2-week activation clock)"
+    condition_threshold {
+      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/amendments_in_majority_window\" AND resource.type=\"generic_task\""
+      comparison      = "COMPARISON_GT"
+      threshold_value = 0.5 # GAUGE count; >0.5 means >=1
+      duration        = "0s"
+      aggregations {
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_MAX"
+      }
+      trigger { count = 1 }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  # Amendment windows last ~2 weeks; keep the incident open a day so it re-surfaces
+  # rather than flapping closed between 10-min polls.
+  alert_strategy { auto_close = "86400s" }
+  documentation {
+    content   = "One or more XRPL amendments are in the majority activation window (≈2 weeks to activation). Confirm our validator's xrpld binary supports them (https://xrpl.org/resources/known-amendments + xrpscan amendments) — if not, schedule the rolling upgrade BEFORE activation or the node becomes amendment-blocked and stops validating. The radar email + GitHub release watch carry the upstream detail. Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
+    mime_type = "text/markdown"
+  }
+  depends_on = [google_monitoring_metric_descriptor.amendments_in_majority_window]
+}

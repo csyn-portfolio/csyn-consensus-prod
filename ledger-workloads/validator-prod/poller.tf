@@ -81,6 +81,34 @@ resource "google_monitoring_metric_descriptor" "poller_heartbeat" {
   description  = "Written 1.0 on every successful poll cycle; absence => poller down."
 }
 
+# Amendment watch (poller >= 0.2.0). Count of amendments enabled=false with a
+# non-null majority on xrpscan — i.e. past 80% and inside the ~2-week activation
+# countdown. >=1 => confirm our xrpld binary supports them before activation
+# (amendment-blocked is the silent way validators stop). Best-effort in the poller:
+# an xrpscan outage skips these without failing the agreement/heartbeat cycle.
+resource "google_monitoring_metric_descriptor" "amendments_in_majority_window" {
+  project      = module.validator.project_id
+  type         = "custom.googleapis.com/xrpl/validator/amendments_in_majority_window"
+  metric_kind  = "GAUGE"
+  value_type   = "DOUBLE"
+  unit         = "1"
+  display_name = "XRPL amendments in majority activation window"
+  description  = "Count of amendments enabled=false with majority!=null (≈2-week activation clock running)."
+}
+
+# Early-warning gauge: nearest not-yet-enabled amendment's (threshold - count),
+# sentinel 999 when none voting. Lower => an amendment is closer to 80%. Recorded
+# for visibility (Metrics Explorer / future alert); no alert in this pass.
+resource "google_monitoring_metric_descriptor" "min_gap_to_threshold" {
+  project      = module.validator.project_id
+  type         = "custom.googleapis.com/xrpl/validator/min_gap_to_threshold"
+  metric_kind  = "GAUGE"
+  value_type   = "DOUBLE"
+  unit         = "1"
+  display_name = "XRPL nearest amendment gap to 80% threshold"
+  description  = "min(threshold - count) over not-yet-enabled amendments; 999 sentinel when none voting."
+}
+
 # --- Cloud Run JOB (staged create, like firehose) ----------------------------
 resource "google_cloud_run_v2_job" "poller" {
   count    = var.poller_image_digest == "" ? 0 : 1
