@@ -16,7 +16,11 @@ variable "image_digest" {
 variable "poller_image_digest" {
   description = "Pinned digest (sha256:...) of the xrpl-poller image in csyn-ldg-images. Empty => Cloud Run job not yet created (staged, like firehose image_digest)."
   type        = string
-  default     = ""
+  # xrpl-poller 0.2.0 (agreement + amendment-activation watch), built from
+  # csyn-consensus-infra@main via build-poller-image.yml 2026-06-20. Pinning this
+  # flips the count-gate: creates the Cloud Run job + scheduler (activates the
+  # agreement poller) and starts emitting the amendment metrics the alert reads.
+  default = "sha256:b95d9a26b2d9f5e902a8b523b01dec8d8955fe43f17613954956ea2dc45b9c69"
 }
 
 variable "validator_pubkey" {
