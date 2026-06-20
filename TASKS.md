@@ -60,26 +60,23 @@ CONSPLIT2 split was incomplete; the controllable parts are now resolved:
   the CS mirror, verified-checksum) + `tofu plan` → **"No changes. Your
   infrastructure matches the configuration."** across all 49 resources. Live == code.
 
-## Still gated on Pete (CI plan/apply enablement — out of this repo's scope)
-- **Substrate WIF binding NOT applied.** `ledger-apply` SA has a workloadIdentityUser
-  binding ONLY for `csyn-consensus-infra` (via csyn-platform-pool). `csyn-consensus-prod`
-  (repo id 1275266028) is **unbound** → CI from this repo cannot impersonate ledger-apply.
-  Fix is **bootstrap-class, Pete-apply-only** in
-  `cloud-syndicate-platform/bootstrap/org-foundation/ledger-apply-sa.tf` (+ wif/).
-  (Earlier hybrid log claimed "applied" — live state contradicts; not applied.)
-- **4 GitHub secrets** on csyn-consensus-prod (all absent): `WIF_PROVIDER_PLAN`,
-  `WIF_PROVIDER_APPLY` (same csyn-platform-pool provider as sibling — inert until the
-  binding above lands), `MODULE_READER_CLIENT_ID`, `MODULE_READER_APP_PRIVATE_KEY`
-  (App-level; can't be read from GitHub — source from where the sibling's were set).
-- **GitHub App install:** confirm the MODULE_READER app is installed on
-  `csyn-consensus-infra` with Contents:Read (needed for the new module fetch in CI).
-- Optional: deploy the staged poller; verify pete@cloudsyn.net notification channel.
+## CI enablement — DONE + VERIFIED (2026-06-20)
+- **Substrate applied (Pete-confirmed, flight-control).** PR #204
+  (cloud-syndicate-platform) applied two bootstrap roots: `wif/` (6 add → creates
+  `gh-csyn-consensus-prod-{plan,apply}` providers + SAs) and
+  `bootstrap/org-foundation/` (1 add → the `ledger-apply` principalSet binding).
+  Verified live: `ledger-apply` now trusts **both** csyn-consensus-infra AND
+  csyn-consensus-prod.
+- **All 4 GitHub secrets set** on csyn-consensus-prod: `WIF_PROVIDER_PLAN/APPLY`
+  (from the new providers), `MODULE_READER_CLIENT_ID` (Iv23li…), `MODULE_READER_APP_PRIVATE_KEY`.
+- **GitHub App** `csyn-module-reader` confirmed installed on the module repos.
+- **END-TO-END CI GREEN.** PR #1 plan re-run → all jobs success; CI plan comment:
+  **"No changes. Your infrastructure matches the configuration."** PR #1 MERGEABLE/CLEAN.
 
 ## Next
-- **PR #1 OPEN**: https://github.com/csyn-portfolio/csyn-consensus-prod/pull/1
-  (operability fix). CI `plan` is RED **as expected** — fails at the
-  `google-github-actions/auth` step (no `WIF_PROVIDER_PLAN` secret + substrate
-  binding unapplied). detect-changes passed; workflow YAML valid. The module-by-tag
-  init/plan path is proven locally (drift-check clean), not yet in CI.
-- Pete: apply substrate principalSet binding, set 4 secrets, confirm app install →
-  re-run the PR `plan` for the end-to-end CI proof, then merge.
+- **Merge PR #1** (csyn-consensus-prod, operability fix) — CI green, mergeable.
+- **Merge substrate PR #204** (records the already-applied bootstrap state).
+- Cleanup: remove substrate worktree `/tmp/csyn-plat-consplit2`; reset local
+  cloud-syndicate-platform `main` to origin/main after #204 merges; Pete delete the
+  `~/Downloads/csyn-module-reader.*.pem` now that it's in Secret/GH.
+- Optional: deploy the staged poller; verify pete@cloudsyn.net notification channel.
