@@ -46,19 +46,36 @@ The mainnet validator was **already applied from the sibling repo before the spl
 - Notification channel email verification = None — confirm Pete's email is verified
   or alerts won't deliver.
 
-## BLOCKERS — repo cannot `tofu init`/plan/apply yet (CONSPLIT2 split incomplete)
-- **Modules missing.** `validator.tf` sources `../../modules/ledger-service` +
-  `ledger-node` → resolve to a `modules/` dir that does NOT exist here (modules
-  stayed in sibling `csyn-consensus-infra`, which has **zero tags**). README/CLAUDE
-  intent = "referenced by tag from sibling" — NOT implemented. Fix: git-source both
-  by pinned tag from the sibling (one home = sibling), add a 2nd GitHub App repo
-  scope in CI, update the two `source=` lines. Live infra unaffected.
-- **GitHub secrets: NONE set** on csyn-portfolio/csyn-consensus-prod
-  (`WIF_PROVIDER_PLAN/APPLY`, `MODULE_READER_CLIENT_ID/APP_PRIVATE_KEY` all absent)
-  → CI cannot auth or fetch the substrate module.
+## Repo operability — FIXED on branch `feat/modules-by-tag` (Claude 2026-06-20)
+CONSPLIT2 split was incomplete; the controllable parts are now resolved:
+- **Modules by tag.** `validator.tf` now git-sources `ledger-service` + `ledger-node`
+  from the sibling `csyn-consensus-infra@v0.1.0` (tag cut at b0f422b; one home =
+  sibling). ledger-service transitively pulls `service-project` from
+  cloud-syndicate-platform@v0.1.0.
+- **CI app-token** (plan.yml + apply.yml) now scopes BOTH `cloud-syndicate-platform`
+  and `csyn-consensus-infra` (two git insteadOf rewrites, one installation token).
+- **Lock restored.** `.terraform.lock.hcl` recovered from sibling pre-split history
+  (google/google-beta 6.50.0, time 0.14.0) — not relocked under the mirror (rule #9).
+- **DRIFT-CHECK CLEAN.** Local `tofu init` (modules resolve by tag; providers from
+  the CS mirror, verified-checksum) + `tofu plan` → **"No changes. Your
+  infrastructure matches the configuration."** across all 49 resources. Live == code.
 
-## Next (awaiting Pete)
-- Decide module strategy (recommend: git-source-by-tag from sibling) + cut sibling tag.
-- Set the 4 GitHub secrets (pipe `--body` directly; secret hygiene).
-- Then drift-check: first `tofu plan` from this repo should be clean (split = copy).
-- Optional: deploy the staged poller; verify email notification channel.
+## Still gated on Pete (CI plan/apply enablement — out of this repo's scope)
+- **Substrate WIF binding NOT applied.** `ledger-apply` SA has a workloadIdentityUser
+  binding ONLY for `csyn-consensus-infra` (via csyn-platform-pool). `csyn-consensus-prod`
+  (repo id 1275266028) is **unbound** → CI from this repo cannot impersonate ledger-apply.
+  Fix is **bootstrap-class, Pete-apply-only** in
+  `cloud-syndicate-platform/bootstrap/org-foundation/ledger-apply-sa.tf` (+ wif/).
+  (Earlier hybrid log claimed "applied" — live state contradicts; not applied.)
+- **4 GitHub secrets** on csyn-consensus-prod (all absent): `WIF_PROVIDER_PLAN`,
+  `WIF_PROVIDER_APPLY` (same csyn-platform-pool provider as sibling — inert until the
+  binding above lands), `MODULE_READER_CLIENT_ID`, `MODULE_READER_APP_PRIVATE_KEY`
+  (App-level; can't be read from GitHub — source from where the sibling's were set).
+- **GitHub App install:** confirm the MODULE_READER app is installed on
+  `csyn-consensus-infra` with Contents:Read (needed for the new module fetch in CI).
+- Optional: deploy the staged poller; verify pete@cloudsyn.net notification channel.
+
+## Next
+- Open PR for `feat/modules-by-tag` (operability fix + validation record).
+- Pete: apply substrate principalSet binding, set 4 secrets, confirm app install.
+- Then a CI PR plan run is the end-to-end proof of the CI path.
