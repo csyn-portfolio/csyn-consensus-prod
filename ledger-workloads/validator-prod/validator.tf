@@ -9,7 +9,10 @@
 # booted by module "node" below. Its shape is surfaced as ledger-service inputs
 # here so the project's contract (machine_type / disk_profile / budget) is fixed.
 module "validator" {
-  source = "../../modules/ledger-service"
+  # CONSPLIT2: modules' one home is the sibling practice repo (csyn-consensus-infra);
+  # this prod repo references them by pinned git tag. ledger-service transitively
+  # git-sources modules/service-project from cloud-syndicate-platform@v0.1.0.
+  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-service?ref=v0.1.0"
 
   tenant              = "ldg"
   env                 = "prod"
@@ -71,7 +74,8 @@ locals {
 }
 
 module "node" {
-  source = "../../modules/ledger-node"
+  # CONSPLIT2: pinned git tag from the sibling practice repo (one home). Self-contained.
+  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-node?ref=v0.1.0"
 
   name       = "csyn-ldg-validator"
   project_id = module.validator.project_id

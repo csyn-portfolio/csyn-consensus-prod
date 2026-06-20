@@ -46,19 +46,37 @@ The mainnet validator was **already applied from the sibling repo before the spl
 - Notification channel email verification = None — confirm Pete's email is verified
   or alerts won't deliver.
 
-## BLOCKERS — repo cannot `tofu init`/plan/apply yet (CONSPLIT2 split incomplete)
-- **Modules missing.** `validator.tf` sources `../../modules/ledger-service` +
-  `ledger-node` → resolve to a `modules/` dir that does NOT exist here (modules
-  stayed in sibling `csyn-consensus-infra`, which has **zero tags**). README/CLAUDE
-  intent = "referenced by tag from sibling" — NOT implemented. Fix: git-source both
-  by pinned tag from the sibling (one home = sibling), add a 2nd GitHub App repo
-  scope in CI, update the two `source=` lines. Live infra unaffected.
-- **GitHub secrets: NONE set** on csyn-portfolio/csyn-consensus-prod
-  (`WIF_PROVIDER_PLAN/APPLY`, `MODULE_READER_CLIENT_ID/APP_PRIVATE_KEY` all absent)
-  → CI cannot auth or fetch the substrate module.
+## Repo operability — FIXED on branch `feat/modules-by-tag` (Claude 2026-06-20)
+CONSPLIT2 split was incomplete; the controllable parts are now resolved:
+- **Modules by tag.** `validator.tf` now git-sources `ledger-service` + `ledger-node`
+  from the sibling `csyn-consensus-infra@v0.1.0` (tag cut at b0f422b; one home =
+  sibling). ledger-service transitively pulls `service-project` from
+  cloud-syndicate-platform@v0.1.0.
+- **CI app-token** (plan.yml + apply.yml) now scopes BOTH `cloud-syndicate-platform`
+  and `csyn-consensus-infra` (two git insteadOf rewrites, one installation token).
+- **Lock restored.** `.terraform.lock.hcl` recovered from sibling pre-split history
+  (google/google-beta 6.50.0, time 0.14.0) — not relocked under the mirror (rule #9).
+- **DRIFT-CHECK CLEAN.** Local `tofu init` (modules resolve by tag; providers from
+  the CS mirror, verified-checksum) + `tofu plan` → **"No changes. Your
+  infrastructure matches the configuration."** across all 49 resources. Live == code.
 
-## Next (awaiting Pete)
-- Decide module strategy (recommend: git-source-by-tag from sibling) + cut sibling tag.
-- Set the 4 GitHub secrets (pipe `--body` directly; secret hygiene).
-- Then drift-check: first `tofu plan` from this repo should be clean (split = copy).
-- Optional: deploy the staged poller; verify email notification channel.
+## CI enablement — DONE + VERIFIED (2026-06-20)
+- **Substrate applied (Pete-confirmed, flight-control).** PR #204
+  (cloud-syndicate-platform) applied two bootstrap roots: `wif/` (6 add → creates
+  `gh-csyn-consensus-prod-{plan,apply}` providers + SAs) and
+  `bootstrap/org-foundation/` (1 add → the `ledger-apply` principalSet binding).
+  Verified live: `ledger-apply` now trusts **both** csyn-consensus-infra AND
+  csyn-consensus-prod.
+- **All 4 GitHub secrets set** on csyn-consensus-prod: `WIF_PROVIDER_PLAN/APPLY`
+  (from the new providers), `MODULE_READER_CLIENT_ID` (Iv23li…), `MODULE_READER_APP_PRIVATE_KEY`.
+- **GitHub App** `csyn-module-reader` confirmed installed on the module repos.
+- **END-TO-END CI GREEN.** PR #1 plan re-run → all jobs success; CI plan comment:
+  **"No changes. Your infrastructure matches the configuration."** PR #1 MERGEABLE/CLEAN.
+
+## Next
+- **Merge PR #1** (csyn-consensus-prod, operability fix) — CI green, mergeable.
+- **Merge substrate PR #204** (records the already-applied bootstrap state).
+- Cleanup: remove substrate worktree `/tmp/csyn-plat-consplit2`; reset local
+  cloud-syndicate-platform `main` to origin/main after #204 merges; Pete delete the
+  `~/Downloads/csyn-module-reader.*.pem` now that it's in Secret/GH.
+- Optional: deploy the staged poller; verify pete@cloudsyn.net notification channel.
