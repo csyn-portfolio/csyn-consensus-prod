@@ -78,3 +78,53 @@ resource "google_monitoring_metric_descriptor" "peer_count" {
   display_name = "XRPL validator peer count"
   description  = "server_info.peers — connected peer count."
 }
+
+# --- New descriptors: UNL (validator-list) freshness gauges (sidecar 1.1.0) -----
+# The node holds one cached publisher list per publisher and refreshes them over
+# the XRPL peer protocol (no HTTP egress; `[validator_list_sites]` absent). With a
+# low validator_list_threshold the node survives until the LATEST list expires, so
+# we track both ends — min is the leading indicator a publisher stopped refreshing,
+# max is the true "node loses its trusted set" horizon. From the `validators` RPC.
+
+resource "google_monitoring_metric_descriptor" "unl_min_days_to_expiry" {
+  project      = module.validator.project_id
+  type         = "custom.googleapis.com/xrpl/validator/unl_min_days_to_expiry"
+  metric_kind  = "GAUGE"
+  value_type   = "DOUBLE"
+  unit         = "d"
+  display_name = "XRPL UNL — days to EARLIEST publisher-list expiry"
+  description  = "min over available publisher_lists of (expiration - now) in days; leading indicator a publisher's list stopped refreshing. Negative = that list expired. -1 sentinel when none available."
+}
+
+resource "google_monitoring_metric_descriptor" "unl_max_days_to_expiry" {
+  project      = module.validator.project_id
+  type         = "custom.googleapis.com/xrpl/validator/unl_max_days_to_expiry"
+  metric_kind  = "GAUGE"
+  value_type   = "DOUBLE"
+  unit         = "d"
+  display_name = "XRPL UNL — days to LATEST publisher-list expiry (node-stop horizon)"
+  description  = "max over available publisher_lists of (expiration - now) in days; the true horizon at which the node loses its trusted set. -1 sentinel when none available."
+}
+
+resource "google_monitoring_metric_descriptor" "unl_publisher_lists_available" {
+  project      = module.validator.project_id
+  type         = "custom.googleapis.com/xrpl/validator/unl_publisher_lists_available"
+  metric_kind  = "GAUGE"
+  value_type   = "DOUBLE"
+  unit         = "1"
+  display_name = "XRPL UNL — available publisher lists"
+  description  = "Count of publisher_lists with available==true (expect 2: Ripple + XRPLF)."
+}
+
+# The node's OWN verdict on whether the effective list is usable right now —
+# authoritative and independent of the per-publisher day math. 0 = the node no
+# longer has an active trusted validator list (it has stopped tracking consensus).
+resource "google_monitoring_metric_descriptor" "unl_active" {
+  project      = module.validator.project_id
+  type         = "custom.googleapis.com/xrpl/validator/unl_active"
+  metric_kind  = "GAUGE"
+  value_type   = "DOUBLE"
+  unit         = "1"
+  display_name = "XRPL UNL active (1=active)"
+  description  = "1.0 when validator_list.status==active; 0.0 otherwise (node's effective UNL is not usable)."
+}
