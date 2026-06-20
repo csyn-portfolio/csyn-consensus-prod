@@ -76,6 +76,10 @@ CONSPLIT2 split was incomplete; the controllable parts are now resolved:
 - Optional: deploy the staged poller; verify pete@cloudsyn.net notification channel.
 
 ## Next
-- Open PR for `feat/modules-by-tag` (operability fix + validation record).
-- Pete: apply substrate principalSet binding, set 4 secrets, confirm app install.
-- Then a CI PR plan run is the end-to-end proof of the CI path.
+- **PR #1 OPEN**: https://github.com/csyn-portfolio/csyn-consensus-prod/pull/1
+  (operability fix). CI `plan` is RED **as expected** — fails at the
+  `google-github-actions/auth` step (no `WIF_PROVIDER_PLAN` secret + substrate
+  binding unapplied). detect-changes passed; workflow YAML valid. The module-by-tag
+  init/plan path is proven locally (drift-check clean), not yet in CI.
+- Pete: apply substrate principalSet binding, set 4 secrets, confirm app install →
+  re-run the PR `plan` for the end-to-end CI proof, then merge.
