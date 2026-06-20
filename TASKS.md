@@ -1,35 +1,64 @@
 # csyn-consensus-prod — Tasks
 
 Durable task state + cross-repo decision pointers for the Consensus ledger
-prod workloads repo (split from `csyn-consensus-infra` under CONSPLIT2).
-Pointers are one line, never a copy of the decision text (one-home rule; format
-spec in `~/.ai-decisions.md`).
+**prod** workloads repo (split from `csyn-consensus-infra` under CONSPLIT2).
 
-## Decision pointers (cross-repo index — see `~/.ai-decisions.md`)
-- [decision-pointer] CONSPLIT1 (workloads vs substrate) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-16-split-consensus-infra-repo.md · index: ~/.ai-decisions.md
-- [decision-pointer] CONSPLIT2 (always-split: practice in csyn-consensus-infra; prod in this repo) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-20-always-split-consensus-repos.md · index: ~/.ai-decisions.md
-- [decision-pointer] CONSPLIT2 (always-split policy: practice/testnet workloads stay in csyn-consensus-infra; prod/mainnet regulated workloads (validator-prod + future) move to new csyn-consensus-prod; separate Git/CI/WIF identities) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-20-always-split-consensus-repos.md · index: ~/.ai-decisions.md
-- [decision-pointer] CONSVAL1 / CONSVAL1-A1 (mainnet validator = n2d-highmem-8 NON-confidential, us-south1, Shielded+CMEK, MIGRATE, machine_type-as-var; us-south1 has no Confidential VM + no XRPL req mandates it; standard for all mainnet) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/ (CONSVAL1) · index: ~/.ai-decisions.md · workload amendment: docs/superpowers/specs/2026-06-18-prod-validator-sprint-design.md
+## Decision pointers
+- [decision-pointer] CONSPLIT1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-16-split-consensus-infra-repo.md
+- [decision-pointer] CONSPLIT2 (always-split: practice in csyn-consensus-infra; prod regulated in this repo) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-20-always-split-consensus-repos.md · index: ~/.ai-decisions.md
+- [decision-pointer] CONSVAL1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/ (CONSVAL1)
 
-## Open items (CONSVAL1)
-- **Confidential-VM gap compliance — CLEARED internally (2026-06-18); external concurrence + 2 artifacts open.** Internal security-compliance consult verdict: NO framework (SOC2 / FedRAMP Mod+High / PCI / FFIEC) mandates in-use/memory encryption (SC-28 = at-rest, explicitly excludes "in process"; SC-8 = in-transit); zero findings given the compensating set; correct posture = documented Risk Acceptance + remediation trigger (enable CC / move to us-central1 only if a customer contract names it). Full verdict + control mapping: `docs/2026-06-18-confidential-vm-gap-compliance-consult.md` §6. **Done:** Risk Acceptance `CONSVAL1-RA-01` (`docs/2026-06-18-validator-confidential-vm-risk-acceptance.md`) + token-revocation runbook (`docs/runbooks/validator-token-revocation.md`) + gcp-feedback canon capture. **External concurrence: WAIVED** by risk owner 2026-06-18 (internal consult + CONSVAL1-RA-01 is the accepted basis). **CONSVAL1 decision record created** → cloud-syndicate-platform PR #197 (pending merge); `~/.ai-decisions.md` row CONSVAL1 added. **This amendment:** csyn-consensus-infra PR #37 (clean off main; supersedes closed #36).
+## State (post-CONSPLIT2)
+- This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
+- Practice/testnet in sibling `csyn-consensus-infra`.
+- WIF + principalSet registered in substrate (ID 1275266028).
+- Same `ledger-apply` SA (folder-scoped).
+- State: `csyn-tf-state` + `ledger-workloads/validator-prod` prefix (no migration).
 
-## State
-- **CONSPLIT1 core migration COMPLETE** (Tasks 0–8): the 8 `ledger-workloads/*` roots + ledger modules apply the same `csyn-tf-state/ledger-workloads/*` prefixes via this repo's own CI (WIF + GitHub-App module fetch). Substrate stripped of ledger source (cloud-syndicate-platform#186); `ledger-apply` WIF trust is now this repo only (cloud-syndicate-platform#187).
-- **Branch protection (Task 8): ARMED** — `main` requires the `plan-gate` status + 1 review + linear history (#4). `plan-gate` is the always-run aggregator; do not require the bare `terraform-plan`/`plan` context (never matches the matrix check-run names).
+## Live validator validation — 2026-06-20 (Claude, read-only gcloud/REST evidence)
+The mainnet validator was **already applied from the sibling repo before the split**
+(state never migrated — `csyn-tf-state/ledger-workloads/validator-prod`, serial 29,
+49 resources). It is **live and healthy**. CONSVAL1 shape + readiness rows verified:
 
-## Dev deploy state (2026-06-17)
-- **clio-dev DEPLOYED** (svc-clio-dev): Scylla+Clio on one COS VM, observability (gcplogs→Cloud Logging) + IAP admin path. Three startup bugs found & fixed (Scylla mount chown 999:1000, config-as-file bind-mount, dos_guard whitelist CIDR→bare IPs).
-- **xrpld wired as Clio ETL feeder** (svc-rippled-dev, Sprint E): added `[port_ws_public]` 6006 + `clio_gateways=10.40.0.11` secure_gateway. Root cause of the earlier ETL failure was our-side (feeder had gRPC but no WS port), not Clio. Also reverted a rename landmine (immutable address `description` → would have replaced the reserved P2P IP).
-- **Clio↔xrpld TCP path: FIXED + VERIFIED** (PR #13, applied + reset 2026-06-17 ~19:40Z). Root cause was one layer below GCP: **COS ships an iptables `INPUT` policy DROP host firewall** (`iptables-setup.service`, allows only 22/icmp/lo/established); rippled runs `--network host`, so clio's SYN was dropped before the socket (zero SYN-RECV; 219 host-DROP pkts). Fix opened 6006/50051 (internal CIDR) + 51235 (P2P) in `modules/ledger-node/startup.sh.tftpl`. Post-reset verify: host INPUT now ACCEPTs the ports (rule 5 already matching); clio→xrpld:6006/50051 **CONNECTED 0.00s**; Clio log flipped `Read error: Connection timed out` → **`SubscriptionSource[10.40.0.10:6006] - Connected`**. Canon filed: cs-ledger:rippled (clio-etl-feeder) + gcp-arch-expert:compute-vms.
-- **Clio end-to-end ETL: CONFIRMED OPERATIONAL** (2026-06-17 ~20:38Z). xrpld reached `state=full`, `complete_ledgers=18295445-18315165`, `peers=5` (persisted NuDB history retained from the pre-reset floor 18295445 — no data loss across reset). **Clio extracted into Scylla and caught up to the tip**: `complete_ledgers=18314206-18315166` (top is one ledger *ahead* of xrpld's snapshot — Clio is tracking live as ledgers close). clio-dev deploy is fully working end-to-end. **Lesson #11 CORRECTED (2026-06-17 investigation):** xrpld did NOT take ~1h to reach `full` — `initial_sync_duration_us`=660s → **~11 min** (NuDB resumed from disk, no backfill); the "~1h" was an observation artifact (a broken watcher gave no visibility 20:18–20:38). Real risk = the node is a **Spot VM with `automatic_restart=False`**, so a preemption leaves it DOWN until manual intervention. See readiness row #11 for the prod-validator mitigation (STANDARD+MIGRATE, not Spot).
-- **flare-dev DEPLOYED** (svc-flare-dev, Sprint 3, 2026-06-17 ~23:15Z): go-flare **v1.14.0** Coston2 (`costwo`) validator on one COS VM (`csyn-ldg-dev-flare`, 10.40.0.12, ext 8.230.110.13, SPOT), public 9651 staking + internal 9650, 100GB persistent hyperdisk for `/app/db`. **STATIC bootstrap** (`AUTOCONFIGURE_*=0`, seed `35.240.55.109:9651` + NodeID pinned) because the COS egress floor allows 443 only to the restricted VIP, not the public Flare autoconfigure endpoint. Node **Up + bootstrapping**, `/ext/health` reports **96.7% validator connectivity** (sync in progress, hours+). PRs: **#18** (node HCL), **#19** (missing IAP-SSH(22) rule), **#20** (missing `logging.logWriter` — `--log-driver=gcplogs` HARD-FAILS `docker run` without it; container stuck `Created`). Both gaps were folded into exrp's node PR (✅ done — see exrp-dev entry below). go-flare v1.14.0-GA canon correction already pending in cs-ledger:flare-node (captured 14:37Z).
-- **exrp-dev DEPLOYED + SYNCED** (svc-exrp-dev, Sprint 2, 2026-06-18 ~00:47Z): `exrpd` **v10.0.3** XRPL-EVM **Testnet** (`xrplevm_1449000-1`, EVM chain-id 1449000) full node on one COS VM (`csyn-ldg-dev-exrp`, 10.40.0.13, ext 8.230.102.96, SPOT), public CometBFT P2P 26656, internal EVM JSON-RPC 8545/8546, CometBFT RPC 26657 localhost-only, 100GB persistent hyperdisk. Cosmos-SDK+Cosmos-EVM on CometBFT PoA — **NOT** turnkey like go-flare; startup runs the full init flow (`exrpd init` → genesis → `config.toml`/`app.toml` edits → `exrpd start`) and **STATE-SYNC** (single v10.0.3 binary vs cosmovisor+genesis-replay), trust anchor recomputed every boot. **VALIDATED:** `catching_up:false`, height tracking tip (~7318131, +1/4s), 12 peers, `eth_blockNumber`+`eth_chainId`=0x161c28 (1449000) responding. PRs: **#22** (node HCL + both foundation gaps folded in + 30303-devp2p cleanup), **#23** (state-sync `trust_hash` extraction fix). **3 bring-up landmines** (all fixed/handled): (1) greedy-`sed` grabbed the wrong `"hash"` → light-client crash-loop (PR #23: use `grep -oE '"hash":"[A-F0-9]{64}"'|head -1` for `block_id.hash`); (2) in-band `logWriter`+VM in one apply RACES startup's gcplogs `docker run` (propagation lag → `Created`+`PermissionDenied`) — binding was correct; reset self-heals (memory `project-ledger-foundation-gaps-iap-logwriter`); (3) testnet state-sync wedged on the FINAL snapshot chunk (263/264, provider dropped) — **`gcloud compute instances reset` re-triggers onto a fresh snapshot** (every-boot anchor recompute + container recreate makes reset the self-heal). Memory: `project-cosmos-statesync-trust-hash`. cs-ledger:xrpl-evm canon gap (state-sync bootstrap) **captured** to LESSONS_PENDING 2026-06-18 (`skills/xrpl-evm/canon/LESSONS_PENDING/state-sync/`) — `xrpl-evm` confirmed on the feedback allowlist (`hooks/feedback-capture.py:33`); awaiting curator promotion. Upstream verified clean (no PR-able defect): official docs read-from-explorer + Polkachu/Lavender use correct `jq -r .result.block_id.hash`; our greedy-`sed` was self-inflicted (jq-less COS image). Value-add PR to `ripple/docs.xrplevm.org` (automated snippet + block_id.hash warning) **submitted** 2026-06-18: [ripple/docs.xrplevm.org#59](https://github.com/ripple/docs.xrplevm.org/pull/59) (fork `pete-csyn`, branch `docs/statesync-trust-hash-extraction`).
+- **Node IS validating mainnet** — Cloud Logging (gcplogs): `mode: proposing`,
+  "Advancing accepted ledger to 105054543 with >= 28 validations"; logs fresh <10m.
+  The dev #11 silent-log fix works (`[debug_logfile]=/dev/stdout` + `enable_gcplogs`).
+- **VM (CONSVAL1):** `csyn-ldg-validator` RUNNING, n2d-highmem-8, us-south1-a,
+  provisioningModel=STANDARD (never Spot), onHostMaintenance=MIGRATE, automaticRestart,
+  Shielded (secureBoot+vTPM+integrity), confidential=absent (by design). ✓
+- **Disks:** pd-ssd boot 20 / data 150, both CMEK = `ledger-validator-disk-hsm`. ✓
+- **HSM crown-jewel:** disk key + secret key (`ledger-validator-secret-hsm`) both
+  protectionLevel=**HSM**, ENABLED (keyring `everforge-validator-hsm-us-south1`,
+  csyn-kms). Secret `validator-token` user-managed regional replica, HSM-CMEK. ✓
+- **Signing surface:** `[validator_token]` NOT on disk — injected at boot from SM;
+  node SA `csyn-ldg-validator-prod-sa` holds secretAccessor only (least-priv). ✓
+- **rippled.cfg:** peer_private=1 (NOT relaxed like dev), admin RPC 127.0.0.1 only,
+  network_id main, UNL statically pinned, 4 fixed hubs, log_level info. ✓
+- **Perimeter:** egress DENY-floor @65534 + only tcp:51235 (P2P) & tcp:443 (VIP);
+  ingress only IAP-range→22 and P2P 0.0.0.0/0→51235. No public admin/RPC/WS. ✓
+- **Reserved P2P EIP** 34.174.33.70 IN_USE. Monitoring: 5 alert policies enabled,
+  channel pete@cloudsyn.net (verificationStatus None — confirm email verified).
 
-- **firehose-dev DEPLOYED + LIVE** (svc-firehose-dev + svc-bq-dev, 2026-06-18 ~12:01Z): the XRPL→BigQuery ETL, **last node of the dev estate**. Thin Go **WebSocket** publisher (`docker/firehose`, reads rippled-dev `[port_ws_public]` ws://10.40.0.10:6006 decoded JSON — NOT gRPC, which is Clio's libxrpl path) on a **`google_cloud_run_v2_worker_pool`** (MANUAL=1, Direct VPC egress, PRIVATE_RANGES_ONLY) → 2 Pub/Sub topics+DLQs → **native BigQuery subscriptions** → `csyn-ldg-svc-bq-dev.xrpl_public.{ledgers,transactions}` (+ `*_v1` dedup views). **VERIFIED:** rows streaming live (17→22→25 ledgers across queries, dedup views populated, latest close current). PRs: **#26** (bq sink), **#27** (publisher+image build+worker pool), **#29** (subnetwork short-form), **#30** (service-agent AR reader), **#32** (Shared-VPC network grants + 120s IAM gate). **4 Cloud-Run-on-Shared-VPC bring-up landmines** (estate's first Cloud Run workload — VMs never hit them): subnetwork self_link→short-form; cross-project image pull + Direct-VPC network attach BOTH via `service-<pn>@serverless-robot-prod` (AR reader + networkUser/subnet + networkViewer/host-project), not the apply/runtime SA; cross-project IAM propagation race → 120s `time_sleep`. Memory: `project-cloudrun-shared-vpc-landmines`. gcp-arch:networking consult confirmed the complete grant set (resolves an open networking canon item). Analytics Hub public listing still DEFERRED (BQPUB1 / spec §6.7). **Dev practice estate COMPLETE** (rippled/clio/flare/exrp + firehose).
+### Known-deferred / gaps (not validator defects)
+- **Poller (agreement monitoring) is STAGED** — `poller_image_digest=""`, no Cloud
+  Run job. The 2 poller-derived alerts (agreement-degraded, poller-down) have no
+  data; log-based alerts (down/stuck) are live. Deploy poller to close the gap.
+- Notification channel email verification = None — confirm Pete's email is verified
+  or alerts won't deliver.
 
-## Dev → prod (carry-forward — MANDATORY for the prod build)
-- All dev lessons + prod-validator-only needs are planned in **[docs/dev-to-prod-readiness.md](docs/dev-to-prod-readiness.md)** (one home). Prod roots reference it (validator-prod/README.md). Foundations = `cloud-syndicate-platform` (Pete-apply); workloads = here. cs-ledger canon fixes filed: clio whitelist + clio deployment gotchas + rippled feeder-WS-port + **COS host-firewall second-gate** (LESSONS_PENDING) + plugin allowlist (cs-ledger-plugin#9). Generic COS host-firewall gotcha also filed to gcp-arch-expert:compute-vms.
+## BLOCKERS — repo cannot `tofu init`/plan/apply yet (CONSPLIT2 split incomplete)
+- **Modules missing.** `validator.tf` sources `../../modules/ledger-service` +
+  `ledger-node` → resolve to a `modules/` dir that does NOT exist here (modules
+  stayed in sibling `csyn-consensus-infra`, which has **zero tags**). README/CLAUDE
+  intent = "referenced by tag from sibling" — NOT implemented. Fix: git-source both
+  by pinned tag from the sibling (one home = sibling), add a 2nd GitHub App repo
+  scope in CI, update the two `source=` lines. Live infra unaffected.
+- **GitHub secrets: NONE set** on csyn-portfolio/csyn-consensus-prod
+  (`WIF_PROVIDER_PLAN/APPLY`, `MODULE_READER_CLIENT_ID/APP_PRIVATE_KEY` all absent)
+  → CI cannot auth or fetch the substrate module.
 
-## On deck
-- Estate-wide #173 budget-threshold rollout rides this repo's first CI applies for the 8 ledger roots (tracked in `cloud-syndicate-platform` TASKS.md + memory `service-project-shared-module-rollout-drift`).
+## Next (awaiting Pete)
+- Decide module strategy (recommend: git-source-by-tag from sibling) + cut sibling tag.
+- Set the 4 GitHub secrets (pipe `--body` directly; secret hygiene).
+- Then drift-check: first `tofu plan` from this repo should be clean (split = copy).
+- Optional: deploy the staged poller; verify email notification channel.
