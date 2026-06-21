@@ -37,6 +37,35 @@ resource "google_monitoring_notification_channel" "pete_email" {
   }
 }
 
+# Slack channel — a redundant alert path of a DIFFERENT type than email
+# (observability-sre consult 2026-06-21: best-effort email alone is inadequate
+# for a regulated prod validator). GATED on the token: empty var.slack_auth_token
+# => count 0 => not created, CI plan stays green. The token requires authorizing
+# the "Google Cloud Monitoring" Slack app in the workspace (interactive, Pete-only;
+# Monitoring > Alerting > Notification channels > Slack), then supply via -var or
+# a GH secret at apply — never commit it.
+resource "google_monitoring_notification_channel" "slack" {
+  count        = var.slack_auth_token != "" ? 1 : 0
+  project      = module.validator.project_id
+  display_name = "Slack ${var.slack_channel_name} — validator-prod"
+  type         = "slack"
+  labels = {
+    channel_name = var.slack_channel_name
+  }
+  sensitive_labels {
+    auth_token = var.slack_auth_token
+  }
+}
+
+locals {
+  # Every alert policy fans out to email + (once configured) Slack. Both channels
+  # receive all policies; narrow Slack to CRITICAL-only later if it gets noisy.
+  alert_channels = concat(
+    [google_monitoring_notification_channel.pete_email.id],
+    google_monitoring_notification_channel.slack[*].id,
+  )
+}
+
 # --- Heartbeat metrics (zero labels — cardinality guard; pure heartbeats) ------
 # Counts EVERY xrpld container line. At log_level=info a healthy node emits many
 # lines/sec, so the series is continuous; container exit / VM death / gcplogs failure
@@ -97,7 +126,7 @@ resource "google_monitoring_alert_policy" "validator_down" {
       trigger { count = 1 }
     }
   }
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
     content   = "No xrpld log lines reached Cloud Logging for 5 minutes — the validator container or COS VM is down (or gcplogs stopped). A down validator misses validations (UNL curators score this). Check `gcloud compute instances describe csyn-ldg-validator --zone us-south1-a`, then IAP-SSH + `docker ps`. Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
@@ -117,7 +146,7 @@ resource "google_monitoring_alert_policy" "validator_secret_fail" {
       filter = "logName=\"${local.validator_startup_log}\" AND jsonPayload.message=~\"validator: FAILED to load token from Secret Manager\""
     }
   }
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   # REQUIRED for condition_matched_log — the API rejects the policy without it.
   alert_strategy {
     notification_rate_limit { period = "300s" }
@@ -149,7 +178,7 @@ resource "google_monitoring_alert_policy" "validator_stuck" {
       trigger { count = 1 }
     }
   }
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
     content   = "No LedgerConsensus activity for 15m — the node may be wedged (stuck connected/wrongLedger, not proposing). A short post-reboot resync (~2min) will NOT trigger this. Check `server_info` mode via the localhost admin RPC (expect `proposing`). Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
@@ -177,7 +206,7 @@ resource "google_monitoring_alert_policy" "poller_down" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" } # condition_absent needs NO notification_rate_limit
   depends_on = [google_monitoring_metric_descriptor.poller_heartbeat]
 }
@@ -208,7 +237,7 @@ resource "google_monitoring_alert_policy" "amendment_in_majority" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   # Amendment windows last ~2 weeks; keep the incident open a day so it re-surfaces
   # rather than flapping closed between 10-min polls.
   alert_strategy { auto_close = "86400s" }
@@ -244,7 +273,7 @@ resource "google_monitoring_alert_policy" "amendment_blocked" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   alert_strategy { auto_close = "86400s" }
   documentation {
     content   = "The validator is AMENDMENT-BLOCKED: it is on a binary that does not support an amendment the network has activated, so it has stopped validating and CANNOT roll back. Upgrade the xrpld binary to a supporting release immediately. Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
@@ -279,7 +308,7 @@ resource "google_monitoring_alert_policy" "unl_min_expiry" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   severity              = "WARNING"
   alert_strategy { auto_close = "86400s" }
   documentation {
@@ -314,7 +343,7 @@ resource "google_monitoring_alert_policy" "unl_max_expiry" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   severity              = "CRITICAL"
   alert_strategy { auto_close = "86400s" }
   documentation {
@@ -349,7 +378,7 @@ resource "google_monitoring_alert_policy" "unl_not_active" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   severity              = "CRITICAL"
   alert_strategy { auto_close = "86400s" }
   documentation {
@@ -384,7 +413,7 @@ resource "google_monitoring_alert_policy" "unl_publishers_degraded" {
     }
   }
 
-  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  notification_channels = local.alert_channels
   severity              = "WARNING"
   alert_strategy { auto_close = "86400s" }
   documentation {
