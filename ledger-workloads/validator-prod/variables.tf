@@ -16,7 +16,8 @@ variable "image_digest" {
 variable "sidecar_image_digest" {
   type        = string
   description = "Immutable digest of the xrpl-sidecar image in csyn-ldg-images. Pin by digest, not tag. Default lets CI apply.yml apply without a -var; re-pin after any rebuild (a new build = a new digest even for the same version tag)."
-  # Captured from AR after build-sidecar-image.yml (sidecar_version=1.0.0), 2026-06-20:
-  #   us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/xrpl-sidecar:1.0.0
-  default = "sha256:fed843fc468f9ab788686330593305ad0251e2a943788a13c9296602d8f4647c"
+  # Captured from AR after build-sidecar-image.yml (sidecar_version=1.1.0), 2026-06-21:
+  #   us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/xrpl-sidecar:1.1.0
+  #   (1.1.0 adds the UNL freshness metrics; cosign-signed via WIF.)
+  default = "sha256:037a5d4d895766743ec1a9fe4a4333b426ac1b669acaaf4e5f505e855ca23700"
 }
