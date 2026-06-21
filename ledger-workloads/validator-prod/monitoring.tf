@@ -358,3 +358,38 @@ resource "google_monitoring_alert_policy" "unl_not_active" {
   }
   depends_on = [google_monitoring_metric_descriptor.unl_active]
 }
+
+# --- A publisher list dropped (early redundancy signal) -----------------------
+# Both publishers (Ripple + XRPLF) should be `available`. One dropping to
+# unavailable is a distinct early signal — the node still runs on the surviving
+# list (threshold=1), so this is a WARNING to investigate that publisher's P2P
+# refresh, not yet a node-stop. (observability-sre consult, 2026-06-21.)
+resource "google_monitoring_alert_policy" "unl_publishers_degraded" {
+  project      = module.validator.project_id
+  display_name = "XRPL UNL — a publisher list dropped (only 1 of 2 available)"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "unl_publisher_lists_available < 2"
+    condition_threshold {
+      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_publisher_lists_available\" AND resource.type=\"generic_task\""
+      comparison      = "COMPARISON_LT"
+      threshold_value = 2
+      duration        = "600s" # debounce a transient unavailability during a P2P list update
+      aggregations {
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_MIN"
+      }
+      trigger { count = 1 }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  severity              = "WARNING"
+  alert_strategy { auto_close = "86400s" }
+  documentation {
+    content   = "Only one of the two XRPL publisher lists (Ripple `ED2677AB…` / XRPLF `ED42AEC…`) is currently `available` on the node. The validator still tracks consensus on the surviving list (`validator_list_threshold` is satisfied by one), so this is NOT an outage — it is an early signal that one publisher's list stopped refreshing over P2P. Check the `validators` admin RPC `publisher_lists[]` and peer connectivity to vetted hubs. If the surviving list also approaches expiry (`unl_max_expiry`), escalate to the break-glass runbook (docs/runbooks/unl-break-glass.md)."
+    mime_type = "text/markdown"
+  }
+  depends_on = [google_monitoring_metric_descriptor.unl_publisher_lists_available]
+}
