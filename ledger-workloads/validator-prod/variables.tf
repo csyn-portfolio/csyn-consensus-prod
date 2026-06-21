@@ -21,3 +21,21 @@ variable "sidecar_image_digest" {
   #   (1.1.0 adds the UNL freshness metrics; cosign-signed via WIF.)
   default = "sha256:037a5d4d895766743ec1a9fe4a4333b426ac1b669acaaf4e5f505e855ca23700"
 }
+
+variable "slack_auth_token" {
+  type      = string
+  default   = ""
+  sensitive = true
+  # Bot token from authorizing the "Google Cloud Monitoring" Slack app in the
+  # workspace (Monitoring > Alerting > Notification channels > Slack > Add) —
+  # interactive, Pete-only. Empty (default) => the Slack channel is NOT created
+  # and CI plan stays green. Supply via `-var` or a GH secret at apply time;
+  # NEVER commit the token.
+  description = "Slack bot token for the Cloud Monitoring Slack notification channel. Empty disables Slack."
+}
+
+variable "slack_channel_name" {
+  type        = string
+  default     = "#consensus-alerts"
+  description = "Slack channel that receives validator alerts (used only when slack_auth_token is set)."
+}
