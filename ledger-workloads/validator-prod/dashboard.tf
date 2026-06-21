@@ -126,11 +126,11 @@ resource "google_monitoring_dashboard" "validator" {
               ]
               yAxis        = { label = "days", scale = "LINEAR" }
               chartOptions = { mode = "COLOR" }
-              # NB: xyChart thresholds auto-color and REJECT a `color` field
-              # (unlike scorecard thresholds) — value/direction/label only.
+              # NB: xyChart thresholds accept ONLY value (+ label) — they REJECT
+              # both `color` and `direction` (those are scorecard-threshold fields).
               thresholds = [
-                { value = 14, direction = "BELOW", label = "earliest-list warn (14d)" },
-                { value = 7, direction = "BELOW", label = "node-stop critical (7d)" },
+                { value = 14, label = "earliest-list warn (14d)" },
+                { value = 7, label = "node-stop critical (7d)" },
               ]
             }
           }
