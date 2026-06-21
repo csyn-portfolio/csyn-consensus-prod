@@ -74,9 +74,9 @@ CONSPLIT2 split was incomplete; the controllable parts are now resolved:
   **"No changes. Your infrastructure matches the configuration."** PR #1 MERGEABLE/CLEAN.
 
 ## Next
-- **Merge PR #1** (csyn-consensus-prod, operability fix) — CI green, mergeable.
-- **Merge substrate PR #204** (records the already-applied bootstrap state).
-- Cleanup: remove substrate worktree `/tmp/csyn-plat-consplit2`; reset local
-  cloud-syndicate-platform `main` to origin/main after #204 merges; Pete delete the
-  `~/Downloads/csyn-module-reader.*.pem` now that it's in Secret/GH.
-- Optional: deploy the staged poller; verify pete@cloudsyn.net notification channel.
+- [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
+- [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
+- [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
+- **Pete-only: finish Slack alert path** — Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
+- WS2-C: ~1wk re-check UNL expiry advancement (monitoring live; fetcher/ops-prod deferred).
+- Cleanup (optional): delete `~/Downloads/csyn-module-reader.*.pem` if still on disk; remove stale worktree `/tmp/csyn-plat-consplit2` if present.
