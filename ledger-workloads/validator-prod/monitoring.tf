@@ -252,3 +252,109 @@ resource "google_monitoring_alert_policy" "amendment_blocked" {
   }
   depends_on = [google_monitoring_metric_descriptor.amendment_blocked]
 }
+
+# --- UNL freshness: a publisher list is going stale (leading indicator) --------
+# The node refreshes its UNL over the peer protocol (no HTTP egress). When the
+# EARLIEST publisher list is within 14 days of expiry, that publisher's P2P refresh
+# may have stalled. This is a WARNING, not urgent: the node stays trusted as long as
+# unl_max_days_to_expiry is high (the other publisher's list still covers it). It is
+# the signal to investigate / consider the manual break-glass (WS2-D runbook).
+resource "google_monitoring_alert_policy" "unl_min_expiry" {
+  project      = module.validator.project_id
+  display_name = "XRPL UNL — earliest publisher list within 14d of expiry (refresh may have stalled)"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "unl_min_days_to_expiry < 14"
+    condition_threshold {
+      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_min_days_to_expiry\" AND resource.type=\"generic_task\""
+      comparison      = "COMPARISON_LT"
+      threshold_value = 14
+      duration        = "600s" # slow-moving (≈1/day); 10m avoids a transient parse blip
+      aggregations {
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_MIN"
+      }
+      trigger { count = 1 }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  severity              = "WARNING"
+  alert_strategy { auto_close = "86400s" }
+  documentation {
+    content   = "The earliest-expiring XRPL publisher list (Ripple or XRPLF) is within 14 days of expiry. The validator refreshes its UNL peer-to-peer (no HTTP egress); a stalling earliest list suggests that publisher's P2P refresh has lagged. NOT urgent if `unl_max_days_to_expiry` is still high — the other publisher's list keeps the node trusted (validator_list_threshold=1). In healthy operation the publisher reissues a later-dated list before this 14d window, so a sustained firing means refresh genuinely stalled. Action: check `validators` admin RPC publisher_lists[] expirations + that vetted hubs are peered; if neither list is refreshing, execute the manual UNL break-glass runbook (docs/runbooks/unl-break-glass.md). The CRITICAL counterpart is `unl_max_expiry`."
+    mime_type = "text/markdown"
+  }
+  depends_on = [google_monitoring_metric_descriptor.unl_min_days_to_expiry]
+}
+
+# --- UNL freshness: node-stop horizon (CRITICAL failsafe) ---------------------
+# unl_max_days_to_expiry is the latest available publisher list — the true point at
+# which the node loses its trusted set entirely (no list left to satisfy the
+# threshold). < 7 days means BOTH publishers have stopped refreshing and expiry is
+# imminent: execute the break-glass before the node stops tracking consensus.
+resource "google_monitoring_alert_policy" "unl_max_expiry" {
+  project      = module.validator.project_id
+  display_name = "XRPL UNL — node within 7d of losing its trusted validator list (break-glass)"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "unl_max_days_to_expiry < 7"
+    condition_threshold {
+      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_max_days_to_expiry\" AND resource.type=\"generic_task\""
+      comparison      = "COMPARISON_LT"
+      threshold_value = 7
+      duration        = "600s"
+      aggregations {
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_MIN"
+      }
+      trigger { count = 1 }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  severity              = "CRITICAL"
+  alert_strategy { auto_close = "86400s" }
+  documentation {
+    content   = "CRITICAL: the LATEST-expiring XRPL publisher list is within 7 days of expiry — every cached publisher list is about to expire and P2P refresh has not delivered a newer one. When the last list expires the node loses its trusted validator set and stops tracking consensus. Execute the manual UNL break-glass NOW: fetch the current publisher-signed list in an egress-capable environment, deliver it via the restricted-VIP/GCS path, point `[validator_list_sites]` at the local `file:///` or `http://127.0.0.1` copy (the node verifies the publisher signature itself), then clock-safe recreate. Runbook: docs/runbooks/unl-break-glass.md."
+    mime_type = "text/markdown"
+  }
+  depends_on = [google_monitoring_metric_descriptor.unl_max_days_to_expiry]
+}
+
+# --- UNL not active: the node's own verdict that its UNL is unusable (CRITICAL) -
+# unl_active comes straight from validator_list.status — the most authoritative
+# signal. 0 means the node no longer has an active trusted list (it has stopped,
+# or is about to stop, tracking consensus). The day-based alerts above are leading
+# indicators; this is the node telling us directly.
+resource "google_monitoring_alert_policy" "unl_not_active" {
+  project      = module.validator.project_id
+  display_name = "XRPL UNL NOT ACTIVE — node's effective validator list is unusable"
+  combiner     = "OR"
+
+  conditions {
+    display_name = "unl_active < 1 (validator_list.status != active)"
+    condition_threshold {
+      filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_active\" AND resource.type=\"generic_task\""
+      comparison      = "COMPARISON_LT"
+      threshold_value = 1
+      duration        = "600s" # 10m avoids a single transient read; status is sticky
+      aggregations {
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_MIN"
+      }
+      trigger { count = 1 }
+    }
+  }
+
+  notification_channels = [google_monitoring_notification_channel.pete_email.id]
+  severity              = "CRITICAL"
+  alert_strategy { auto_close = "86400s" }
+  documentation {
+    content   = "The validator reports `validator_list.status != active` — its effective UNL is not usable, so it is not tracking consensus on a trusted set. This is the node's own authoritative verdict (more direct than the day-to-expiry alerts). Confirm via the `validators` admin RPC, check peer connectivity to vetted hubs, and execute the UNL break-glass runbook (docs/runbooks/unl-break-glass.md) if no valid list can be obtained over P2P."
+    mime_type = "text/markdown"
+  }
+  depends_on = [google_monitoring_metric_descriptor.unl_active]
+}
