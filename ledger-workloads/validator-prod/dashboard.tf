@@ -42,8 +42,11 @@ resource "google_monitoring_dashboard" "validator" {
             title = "Proposing (1 = participating)"
             scorecard = {
               timeSeriesQuery = { timeSeriesFilter = {
-                filter      = "metric.type=\"${local.dash_mp}/proposing\" ${local.dash_res}"
-                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MEAN" }
+                filter = "metric.type=\"${local.dash_mp}/proposing\" ${local.dash_res}"
+                # ALIGN_MIN (not MEAN): a 30s metric over a 60s window averages 2
+                # samples, so MEAN turns a single transient 0 into a misleading 0.5
+                # half-red. MIN shows a clean 0/1 (worst sample in the window).
+                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MIN" }
               } }
               sparkChartView = { sparkChartType = "SPARK_LINE" }
               thresholds     = [{ value = 1, color = "RED", direction = "BELOW" }]
@@ -57,7 +60,7 @@ resource "google_monitoring_dashboard" "validator" {
             scorecard = {
               timeSeriesQuery = { timeSeriesFilter = {
                 filter      = "metric.type=\"${local.dash_mp}/unl_active\" ${local.dash_res}"
-                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MEAN" }
+                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MIN" } # binary: worst sample in window
               } }
               sparkChartView = { sparkChartType = "SPARK_LINE" }
               thresholds     = [{ value = 1, color = "RED", direction = "BELOW" }]
@@ -71,7 +74,7 @@ resource "google_monitoring_dashboard" "validator" {
             scorecard = {
               timeSeriesQuery = { timeSeriesFilter = {
                 filter      = "metric.type=\"${local.dash_mp}/amendment_blocked\" ${local.dash_res}"
-                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MEAN" }
+                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MAX" } # bad=1: catch any blocked sample
               } }
               sparkChartView = { sparkChartType = "SPARK_LINE" }
               thresholds     = [{ value = 1, color = "RED", direction = "ABOVE" }]
@@ -225,7 +228,7 @@ resource "google_monitoring_dashboard" "validator" {
             scorecard = {
               timeSeriesQuery = { timeSeriesFilter = {
                 filter      = "metric.type=\"${local.dash_mp}/poller_heartbeat\" ${local.dash_res}"
-                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MEAN" }
+                aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MIN" } # binary: worst sample in window
               } }
               sparkChartView = { sparkChartType = "SPARK_LINE" }
               thresholds     = [{ value = 1, color = "RED", direction = "BELOW" }]
