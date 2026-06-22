@@ -93,7 +93,8 @@ announce → recreate), **never** `docker rm -f`:
 2. Refresh the on-disk `rippled.cfg` from metadata, then recreate the `rippled`
    container per the upgrade-pattern canon (idempotent COS startup; reboot path).
    (Note: this is the validator, not the harmless sidecar — see
-   `validator-buildout-and-domain-verification.md` for the exact recreate steps.)
+   [`validator-recreate.md`](validator-recreate.md) for the exact recreate steps
+   **and the mandatory sync-soak gate**.)
 
 ## Step 5 — Verify
 

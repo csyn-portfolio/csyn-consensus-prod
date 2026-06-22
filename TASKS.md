@@ -33,7 +33,7 @@ The mainnet validator was **already applied from the sibling repo before the spl
 - **Signing surface:** `[validator_token]` NOT on disk — injected at boot from SM;
   node SA `csyn-ldg-validator-prod-sa` holds secretAccessor only (least-priv). ✓
 - **rippled.cfg:** peer_private=1 (NOT relaxed like dev), admin RPC 127.0.0.1 only,
-  network_id main, UNL statically pinned, 4 fixed hubs, log_level info. ✓
+  network_id main, UNL statically pinned, 5 fixed hubs (zaphod added, PR #9), log_level info. ✓
 - **Perimeter:** egress DENY-floor @65534 + only tcp:51235 (P2P) & tcp:443 (VIP);
   ingress only IAP-range→22 and P2P 0.0.0.0/0→51235. No public admin/RPC/WS. ✓
 - **Reserved P2P EIP** 34.174.33.70 IN_USE. Monitoring: 5 alert policies enabled,
@@ -79,4 +79,22 @@ CONSPLIT2 split was incomplete; the controllable parts are now resolved:
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
 - **Pete-only: finish Slack alert path** — Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: ~1wk re-check UNL expiry advancement (monitoring live; fetcher/ops-prod deferred).
+- **Peer-set activation recreate (clears the `peer_count<3` page condition).** zaphod
+  is staged in `[ips_fixed]` metadata (PR #9) but not live — only 2 of 5 hubs peer
+  (sahyadri down, xrpl-commons flaky). A clock-safe recreate loads zaphod → expect ≥3
+  live, clearing the `<3` **page** line in `observability-baseline.md` (target ≥8, alert
+  <5, page <3). **Runbook ready:** [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)
+  — includes the mandatory **sync-soak gate** (xrpld 3.2.0 [#7572](https://github.com/XRPLF/rippled/issues/7572)
+  is an open, unreproduced `stuck-in-connected` sync regression; a recreate re-runs the
+  sync path, so verify `connected→…→proposing` + `complete_ledgers` advancing within 10m,
+  else roll back to the pre-recreate snapshot). **Pete decision pending:** schedule the
+  recreate (brief miss window) vs. keep deferring. Execute on confirm.
+- **≥8 peer target → CS-operated peer node (TBD).** Public-hub pinning is exhausted (all
+  ~5 citable public hubs in `[ips_fixed]`); reaching the ≥8 baseline target needs a
+  CS-run peer. Until then a live 5-hub set floats ~3 sessions = page cleared, still `<5`
+  ticket territory.
+- **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5
+  `monitoring.tf` alert policies reference it for diagnosis steps (dangling link). The
+  recreate steps now live in `validator-recreate.md`; the buildout/domain-verification +
+  general node-diagnosis runbook still needs authoring.
 - Cleanup (optional): delete `~/Downloads/csyn-module-reader.*.pem` if still on disk; remove stale worktree `/tmp/csyn-plat-consplit2` if present.
