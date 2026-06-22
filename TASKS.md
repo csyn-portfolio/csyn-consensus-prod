@@ -7,6 +7,7 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 - [decision-pointer] CONSPLIT1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-16-split-consensus-infra-repo.md
 - [decision-pointer] CONSPLIT2 (always-split: practice in csyn-consensus-infra; prod regulated in this repo) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-20-always-split-consensus-repos.md · index: ~/.ai-decisions.md
 - [decision-pointer] CONSVAL1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/ (CONSVAL1)
+- [decision-pointer] CONSVAL2 (multi-region validator expansion — SG asia-southeast1 first, EverForge managed-validator product, CS anchor; Path B moves live #1 into new `ledger/prod/validators` subfolder w/ scoped resourceLocations MERGE exception; GO-WITH-CONDITIONS) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-21-multi-region-validator-expansion.md · index: ~/.ai-decisions.md · PR #206
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
