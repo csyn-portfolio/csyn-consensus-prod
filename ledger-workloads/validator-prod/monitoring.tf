@@ -431,14 +431,17 @@ resource "google_monitoring_alert_policy" "unl_publishers_degraded" {
 # curators score it down — distinct from validator_stuck (no consensus lines) and
 # from peer_count (a node can be thin-peered yet still proposing — observed steady
 # state). Design (observability-sre consult, 2026-06-30):
-#   ALIGN_MEAN over 300s + LT 0.5 + duration 300s. MEAN absorbs transient single
-#   ~30s 0-blips (3 observed harmless over 7d → mean ~0.9, no fire) AND a normal
-#   ~2min clock-safe recreate (mean stays > 0.5); NOT ALIGN_MIN, which AMPLIFIES a
-#   blip (one 0 collapses the window). Fires on a SUSTAINED non-proposing state in
-#   ~5-10 min — including the #7572 stuck-in-`connected` signature, making this the
-#   automated backstop to the manual sync-soak gate (docs/runbooks/validator-recreate.md).
-# evaluation_missing_data INACTIVE: a full metric GAP = sidecar death, owned by
-# poller_down — this policy judges value only when data is present (no double-fire).
+#   ALIGN_MEAN over 300s + LT 0.5 + duration 0s. MEAN absorbs transient single ~30s
+#   0-blips (3 observed harmless over 7d → mean ~0.9, no fire); NOT ALIGN_MIN, which
+#   AMPLIFIES a blip (one 0 collapses the window). duration 0s (not 300s): a single
+#   sub-0.5 5-min window pages → worst-case onset→page ~5-7.5 min, matching the canon
+#   "page on not-proposing > 5 min". (duration 300s would push worst case to ~12.5 min
+#   for no false-fire benefit — the MEAN aligner already debounces blips.) Catches the
+#   #7572 stuck-in-`connected` signature → automated backstop to the manual sync-soak
+#   gate (docs/runbooks/validator-recreate.md).
+# evaluation_missing_data INACTIVE: a full metric GAP — incl. a normal ~2min recreate,
+# where the sidecar co-dies with rippled — is owned by poller_down, NOT scored as 0s
+# here; this policy judges value only when data is present (no false page, no double-fire).
 resource "google_monitoring_alert_policy" "validator_not_proposing" {
   project      = module.validator.project_id
   display_name = "XRPL validator NOT PROPOSING — stopped participating (5m)"
@@ -446,12 +449,12 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   # paging policy → omit severity (repo convention; see validator_down et al.)
 
   conditions {
-    display_name = "proposing mean < 0.5 over 5m, sustained 5m"
+    display_name = "proposing 5m-mean < 0.5 (mostly non-proposing in the window)"
     condition_threshold {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/proposing\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
-      threshold_value         = 0.5 # 0/1 GAUGE; LT-0.5 = "mean below half" (matches amendment_blocked idiom)
-      duration                = "300s"
+      threshold_value         = 0.5                                # 0/1 GAUGE; LT-0.5 = "5m mean below half" (matches amendment_blocked idiom)
+      duration                = "0s"                               # fire on the first sub-0.5 5m window (~5-7.5m worst case); MEAN already debounces blips
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE" # gaps → poller_down, not here
       aggregations {
         alignment_period   = "300s"
@@ -464,7 +467,7 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
-    content   = "The validator's `proposing` signal averaged below 0.5 for 5+ minutes — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). A normal ~2min clock-safe recreate will NOT trigger this. If this fired DURING/after a recreate and the node is stuck in `connected` with `complete_ledgers` not advancing, that is the #7572 signature — follow the FAIL path in docs/runbooks/validator-recreate.md (roll back to the pre-recreate snapshot). Otherwise check `server_state` via the localhost admin RPC and peer/UNL health."
+    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 (non-proposing for the majority of a 5-minute window) — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). A normal ~2min clock-safe recreate will NOT trigger this (the metric gaps during the reboot and is ignored). If this fired DURING/after a recreate and the node is stuck in `connected` with `complete_ledgers` not advancing, that is the #7572 signature — follow the FAIL path in docs/runbooks/validator-recreate.md (roll back to the pre-recreate snapshot). Otherwise check `server_state` via the localhost admin RPC and peer/UNL health."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.proposing]
