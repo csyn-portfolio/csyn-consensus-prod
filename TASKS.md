@@ -36,8 +36,11 @@ The mainnet validator was **already applied from the sibling repo before the spl
   network_id main, UNL statically pinned, 5 fixed hubs (zaphod added, PR #9), log_level info. ✓
 - **Perimeter:** egress DENY-floor @65534 + only tcp:51235 (P2P) & tcp:443 (VIP);
   ingress only IAP-range→22 and P2P 0.0.0.0/0→51235. No public admin/RPC/WS. ✓
-- **Reserved P2P EIP** 34.174.33.70 IN_USE. Monitoring: 5 alert policies enabled,
-  channel pete@cloudsyn.net (verificationStatus None — confirm email verified).
+- **Reserved P2P EIP** 34.174.33.70 IN_USE. Monitoring: **12 alert policies in code**
+  (10 live: down/secret-fail/stuck/poller-down/2×amendment/4×UNL; **+2 from PR #19** —
+  `validator_not_proposing` PAGE + `validator_low_peers` WARNING — merged to `main`
+  2026-06-30 but **NOT live until `apply.yml` is dispatched**). Channel pete@cloudsyn.net
+  (verificationStatus None — confirm email verified).
 
 ### Known-deferred / gaps (not validator defects)
 - **Poller (agreement monitoring) is STAGED** — `poller_image_digest=""`, no Cloud
@@ -77,18 +80,26 @@ CONSPLIT2 split was incomplete; the controllable parts are now resolved:
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
 - [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
+- [x] ~~Merge PR #19 (not-proposing PAGE + low-peers WARNING alerts)~~ — MERGED 2026-06-30 (`#19`, squash). The response to the 6/30 miss investigation = **page the outcome (`proposing`), warn on peers** (config-only; NOT a node change — validator is healthy). Design via observability-sre consult + high-effort code-review (duration 300s→0s for ~5-7.5m page latency). cs-ledger-feedback captured: "page `peer_count<3`" is alert-debt for a thin-hub validator.
+- **Pete-gated: dispatch `apply.yml`** to make PR #19's alert policies live (`terraform-apply` is workflow_dispatch-only). Apply = 2 add (`validator_not_proposing`, `validator_low_peers`) + 1 benign in-place `google_monitoring_dashboard.validator` normalization (provider re-adds default fields; zero semantic change), 0 destroy.
 - **Pete-only: finish Slack alert path** — Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: ~1wk re-check UNL expiry advancement (monitoring live; fetcher/ops-prod deferred).
-- **Peer-set activation recreate (clears the `peer_count<3` page condition).** zaphod
-  is staged in `[ips_fixed]` metadata (PR #9) but not live — only 2 of 5 hubs peer
-  (sahyadri down, xrpl-commons flaky). A clock-safe recreate loads zaphod → expect ≥3
-  live, clearing the `<3` **page** line in `observability-baseline.md` (target ≥8, alert
-  <5, page <3). **Runbook ready:** [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)
-  — includes the mandatory **sync-soak gate** (xrpld 3.2.0 [#7572](https://github.com/XRPLF/rippled/issues/7572)
-  is an open, unreproduced `stuck-in-connected` sync regression; a recreate re-runs the
-  sync path, so verify `connected→…→proposing` + `complete_ledgers` advancing within 10m,
-  else roll back to the pre-recreate snapshot). **Pete decision pending:** schedule the
-  recreate (brief miss window) vs. keep deferring. Execute on confirm.
+- **Peer-set activation recreate — DECIDED 2026-06-30: DEFER (option A).** zaphod is
+  staged in `[ips_fixed]` metadata (PR #9), NOT live (VM last started 2026-06-18, not
+  recreated since); only 2 of 5 hubs peer (sahyadri down, xrpl-commons flaky). Triage of
+  the 6/30 miss pattern: validator is **healthy** (99.96% agreement, proposing ~100%,
+  ~90s of `proposing=0` in 7d) — the daily 2-13 misses are **thin-peer resilience debt,
+  not a bug or GCP throttle**. **Not recreating prod** for a fragile 2→3 gain that never
+  reaches ≥8 (me + Grok + radar converged). Instead: activate zaphod on the **next
+  mandatory recreate** (binary upgrade); **rehearse the recreate on the dev validator**.
+  Runbook ready ([`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md))
+  with the **sync-soak gate**. **#7572 refined (radar 2026-06-30):** disk-IOPS theory
+  RULED OUT; real trigger is a stateful-middlebox idle-RST our GCP deny-floor env does
+  NOT have (we synced 3.2.0→proposing twice on this host = empirical proof); no fixed
+  version exists. **NEW [#7672](https://github.com/XRPLF/rippled/issues/7672):** 2nd
+  independent report that 3.2.0 broadly underperforms 3.1.3 — strategic flag, track via
+  radar (reverting risks amendment-block). Snapshot `validator-pre-recreate-20260630-1258`
+  retained as the rollback point for the eventual recreate.
 - **≥8 peer target → CS-operated peer node (TBD).** Public-hub pinning is exhausted (all
   ~5 citable public hubs in `[ips_fixed]`); reaching the ≥8 baseline target needs a
   CS-run peer. Until then a live 5-hub set floats ~3 sessions = page cleared, still `<5`
