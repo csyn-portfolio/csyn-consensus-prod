@@ -431,12 +431,14 @@ resource "google_monitoring_alert_policy" "unl_publishers_degraded" {
 # curators score it down — distinct from validator_stuck (no consensus lines) and
 # from peer_count (a node can be thin-peered yet still proposing — observed steady
 # state). Design (observability-sre consult, 2026-06-30):
-#   ALIGN_MEAN over 300s + LT 0.5 + duration 0s. MEAN absorbs transient single ~30s
+#   ALIGN_MEAN over 300s + LT 0.5 + duration 60s. MEAN absorbs transient single ~30s
 #   0-blips (3 observed harmless over 7d → mean ~0.9, no fire); NOT ALIGN_MIN, which
-#   AMPLIFIES a blip (one 0 collapses the window). duration 0s (not 300s): a single
-#   sub-0.5 5-min window pages → worst-case onset→page ~5-7.5 min, matching the canon
-#   "page on not-proposing > 5 min". (duration 300s would push worst case to ~12.5 min
-#   for no false-fire benefit — the MEAN aligner already debounces blips.) Catches the
+#   AMPLIFIES a blip (one 0 collapses the window). duration 60s, NOT 0s: GCP rejects
+#   duration 0 whenever evaluation_missing_data is set (Error 400 "must have a non-zero
+#   duration" — hit at apply 2026-06-30). 60s is the minimum non-zero; fires on the first
+#   sustained sub-0.5 5-min window → worst-case onset→page ~5-8 min, matching the canon
+#   "page on not-proposing > 5 min". (300s would push worst case to ~12.5 min for no
+#   false-fire benefit — the MEAN aligner already debounces blips.) Catches the
 #   #7572 stuck-in-`connected` signature → automated backstop to the manual sync-soak
 #   gate (docs/runbooks/validator-recreate.md).
 # evaluation_missing_data INACTIVE: a full metric GAP — incl. a normal ~2min recreate,
@@ -454,7 +456,7 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/proposing\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
       threshold_value         = 0.5                                # 0/1 GAUGE; LT-0.5 = "5m mean below half" (matches amendment_blocked idiom)
-      duration                = "0s"                               # fire on the first sub-0.5 5m window (~5-7.5m worst case); MEAN already debounces blips
+      duration                = "60s"                              # min non-zero; GCP rejects 0s when evaluation_missing_data is set. ~5-8m worst-case page; MEAN debounces blips
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE" # gaps → poller_down, not here
       aggregations {
         alignment_period   = "300s"
