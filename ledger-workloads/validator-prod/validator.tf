@@ -18,9 +18,9 @@ module "validator" {
   env                 = "prod"
   role                = "validator"
   network_role        = "standalone"
-  create_compute_sa   = true        # CS baseline #4 — dedicated workload SA, never the default
-  data_classification = "sensitive" # mainnet signing node (vs internal testnet)
-  folder_id           = data.terraform_remote_state.org_foundation.outputs.folder_ledger_prod_id
+  create_compute_sa   = true                                                                                # CS baseline #4 — dedicated workload SA, never the default
+  data_classification = "sensitive"                                                                         # mainnet signing node (vs internal testnet)
+  folder_id           = data.terraform_remote_state.org_foundation.outputs.folder_ledger_prod_validators_id # CONSVAL2 Path-B: move into ledger/prod/validators (in-place folder_id change, no-downtime; plan MUST show ~folder_id / 0 destroy)
 
   activate_apis = [
     "compute.googleapis.com",
