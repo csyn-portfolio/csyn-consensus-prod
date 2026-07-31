@@ -519,21 +519,21 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
 # pager channel is ever added, SPLIT channels so peer noise stays off it.
 resource "google_monitoring_alert_policy" "validator_low_peers" {
   project      = module.validator.project_id
-  display_name = "XRPL validator LOW PEERS — below the 2-peer floor (WARNING)"
+  display_name = "XRPL validator LOW PEERS — below the 3-peer floor (WARNING)"
   combiner     = "OR"
   severity     = "WARNING"
 
   conditions {
-    display_name = "WARN: LOW PEERS — peer_count mean < 1.5 for 5m"
+    display_name = "WARN: LOW PEERS — peer_count mean < 2.5 for 5m"
     condition_threshold {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/peer_count\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
-      threshold_value         = 1.5 # equilibrium is 2; 1.5 fires only on sustained drop to 1/0 (NOT 3 → that perma-fires)
+      threshold_value         = 2.5 # post-#26 multi-path equilibrium ~6-7; warn on sustained drop below 3
       duration                = "300s"
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
       aggregations {
         alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN" # one transient 1 among 2s → mean 1.9, no fire
+        per_series_aligner = "ALIGN_MEAN" # absorbs single-peer blips among a ~6 set
       }
       trigger { count = 1 }
     }
@@ -542,7 +542,7 @@ resource "google_monitoring_alert_policy" "validator_low_peers" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "86400s" }
   documentation {
-    content   = "The validator's connected peer count dropped below the 2-peer structural floor (to a single peer or zero) for 5+ minutes. A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Check the `peers` admin RPC and reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Durable fix for ≥8 is a CS-operated peer node (public-hub pinning is exhausted)."
+    content   = "The validator's connected peer count dropped below the 3-peer floor (mean < 2.5 for 5m) after the multi-path [ips_fixed] pin (PR #26; live equilibrium ~6-7). A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Check the `peers` admin RPC and reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Durable fix for ≥8 is a CS-operated peer node (public-hub pinning is exhausted)."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.peer_count]
