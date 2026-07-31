@@ -77,34 +77,47 @@ CONSPLIT2 split was incomplete; the controllable parts are now resolved:
 - **END-TO-END CI GREEN.** PR #1 plan re-run → all jobs success; CI plan comment:
   **"No changes. Your infrastructure matches the configuration."** PR #1 MERGEABLE/CLEAN.
 
+## Incident recovery — 2026-07-31 peer isolation (proposing restored)
+
+**Symptom:** public agreement cliff (`12.38%` day on validations.xrpl.org / xrpscan
+`agreement_1h → 0.00000`); sidecar `proposing=false peers=0`; mode `connected`.
+**Not** amendment-blocked; `unl_active=1` throughout.
+
+**Root cause:** thin `[ips_fixed]` peer set fully isolated (`peer_private=1`, no
+discovery). Both live hub sessions dropped ~2026-07-31 03:35–05:35 UTC; node could
+not rejoin. Contributing process debt: PR #23 peer curation **merged 2026-07-24 but
+never applied**; VM last started **2026-06-18** so staged zaphod / distributedagreement
+never loaded into the running daemon (`metadata ≠ live`).
+
+**Recovery (ops, no new PR):**
+1. Applied already-merged #23 via `apply.yml` run
+   https://github.com/csyn-portfolio/csyn-consensus-prod/actions/runs/30667187410
+   (success) → metadata `ips_fixed` = r.ripple.com, hub.xrpl-commons.org,
+   hubs.xrpkuwait.com, zaphod.alloy.ee, hub.distributedagreement.com (sahyadri dropped).
+2. Snapshot `validator-pre-recreate-20260731-2136` (data disk, READY).
+3. `gcloud compute instances reset csyn-ldg-validator` (boot ~21:38 UTC).
+4. Sync-soak: peers→2 within ~1m; `proposing=true` by ~21:44 UTC (~6 min post-boot).
+   Sidecar: `ok proposing=true amendment_blocked=false peers=2`.
+
+**Validation evidence (read-only):** Monitoring custom metrics + sidecar
+`jsonPayload.message` + xrpscan API. SSH blocked in this session harness — on-box
+`server_info`/`peers`/`validators` still recommended for peer identity inventory.
+
+**Still open:** peer floor still ~2 sessions (thin-hub debt). `agreement_1h` lags
+until the miss window rolls off (~1h). CS-operated peer node still the path to ≥8.
+
 ## Next
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
 - [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
 - [x] ~~Merge PR #19 (not-proposing PAGE + low-peers WARNING alerts)~~ — MERGED 2026-06-30 (`#19`, squash). The response to the 6/30 miss investigation = **page the outcome (`proposing`), warn on peers** (config-only; NOT a node change — validator is healthy). Design via observability-sre consult + high-effort code-review (duration 300s→0s for ~5-7.5m page latency). cs-ledger-feedback captured: "page `peer_count<3`" is alert-debt for a thin-hub validator.
-- **Pete-gated: dispatch `apply.yml`** to make PR #19's alert policies live (`terraform-apply` is workflow_dispatch-only). Apply = 2 add (`validator_not_proposing`, `validator_low_peers`) + 1 benign in-place `google_monitoring_dashboard.validator` normalization (provider re-adds default fields; zero semantic change), 0 destroy.
+- [x] ~~Pete-gated: dispatch `apply.yml` for PR #19 alerts~~ — policies live (verified 2026-07-31 list).
+- [x] ~~Apply PR #23 peer curation + clock-safe recreate~~ — DONE 2026-07-31 (incident recovery above). Snapshot `validator-pre-recreate-20260731-2136`.
 - **Pete-only: finish Slack alert path** — Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
-- WS2-C: ~1wk re-check UNL expiry advancement (monitoring live; fetcher/ops-prod deferred).
-- **Peer-set activation recreate — DECIDED 2026-06-30: DEFER (option A).** zaphod is
-  staged in `[ips_fixed]` metadata (PR #9), NOT live (VM last started 2026-06-18, not
-  recreated since); only 2 of 5 hubs peer (sahyadri down, xrpl-commons flaky). Triage of
-  the 6/30 miss pattern: validator is **healthy** (99.96% agreement, proposing ~100%,
-  ~90s of `proposing=0` in 7d) — the daily 2-13 misses are **thin-peer resilience debt,
-  not a bug or GCP throttle**. **Not recreating prod** for a fragile 2→3 gain that never
-  reaches ≥8 (me + Grok + radar converged). Instead: activate zaphod on the **next
-  mandatory recreate** (binary upgrade); **rehearse the recreate on the dev validator**.
-  Runbook ready ([`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md))
-  with the **sync-soak gate**. **#7572 refined (radar 2026-06-30):** disk-IOPS theory
-  RULED OUT; real trigger is a stateful-middlebox idle-RST our GCP deny-floor env does
-  NOT have (we synced 3.2.0→proposing twice on this host = empirical proof); no fixed
-  version exists. **NEW [#7672](https://github.com/XRPLF/rippled/issues/7672):** 2nd
-  independent report that 3.2.0 broadly underperforms 3.1.3 — strategic flag, track via
-  radar (reverting risks amendment-block). Snapshot `validator-pre-recreate-20260630-1258`
-  retained as the rollback point for the eventual recreate.
-- **≥8 peer target → CS-operated peer node (TBD).** Public-hub pinning is exhausted (all
-  ~5 citable public hubs in `[ips_fixed]`); reaching the ≥8 baseline target needs a
-  CS-run peer. Until then a live 5-hub set floats ~3 sessions = page cleared, still `<5`
-  ticket territory.
+- WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
+- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions still ~2; zaphod/distributedagreement now in **loaded** config. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
+- **≥8 peer target → CS-operated peer node (TBD) — still the structural fix.** Public-hub pinning exhausted; thin floor will re-isolate if both live hubs drop again.
+- **Process lesson:** merged peer-set / metadata changes require **apply + recreate** before they count as live; track “staged vs loaded” explicitly (do not treat merge as activation).
 - **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5
   `monitoring.tf` alert policies reference it for diagnosis steps (dangling link). The
   recreate steps now live in `validator-recreate.md`; the buildout/domain-verification +
