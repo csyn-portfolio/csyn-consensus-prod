@@ -103,9 +103,10 @@ never loaded into the running daemon (`metadata ≠ live`).
 `jsonPayload.message` + xrpscan API. SSH blocked in this session harness — on-box
 `server_info`/`peers`/`validators` still recommended for peer identity inventory.
 
-**Still open (structural):** CS-operated peer node for ≥8. Public multi-IP pin
-(PR after #25) maximizes sessions from the 5-operator hub set; hostname-only
-had collapsed multi-A hubs to one outbound each (live evidence: 2 stable of 5).
+**Still open (structural):** CS-operated peer node for ≥8. Public multi-path pin
+([PR #26](https://github.com/csyn-portfolio/csyn-consensus-prod/pull/26)): hostnames
++ measured extra IPs (IAP peers inventory 2026-07-31: 2 stable keys — Ripple +
+DA; zaphod/kuwait flap post-handshake).
 
 ### Alerting follow-up (why the page felt "missing")
 Email **did** deliver to `pete@cloudsyn.net` from `alerting-noreply@google.com`:
