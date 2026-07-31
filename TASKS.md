@@ -103,8 +103,9 @@ never loaded into the running daemon (`metadata ≠ live`).
 `jsonPayload.message` + xrpscan API. SSH blocked in this session harness — on-box
 `server_info`/`peers`/`validators` still recommended for peer identity inventory.
 
-**Still open:** peer floor still ~2 sessions (thin-hub debt). `agreement_1h` lags
-until the miss window rolls off (~1h). CS-operated peer node still the path to ≥8.
+**Still open (structural):** CS-operated peer node for ≥8. Public multi-IP pin
+(PR after #25) maximizes sessions from the 5-operator hub set; hostname-only
+had collapsed multi-A hubs to one outbound each (live evidence: 2 stable of 5).
 
 ### Alerting follow-up (why the page felt "missing")
 Email **did** deliver to `pete@cloudsyn.net` from `alerting-noreply@google.com`:

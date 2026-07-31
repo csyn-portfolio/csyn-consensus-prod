@@ -99,15 +99,36 @@ advisory_delete=0
 #     Dead [ips_fixed] entries are NOT free (retry churn + log noise + a false
 #     "N hubs pinned" capacity picture when only ~2-3 ever session). Re-add if
 #     ISRDC is observed back on :51235.
-# Expect only ~2-3 LIVE sessions after this (TCP-OK != stable session). The real
-# fix for the thin-peer floor is a CS-operated non-validating tracking node in a
-# different region with mutual [ips_fixed] (TBD) — public-hub pinning is exhausted.
+#
+# 2026-07-31 multi-IP pin (post peer-isolation recovery): hostname-only entries
+# collapse each multi-A hub to ONE outbound session. Live evidence after the
+# recreate that loaded #23: stable sessions were only 2 —
+#   18.209.223.102 (r.ripple.com pool) + 205.209.113.250 (distributedagreement)
+# while zaphod/kuwait flapped open→"No message of desired type"→close, and
+# commons barely transferred. Pin multiple TCP-OK A-records per operator so
+# [ips_fixed] can open concurrent sessions (same operator ≠ same peer key, but
+# multiplies overlay paths). Re-verify dig/nc at upgrade time — IPs churn.
+# Hostnames intentionally NOT also listed (would race DNS to a random A and
+# double-attempt the same key). Expected live still < configured N; the path
+# to ≥8 remains a CS-operated peer node.
 [ips_fixed]
-r.ripple.com 51235
-hub.xrpl-commons.org 51235
-hubs.xrpkuwait.com 51235
-zaphod.alloy.ee 51235
-hub.distributedagreement.com 51235
+# r.ripple.com pool (dig multi-A; all TCP:51235 OK 2026-07-31)
+18.209.223.102 51235
+35.158.172.184 51235
+44.205.42.42 51235
+52.40.102.255 51235
+35.167.183.116 51235
+# hub.distributedagreement.com
+205.209.113.250 51235
+# hubs.xrpkuwait.com
+37.34.188.207 51235
+37.34.241.36 51235
+78.89.200.25 51235
+# zaphod.alloy.ee
+45.139.107.16 51235
+45.139.107.214 51235
+# hub.xrpl-commons.org
+51.159.84.51 51235
 
 # Mainnet network identifier (prevents cross-network peer confusion).
 [network_id]
