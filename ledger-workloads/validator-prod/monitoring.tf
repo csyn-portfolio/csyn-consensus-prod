@@ -113,9 +113,11 @@ resource "google_monitoring_alert_policy" "validator_down" {
   project      = module.validator.project_id
   display_name = "Validator DOWN — no xrpld logs (5m)"
   combiner     = "OR"
+  severity     = "CRITICAL"
   depends_on   = [time_sleep.metrics_ready] # metric descriptor must be queryable first
   conditions {
-    display_name = "No xrpld log lines for 5m"
+    # Condition display_name is included in Monitoring's default email subject.
+    display_name = "PAGE: Validator DOWN — no xrpld logs (5m)"
     condition_absent {
       filter   = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/${google_logging_metric.validator_log_presence.name}\""
       duration = "300s"
@@ -129,7 +131,7 @@ resource "google_monitoring_alert_policy" "validator_down" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
-    content   = "No xrpld log lines reached Cloud Logging for 5 minutes — the validator container or COS VM is down (or gcplogs stopped). A down validator misses validations (UNL curators score this). Check `gcloud compute instances describe csyn-ldg-validator --zone us-south1-a`, then IAP-SSH + `docker ps`. Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
+    content   = "No xrpld log lines reached Cloud Logging for 5 minutes — the validator container or COS VM is down (or gcplogs stopped). A down validator misses validations (UNL curators score this). Check `gcloud compute instances describe csyn-ldg-validator --zone us-south1-a`, then IAP-SSH + `docker ps`. Runbook: docs/runbooks/validator-recreate.md (if boot loop) / docs/runbooks/validator-buildout-and-domain-verification.md."
     mime_type = "text/markdown"
   }
 }
@@ -140,8 +142,9 @@ resource "google_monitoring_alert_policy" "validator_secret_fail" {
   project      = module.validator.project_id
   display_name = "Validator secret-load FAILED at boot"
   combiner     = "OR"
+  severity     = "CRITICAL"
   conditions {
-    display_name = "FAILED to load token from Secret Manager"
+    display_name = "PAGE: secret-load FAILED — token missing at boot"
     condition_matched_log {
       filter = "logName=\"${local.validator_startup_log}\" AND jsonPayload.message=~\"validator: FAILED to load token from Secret Manager\""
     }
@@ -157,20 +160,26 @@ resource "google_monitoring_alert_policy" "validator_secret_fail" {
   }
 }
 
-# MEDIUM (lenient) — possibly STUCK: no LedgerConsensus activity for 15m. A normal
-# post-reboot resync (~2min connected/wrongLedger) still emits consensus lines, so 15m
-# of NONE = genuinely wedged. Does NOT catch "logs flow but server_state stays connected"
-# — that precise check belongs to the deferred poller.
+# WARNING (supporting) — possibly STUCK: no LedgerConsensus activity for 30m.
+# The PAGE signal for "not validating" is validator_not_proposing (sidecar GAUGE).
+# This log-absence policy is a backstop when the sidecar is dark but rippled is
+# wedged without consensus lines (validator_down covers total silence at 5m;
+# poller_down covers sidecar gap at 35m). Episode 2026-07-31: at 15m this flapped
+# open/close while not-proposing already paged the outage, burying the page under
+# noise. Tradeoff: 30m is slower for the sidecar-independent wedge path in exchange
+# for fewer flap pairs; primary SLO page is unchanged. Prefer auto_close + longer
+# absence over custom documentation.subject for scannability (see not-proposing).
 resource "google_monitoring_alert_policy" "validator_stuck" {
   project      = module.validator.project_id
-  display_name = "Validator possibly STUCK — no consensus activity (15m)"
+  display_name = "Validator possibly STUCK — no consensus activity (30m)"
   combiner     = "OR"
+  severity     = "WARNING"
   depends_on   = [time_sleep.metrics_ready] # metric descriptor must be queryable first
   conditions {
-    display_name = "No LedgerConsensus lines for 15m"
+    display_name = "WARN: no LedgerConsensus lines (30m) — check proposing page first"
     condition_absent {
       filter   = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/${google_logging_metric.validator_consensus_activity.name}\""
-      duration = "900s"
+      duration = "1800s"
       aggregations {
         alignment_period   = "60s"
         per_series_aligner = "ALIGN_COUNT"
@@ -179,9 +188,9 @@ resource "google_monitoring_alert_policy" "validator_stuck" {
     }
   }
   notification_channels = local.alert_channels
-  alert_strategy { auto_close = "1800s" }
+  alert_strategy { auto_close = "3600s" }
   documentation {
-    content   = "No LedgerConsensus activity for 15m — the node may be wedged (stuck connected/wrongLedger, not proposing). A short post-reboot resync (~2min) will NOT trigger this. Check `server_info` mode via the localhost admin RPC (expect `proposing`). Runbook: docs/runbooks/validator-buildout-and-domain-verification.md."
+    content   = "No LedgerConsensus activity for 30m — the node may be wedged. **First check the PAGE policy `validator_not_proposing`** (that is the validation SLO). This alert is a supporting backstop (e.g. sidecar down so the proposing GAUGE is dark). A short post-reboot resync (~2–10 min) will NOT trigger this. Check `server_info` mode via the localhost admin RPC (expect `proposing`). Runbook: docs/runbooks/validator-recreate.md."
     mime_type = "text/markdown"
   }
 }
@@ -193,9 +202,11 @@ resource "google_monitoring_alert_policy" "poller_down" {
   project      = module.validator.project_id
   display_name = "XRPL sidecar — DOWN (no heartbeat)"
   combiner     = "OR"
+  # Sidecar owns proposing/peer/UNL gauges — blind monitoring is a page, not a ticket.
+  severity = "CRITICAL"
 
   conditions {
-    display_name = "poller_heartbeat absent > 35m"
+    display_name = "PAGE: XRPL sidecar DOWN — no poller_heartbeat (>35m)"
     condition_absent {
       filter   = "metric.type=\"custom.googleapis.com/xrpl/validator/poller_heartbeat\" AND resource.type=\"generic_task\""
       duration = "2100s" # survives 1 missed run @10m, fires on ~3 consecutive
@@ -208,6 +219,10 @@ resource "google_monitoring_alert_policy" "poller_down" {
 
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" } # condition_absent needs NO notification_rate_limit
+  documentation {
+    content   = "The on-VM xrpl-sidecar has not written `poller_heartbeat` for >35m. Without it the proposing / peer_count / UNL gauges go stale and the PAGE policies cannot see a live outage. Check the sidecar container on `csyn-ldg-validator` (`docker ps`, logs) and that localhost:5005 admin RPC still answers. Runbook: docs/runbooks/validator-recreate.md if a reset is needed to re-pull the image."
+    mime_type = "text/markdown"
+  }
   depends_on = [google_monitoring_metric_descriptor.poller_heartbeat]
 }
 
@@ -221,9 +236,10 @@ resource "google_monitoring_alert_policy" "amendment_in_majority" {
   project      = module.validator.project_id
   display_name = "XRPL amendment in majority window — confirm validator on a supporting binary"
   combiner     = "OR"
+  severity     = "WARNING"
 
   conditions {
-    display_name = "amendments_in_majority_window >= 1 (≈2-week activation clock)"
+    display_name = "WARN: amendment in majority window — confirm supporting binary"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/amendments_in_majority_window\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_GT"
@@ -257,9 +273,10 @@ resource "google_monitoring_alert_policy" "amendment_blocked" {
   project      = module.validator.project_id
   display_name = "XRPL validator AMENDMENT-BLOCKED — node stopped validating"
   combiner     = "OR"
+  severity     = "CRITICAL"
 
   conditions {
-    display_name = "amendment_blocked == 1"
+    display_name = "PAGE: AMENDMENT-BLOCKED — node stopped validating"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/amendment_blocked\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_GT"
@@ -294,7 +311,7 @@ resource "google_monitoring_alert_policy" "unl_min_expiry" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_min_days_to_expiry < 14"
+    display_name = "WARN: UNL earliest publisher list within 14d of expiry"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_min_days_to_expiry\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -329,7 +346,7 @@ resource "google_monitoring_alert_policy" "unl_max_expiry" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_max_days_to_expiry < 7"
+    display_name = "PAGE: UNL within 7d of losing trusted list — break-glass"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_max_days_to_expiry\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -364,7 +381,7 @@ resource "google_monitoring_alert_policy" "unl_not_active" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_active < 1 (validator_list.status != active)"
+    display_name = "PAGE: UNL NOT ACTIVE — trusted list unusable"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_active\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -399,7 +416,7 @@ resource "google_monitoring_alert_policy" "unl_publishers_degraded" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_publisher_lists_available < 2"
+    display_name = "WARN: UNL only 1 of 2 publisher lists available"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_publisher_lists_available\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -448,10 +465,19 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   project      = module.validator.project_id
   display_name = "XRPL validator NOT PROPOSING — stopped participating (5m)"
   combiner     = "OR"
-  # paging policy → omit severity (repo convention; see validator_down et al.)
+  # Episode 2026-07-31: omitting severity made Gmail subjects read
+  # "[ALERT - No severity] proposing 5m-mean < 0.5…" — easy to miss next to
+  # flappy WARN mail. With severity set, Monitoring's default subject form is
+  # "[ALERT - Critical] <condition.display_name> …" (observed for WARNING
+  # policies; same template). Do NOT set documentation.subject — a custom
+  # subject replaces that whole line and can hide open-vs-RESOLVED + severity
+  # (Claude dual-gate r1 on PR #25). Severity is a classification label (not a
+  # routing gate); all policies still fan out to notification_channels.
+  severity = "CRITICAL"
 
   conditions {
-    display_name = "proposing 5m-mean < 0.5 (mostly non-proposing in the window)"
+    # Default email subject includes this string after "[ALERT - <severity>]".
+    display_name = "PAGE: NOT PROPOSING — proposing 5m-mean < 0.5"
     condition_threshold {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/proposing\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
@@ -469,7 +495,7 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
-    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 (non-proposing for the majority of a 5-minute window) — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). A normal ~2min clock-safe recreate will NOT trigger this (the metric gaps during the reboot and is ignored). If this fired DURING/after a recreate and the node is stuck in `connected` with `complete_ledgers` not advancing, that is the #7572 signature — follow the FAIL path in docs/runbooks/validator-recreate.md (roll back to the pre-recreate snapshot). Otherwise check `server_state` via the localhost admin RPC and peer/UNL health."
+    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). **This is the primary validation SLO page.** Common causes: peer isolation (`peer_private=1` + thin `[ips_fixed]` — episode 2026-07-31), #7572 stuck-in-`connected` after recreate, amendment-block (also has its own page). A normal ~2–10 min clock-safe recreate will NOT trigger this (metric gaps → ignored via EVALUATION_MISSING_DATA_INACTIVE). If post-recreate and stuck in `connected` with `complete_ledgers` not advancing → FAIL path in docs/runbooks/validator-recreate.md. Else: IAP `server_info` / `peers` / `validators`, hub reachability on :51235."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.proposing]
@@ -498,7 +524,7 @@ resource "google_monitoring_alert_policy" "validator_low_peers" {
   severity     = "WARNING"
 
   conditions {
-    display_name = "peer_count mean < 1.5 over 5m, sustained 5m"
+    display_name = "WARN: LOW PEERS — peer_count mean < 1.5 for 5m"
     condition_threshold {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/peer_count\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
@@ -516,7 +542,7 @@ resource "google_monitoring_alert_policy" "validator_low_peers" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "86400s" }
   documentation {
-    content   = "The validator's connected peer count dropped below the 2-peer structural floor (to a single peer or zero) for 5+ minutes. A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). This is a WARNING, not a page — the paging signal is validator_not_proposing. Check the `peers` admin RPC and reachability of the pinned [ips_fixed] hubs (r.ripple.com, hub.xrpl-commons.org, sahyadri.isrdc.in, hubs.xrpkuwait.com, zaphod.alloy.ee). The durable fix to reach the ≥8 target is a CS-operated peer node (public-hub pinning is exhausted)."
+    content   = "The validator's connected peer count dropped below the 2-peer structural floor (to a single peer or zero) for 5+ minutes. A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Check the `peers` admin RPC and reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Durable fix for ≥8 is a CS-operated peer node (public-hub pinning is exhausted)."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.peer_count]
