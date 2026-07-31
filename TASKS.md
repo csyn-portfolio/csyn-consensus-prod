@@ -106,6 +106,16 @@ never loaded into the running daemon (`metadata ≠ live`).
 **Still open:** peer floor still ~2 sessions (thin-hub debt). `agreement_1h` lags
 until the miss window rolls off (~1h). CS-operated peer node still the path to ≥8.
 
+### Alerting follow-up (why the page felt "missing")
+Email **did** deliver to `pete@cloudsyn.net` from `alerting-noreply@google.com`:
+LOW PEERS open 2026-07-30 20:02 PDT; NOT PROPOSING open 21:29 PDT; many flappy
+STUCK open/resolve pairs all day. Failures were noticeability, not delivery:
+- not-proposing omitted `severity` → subject `[ALERT - No severity] proposing 5m-mean…`
+- stuck at 15m flapped and buried the page
+- Slack second path still gated on Pete token
+Harden PR: severity CRITICAL + `documentation.subject` PAGE: prefixes on pages;
+stuck → 30m WARNING. Apply after merge.
+
 ## Next
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
 - [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
@@ -113,7 +123,7 @@ until the miss window rolls off (~1h). CS-operated peer node still the path to �
 - [x] ~~Merge PR #19 (not-proposing PAGE + low-peers WARNING alerts)~~ — MERGED 2026-06-30 (`#19`, squash). The response to the 6/30 miss investigation = **page the outcome (`proposing`), warn on peers** (config-only; NOT a node change — validator is healthy). Design via observability-sre consult + high-effort code-review (duration 300s→0s for ~5-7.5m page latency). cs-ledger-feedback captured: "page `peer_count<3`" is alert-debt for a thin-hub validator.
 - [x] ~~Pete-gated: dispatch `apply.yml` for PR #19 alerts~~ — policies live (verified 2026-07-31 list).
 - [x] ~~Apply PR #23 peer curation + clock-safe recreate~~ — DONE 2026-07-31 (incident recovery above). Snapshot `validator-pre-recreate-20260731-2136`.
-- **Pete-only: finish Slack alert path** — Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
+- **Pete-only: finish Slack alert path** — still the second notification path (email alone buried the 7/31 page under flappy subjects). Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
 - **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions still ~2; zaphod/distributedagreement now in **loaded** config. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
 - **≥8 peer target → CS-operated peer node (TBD) — still the structural fix.** Public-hub pinning exhausted; thin floor will re-isolate if both live hubs drop again.
