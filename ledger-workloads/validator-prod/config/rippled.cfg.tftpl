@@ -88,26 +88,37 @@ advisory_delete=0
 # reliably-connected distinct operator. peer_private=1 disables discovery, so
 # [ips_fixed] IS the entire outbound set — pin every reputable hub.
 #
-# 2026-07-23 peer-set curation (network scan + node nc-probes + Grok review):
-# the named public-hub universe is only ~6 hubs and we already pinned 5. Two
-# changes this pass:
-#   + ADD hub.distributedagreement.com (David Schwartz, own AS 205.209.113.x,
-#     public inbound hub published 2025-12; TCP-OK from this box). Diversity
-#     footnote: Ripple-adjacent operator — do NOT count it + r.ripple.com as
-#     two fully independent units (~1.3).
-#   - DROP sahyadri.isrdc.in — TCP REFUSED / down continuously since ~2026-06-21.
-#     Dead [ips_fixed] entries are NOT free (retry churn + log noise + a false
-#     "N hubs pinned" capacity picture when only ~2-3 ever session). Re-add if
-#     ISRDC is observed back on :51235.
-# Expect only ~2-3 LIVE sessions after this (TCP-OK != stable session). The real
-# fix for the thin-peer floor is a CS-operated non-validating tracking node in a
-# different region with mutual [ips_fixed] (TBD) — public-hub pinning is exhausted.
+# 2026-07-23: + hub.distributedagreement.com; - sahyadri (TCP refused). Dead
+# [ips_fixed] entries are NOT free (retry churn + false capacity picture).
+#
+# 2026-07-31 multi-path pin (PR #26 dual-gate): hostname-only yields ONE fixed
+# peer per multi-A name (PeerFinder addFixedPeer). IAP `peers` inventory after
+# the #23 recreate (2026-07-31 ~22:05 UTC):
+#   18.209.223.102  n9LQMf…  domain=ripple.com           uptime~1600s  STABLE
+#   205.209.113.250 n9Juuy…  domain=distributedagreement  uptime~1550s  STABLE
+#   zaphod/kuwait: open → "No message of desired type" → close (FLAP — do not
+#   multi-pin those operators until post-handshake refusal is understood).
+# Shape: ALL five hostnames (DNS self-heal under peer_private=1) PLUS extra
+# concurrent A-records for the Ripple pool + measured-stable DA IP. Hostnames
+# + overlapping IPs dedupe by endpoint (emplace fails → next A); they do NOT
+# double-attempt the same key. Flappers stay hostname-only. ≥8 still needs a
+# CS-operated peer node.
 [ips_fixed]
+# Operator hostnames (DNS self-heal)
 r.ripple.com 51235
-hub.xrpl-commons.org 51235
+hub.distributedagreement.com 51235
 hubs.xrpkuwait.com 51235
 zaphod.alloy.ee 51235
-hub.distributedagreement.com 51235
+hub.xrpl-commons.org 51235
+# Extra concurrent endpoints (measured-stable + additional Ripple pool A-records;
+# TCP:51235 OK 2026-07-31). Distinct pubkey_node not proven for every Ripple A —
+# DuplicatePeer rejects same key. DA IP is the measured-stable session.
+18.209.223.102 51235
+35.158.172.184 51235
+44.205.42.42 51235
+52.40.102.255 51235
+35.167.183.116 51235
+205.209.113.250 51235
 
 # Mainnet network identifier (prevents cross-network peer confusion).
 [network_id]
