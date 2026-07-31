@@ -311,7 +311,7 @@ resource "google_monitoring_alert_policy" "unl_min_expiry" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_min_days_to_expiry < 14"
+    display_name = "WARN: UNL earliest publisher list within 14d of expiry"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_min_days_to_expiry\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -346,7 +346,7 @@ resource "google_monitoring_alert_policy" "unl_max_expiry" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_max_days_to_expiry < 7"
+    display_name = "PAGE: UNL within 7d of losing trusted list — break-glass"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_max_days_to_expiry\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -381,7 +381,7 @@ resource "google_monitoring_alert_policy" "unl_not_active" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_active < 1 (validator_list.status != active)"
+    display_name = "PAGE: UNL NOT ACTIVE — trusted list unusable"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_active\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"
@@ -416,7 +416,7 @@ resource "google_monitoring_alert_policy" "unl_publishers_degraded" {
   combiner     = "OR"
 
   conditions {
-    display_name = "unl_publisher_lists_available < 2"
+    display_name = "WARN: UNL only 1 of 2 publisher lists available"
     condition_threshold {
       filter          = "metric.type=\"custom.googleapis.com/xrpl/validator/unl_publisher_lists_available\" AND resource.type=\"generic_task\""
       comparison      = "COMPARISON_LT"

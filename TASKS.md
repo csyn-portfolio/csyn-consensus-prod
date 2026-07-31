@@ -113,8 +113,10 @@ STUCK open/resolve pairs all day. Failures were noticeability, not delivery:
 - not-proposing omitted `severity` → subject `[ALERT - No severity] proposing 5m-mean…`
 - stuck at 15m flapped and buried the page
 - Slack second path still gated on Pete token
-Harden PR: severity CRITICAL + `documentation.subject` PAGE: prefixes on pages;
-stuck → 30m WARNING. Apply after merge.
+Harden PR (#25): severity CRITICAL/WARNING + `PAGE:`/`WARN:` prefixes on
+**condition display names** (default Monitoring subject form — do **not** set
+`documentation.subject`, which can hide ALERT/RESOLVED); stuck → 30m WARNING.
+Apply after merge.
 
 ## Next
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
