@@ -128,7 +128,8 @@ Apply after merge.
 - First prod attempt failed (corrupt overlay2 extract → `exec format error`); emergency 3.2.0 rollback; layerdb orphan purge + clean re-pull with size-proof; container cutover to 3.2.1.
 - [x] Live cutover PASS (~4m): `proposing` + `pubkey_validator=nHUQEd51…` + peers≥9 + complete_ledgers advancing + `xrpld version 3.2.1`.
 - [x] Snapshots retained: `validator-pre-321-{boot,data}-20260801-1917`.
-- [ ] Metadata re-pin to e664d4c5 (this PR) + apply so reboot matches live.
+- [x] Metadata re-pin e664d4c5 — PR #31 merged + apply; staged == live; reboot-safe.
+- [x] Final ops check 2026-08-01 ~20:53 UTC: proposing, peers 5–7, sidecar proposing=true, amendment_blocked=false.
 - Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
 
 ## Next
