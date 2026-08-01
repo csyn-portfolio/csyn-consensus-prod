@@ -6,11 +6,14 @@ variable "machine_type" {
 
 variable "image_digest" {
   type        = string
-  description = "Immutable digest of the xrpld (rippled) image in csyn-ldg-images. Pin by digest, not tag. The mainnet validator runs the SAME dev-vetted build as svc-rippled-dev (xrpld 3.2.0) — a consensus node must run a reviewed, reproducible image. Default lets CI apply.yml apply without a -var; re-pin after any rebuild (a new build = a new digest even for the same version tag)."
-  # Captured live from AR (gcloud artifacts docker images list
-  # us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/rippled) 2026-06-18:
-  # tag 3.2.0 -> sha256:ba7a6dda… (matches svc-rippled-dev's current pin).
-  default = "sha256:ba7a6ddabb23d785868fd88277950c10db131be3e725d27e8cb1e254b023ed39"
+  description = "Immutable digest of the xrpld (rippled) image in csyn-ldg-images. Pin by digest, not tag. The mainnet validator runs the SAME dev-vetted build as svc-rippled-dev (xrpld 3.2.1) — a consensus node must run a reviewed, reproducible image. Default lets CI apply.yml apply without a -var; re-pin after any rebuild (a new build = a new digest even for the same version tag)."
+  # Captured from build-rippled-image.yml run 30714125224 (csyn-consensus-infra),
+  # 2026-08-01: tag 3.2.1 -> sha256:e664d4c5… (smoke: "xrpld version 3.2.1").
+  # Full image rebuild on unpinned debian:12-slim + xrpld=3.2.1-1 (manifest-propagation
+  # hotfix XRPLF/rippled#7925) — not a binary-only patch delta vs 3.2.0 image.
+  # Rollback digest (prior pin): sha256:ba7a6ddabb23d785868fd88277950c10db131be3e725d27e8cb1e254b023ed39 (3.2.0).
+  # SAME digest as svc-rippled-dev (dev soak first — dual-gate C3).
+  default = "sha256:e664d4c5f6bb0e5538f53cb1ad6c6cd5560b6f550141f651754fe1cf563a98c8"
 }
 
 variable "sidecar_image_digest" {
