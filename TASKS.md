@@ -120,20 +120,16 @@ Harden PR (#25): severity CRITICAL/WARNING + `PAGE:`/`WARN:` prefixes on
 `documentation.subject`, which can hide ALERT/RESOLVED); stuck → 30m WARNING.
 Apply after merge.
 
-## xrpld 3.2.1 upgrade (2026-08-01) — ROLLED BACK on prod host
+## xrpld 3.2.1 upgrade (2026-08-01) — LIVE on prod
 
-**Gate:** Claude r1 **MERGE-WITH-FIXES** (dual-gate; builder Grok).
-- Build green: https://github.com/csyn-portfolio/csyn-consensus-infra/actions/runs/30714125224 — smoke `xrpld version 3.2.1`.
-- Digest `sha256:e664d4c5…` **works on svc-rippled-dev** (dev soak OK).
-- **Prod FAIL:** after apply+reset, container crash-looped `exec format error`. Root cause: COS host `csyn-ldg-validator` docker overlay2 extracted 3.2.1 layers as **0-byte files** (layer ~1.9MB / 3264 empty files vs ~82MB on dev; `docker save` → integrity checksum failed). Same image digest; host layer-store defect.
-- **Emergency:** manually re-ran 3.2.0 container (pubkey ok, peers≥7, reconnecting). Snapshots READY: `validator-pre-321-boot-20260801-1917`, `validator-pre-321-data-20260801-1917`.
-- [x] Dev soak on 3.2.1 — DONE (svc-rippled-dev).
-- [x] Prod pin merged + applied + reset attempted — FAILED gate; rolled container back to 3.2.0.
-- [x] Revert metadata pin to 3.2.0 — PR #29 merged + applied (digest `ba7a6dda…` staged = live).
-- [x] Post-rollback `server_state: proposing` + sidecar `proposing=true` (verified 2026-08-01 ~19:38 UTC).
-- [ ] Repair docker layer store on prod COS (or repro image + clean pull) before re-attempting 3.2.1.
-- XRPscan detail 500 still explorer-side (separate).
-- Dev remains on 3.2.1 (svc-rippled-dev); prod intentionally lagging until host fix.
+**Gate:** Claude r1 **MERGE-WITH-FIXES** (dual-gate; builder Grok) + incident recovery.
+- Build: https://github.com/csyn-portfolio/csyn-consensus-infra/actions/runs/30714125224 — `sha256:e664d4c5…`, smoke `xrpld version 3.2.1`.
+- Dev soak: svc-rippled-dev on 3.2.1 (SAME digest invariant).
+- First prod attempt failed (corrupt overlay2 extract → `exec format error`); emergency 3.2.0 rollback; layerdb orphan purge + clean re-pull with size-proof; container cutover to 3.2.1.
+- [x] Live cutover PASS (~4m): `proposing` + `pubkey_validator=nHUQEd51…` + peers≥9 + complete_ledgers advancing + `xrpld version 3.2.1`.
+- [x] Snapshots retained: `validator-pre-321-{boot,data}-20260801-1917`.
+- [ ] Metadata re-pin to e664d4c5 (this PR) + apply so reboot matches live.
+- Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
 
 ## Next
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
