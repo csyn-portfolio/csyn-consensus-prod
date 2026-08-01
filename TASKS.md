@@ -129,10 +129,11 @@ Apply after merge.
 - **Emergency:** manually re-ran 3.2.0 container (pubkey ok, peers≥7, reconnecting). Snapshots READY: `validator-pre-321-boot-20260801-1917`, `validator-pre-321-data-20260801-1917`.
 - [x] Dev soak on 3.2.1 — DONE (svc-rippled-dev).
 - [x] Prod pin merged + applied + reset attempted — FAILED gate; rolled container back to 3.2.0.
-- [ ] Revert metadata pin to 3.2.0 (this PR) so reboot does not re-stage 3.2.1.
+- [x] Revert metadata pin to 3.2.0 — PR #29 merged + applied (digest `ba7a6dda…` staged = live).
+- [x] Post-rollback `server_state: proposing` + sidecar `proposing=true` (verified 2026-08-01 ~19:38 UTC).
 - [ ] Repair docker layer store on prod COS (or repro image + clean pull) before re-attempting 3.2.1.
-- [ ] Wait for `server_state: proposing` post-rollback; confirm sidecar.
 - XRPscan detail 500 still explorer-side (separate).
+- Dev remains on 3.2.1 (svc-rippled-dev); prod intentionally lagging until host fix.
 
 ## Next
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
