@@ -120,18 +120,19 @@ Harden PR (#25): severity CRITICAL/WARNING + `PAGE:`/`WARN:` prefixes on
 `documentation.subject`, which can hide ALERT/RESOLVED); stuck → 30m WARNING.
 Apply after merge.
 
-## xrpld 3.2.1 upgrade (2026-08-01)
+## xrpld 3.2.1 upgrade (2026-08-01) — ROLLED BACK on prod host
 
-**Gate:** Claude r1 **MERGE-WITH-FIXES** (dual-gate; builder Grok) — must-fix incorporated into plan.
-- Build: https://github.com/csyn-portfolio/csyn-consensus-infra/actions/runs/30714125224 — green; smoke `xrpld version 3.2.1`.
-- New digest: `sha256:e664d4c5f6bb0e5538f53cb1ad6c6cd5560b6f550141f651754fe1cf563a98c8` (tag 3.2.1).
-- Rollback: `sha256:ba7a6ddabb23d785868fd88277950c10db131be3e725d27e8cb1e254b023ed39` (3.2.0; tag unclobbered).
-- Framing: full image rebuild (unpinned `debian:12-slim` + `xrpld=3.2.1-1` manifest hotfix #7925), not binary-only.
-- #7572 still OPEN upstream — sync-soak gate still required; do not claim closed.
-- [ ] Dev soak: pin `svc-rippled-dev` same digest → apply + recreate (practice repo) — C3 invariant.
-- [ ] Prod pin PR → CI plan → merge (merge ≠ deploy).
-- [ ] Pete-gated: `apply.yml` validator-prod → boot+data snapshot → IAP pre-pull → reset → runbook Step 4 (`proposing` + `pubkey_validator` + version on-box).
-- XRPscan detail 500 is explorer-side (node proposing peers=9); not a restart trigger.
+**Gate:** Claude r1 **MERGE-WITH-FIXES** (dual-gate; builder Grok).
+- Build green: https://github.com/csyn-portfolio/csyn-consensus-infra/actions/runs/30714125224 — smoke `xrpld version 3.2.1`.
+- Digest `sha256:e664d4c5…` **works on svc-rippled-dev** (dev soak OK).
+- **Prod FAIL:** after apply+reset, container crash-looped `exec format error`. Root cause: COS host `csyn-ldg-validator` docker overlay2 extracted 3.2.1 layers as **0-byte files** (layer ~1.9MB / 3264 empty files vs ~82MB on dev; `docker save` → integrity checksum failed). Same image digest; host layer-store defect.
+- **Emergency:** manually re-ran 3.2.0 container (pubkey ok, peers≥7, reconnecting). Snapshots READY: `validator-pre-321-boot-20260801-1917`, `validator-pre-321-data-20260801-1917`.
+- [x] Dev soak on 3.2.1 — DONE (svc-rippled-dev).
+- [x] Prod pin merged + applied + reset attempted — FAILED gate; rolled container back to 3.2.0.
+- [ ] Revert metadata pin to 3.2.0 (this PR) so reboot does not re-stage 3.2.1.
+- [ ] Repair docker layer store on prod COS (or repro image + clean pull) before re-attempting 3.2.1.
+- [ ] Wait for `server_state: proposing` post-rollback; confirm sidecar.
+- XRPscan detail 500 still explorer-side (separate).
 
 ## Next
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
