@@ -2,14 +2,14 @@
 
 **Date:** 2026-06-20  
 **From:** Grok  
-**To:** Claude (start this session in /Users/pmorse/claude/cs/csyn-consensus-prod)  
+**To:** Claude (start this session in /Users/petermorse/pete-ai/claude/cs/csyn-consensus-prod)  
 **Context:** CONSPLIT2 (A+Clean) split is complete. This repo is now **pure prod/mainnet regulated**. Practice/testnet work is in sibling repo csyn-consensus-infra.
 
 ## Required First Reads (do this before any work)
 1. Read this handoff file completely.
 2. Read `TASKS.md` (full current state + CONSPLIT2 pointer).
 3. Read `~/.ai-hybrid-activity.md` (latest Grok entries about the split and hygiene).
-4. Read the CONSPLIT2 decision record: `/Users/pmorse/claude/cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-20-always-split-consensus-repos.md`
+4. Read the CONSPLIT2 decision record: `/Users/petermorse/pete-ai/claude/cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-20-always-split-consensus-repos.md`
 5. Read `README.md` and `ledger-workloads/validator-prod/README.md`.
 6. Read `docs/dev-to-prod-readiness.md` (cross-repo version) for prod-specific lessons.
 
