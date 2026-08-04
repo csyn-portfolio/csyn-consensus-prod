@@ -313,7 +313,7 @@ question is that our node is under-observed *because* it is hard-private. Declin
 both options leaves that candidate untested and the registry question open. That is
 an accepted cost, taken knowingly.
 
-### Alert scope — external validation visibility (built in `pr:36`, not applied)
+### Alert scope — external validation visibility (scope implemented in `pr:36`)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
 verify with `gcloud alpha monitoring policies list --project=<validator project>`;
 merging `pr:36` does not apply it.
