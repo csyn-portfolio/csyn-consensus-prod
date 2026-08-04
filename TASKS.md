@@ -132,27 +132,33 @@ Apply after merge.
 - [x] Final ops check 2026-08-01 ~20:53 UTC: proposing, peers 5–7, sidecar proposing=true, amendment_blocked=false.
 - Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
 
-## Scanner-invisibility investigation — 2026-08-04 (xrpscan ingest break)
+## Scanner-invisibility investigation — 2026-08-04 (xrpscan cohort freeze, registry-side)
 
 **Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
-validator is healthy and propagating; the staleness is an xrpscan-side ingest
-break affecting a whole cohort.** A separate, real config finding fell out of the
+validator is healthy and propagating; the staleness is a registry-side freeze of
+xrpscan's domain-verified non-UNL cohort.** Naming the specific xrpscan subsystem
+would need their confirmation; what is earned is the cohort scope, below. A separate, real config finding fell out of the
 investigation (`peer_private`, below) — that one is ours and is worth acting on.
 
-**Rule:** a registry (`xrpscan`, VHS/`data.xrpl.org`, livenet) is INFORMATIONAL.
-Never open an incident, and never gate a recreate, on registry `last_seen`. They
-fail as a class. The external check is the `validations` stream across **>= 2
+**Rule:** a registry (`xrpscan`, VHS/`data.xrpl.org`, livenet) is INFORMATIONAL and
+cannot be a sole PASS/FAIL gate — one registry's cohort path can go dark while the
+node is fine. Never open an incident, and never gate a recreate, on registry
+`last_seen`. The external check is the `validations` stream across **>= 2
 independent feeds** — `tools/network-sees-validator.mjs`.
 
-- `OBSERVED: curl https://api.xrpscan.com/api/v1/validators` @ 2026-08-04 ~13:45 UTC
-  → cohort freshness: UNL 35/35 fresh; UNL-with-domain 29/29 fresh; non-UNL
+- `OBSERVED: curl https://api.xrpscan.com/api/v1/validatorregistry` @ 2026-08-04
+  ~13:45 UTC (note `/api/v1/validators` 302s to this) → cohort freshness: UNL 35/35 fresh; UNL-with-domain 29/29 fresh; non-UNL
   WITHOUT domain 74/162 fresh; **non-UNL WITH domain 0/108 fresh**. Ours is
   non-UNL with domain `validator1.cloudsyndicate.io`.
 - `OBSERVED:` same fetch → **49 of those 108 froze inside the 2026-08-01T22:00Z
   hour** across unrelated operators: `xrpsync.com` 22:03:40, `xrplvalidator.alloy.ee`
   22:03:40, **ours 22:02:50**, `zerp.cloud` 22:05:20, `xrpltool.com` 22:05:51; a
   further 37 froze together at 2026-07-30T09Z. Different versions, operators and
-  countries, one moment ⇒ registry-side ingest break, not a per-node fault.
+  countries, one moment. `INFERRED:` that freeze geometry is incompatible with 49
+  independent node faults — mixed versions in the same minute, ledger_index still
+  advancing across the window, and the domainless non-UNL and UNL rows on the SAME
+  registry kept updating. It is not evidence that all 108 nodes were healthy; only
+  ours has multi-feed proof.
 - `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` → SEEN on **3/3**
   independent feeds (`xrplcluster.com`, `s2.ripple.com`, `xrpl.ws`), 17-18
   validations each on an unbroken run of 17-18 ledgers @ 2026-08-04 ~14:0x UTC.
@@ -160,7 +166,8 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   `pubkey_validator` = our master key, `validated_ledger` current, `validator_list
   {count 2, status active}`, `amendment_blocked false`, manifest seq 4 byte-identical
   to xrpscan's @ 2026-08-04 ~12:35 UTC.
-- `EXCLUDED: mesh under-propagation` by the 3/3 multi-feed result above.
+- `EXCLUDED: single-path-only propagation` by the 3/3 multi-feed result above.
+  That is strong multi-path evidence on independent public feeds, not a full-mesh proof.
 - `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, peer isolation,
   inbound firewall` — see the RPC and `nc` evidence in the PR #34 discussion.
 - `EXCLUDED: "registries lag non-UNL validators"` (an earlier draft conclusion of
@@ -196,8 +203,10 @@ So setting it explicitly buys **no additional privacy** — rippled forces the f
 for any node holding a validation key — and costs discovery and inbound peering.
 `OBSERVED:` zero inbound peers in 63.8h of uptime, and 0 of 4 directly-connected
 hubs list our IP across ~690 crawl entries (the latter is the forced flag and would
-persist either way). This is the mechanism behind the thin peer set that caused the
-**2026-07-31 isolation outage** and behind the still-open ">=8 peers" item.
+persist either way). `INFERRED:` hard-private plus a thin `[ips_fixed]` set is
+sufficient mechanism for the **2026-07-31 isolation outage** and for the still-open
+">=8 peers" item; the postmortem above already names peer-set thinness as the cause,
+so treat this as the config reason that thinness had no discovery to fall back on.
 
 **Canon correction:** `cs-ledger:rippled` § Peer set curation says "a validator MUST
 stay `peer_private 1` — rippled forces it internally whenever a validation key is

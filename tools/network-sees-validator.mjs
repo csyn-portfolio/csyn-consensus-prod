@@ -11,12 +11,14 @@
 // operators, because a low-centrality validator can be visible on a lucky path
 // while under-propagating overall.
 //
-// Why not a registry (xrpscan / VHS / livenet): they are lagging and can fail as
-// a class. OBSERVED 2026-08-04: all 108 domain-verified non-UNL validators on
-// xrpscan were stale, 49 of them frozen within the same few minutes of
-// 2026-08-01T22:0xZ across unrelated operators — a registry-side ingest break
-// that looked exactly like a 63h outage of our own. Registries are INFORMATIONAL.
-// Never gate a recreate, and never open an incident, on registry `last_seen`.
+// Why not a registry (xrpscan / VHS / livenet): a registry cannot be a sole
+// PASS/FAIL gate — a whole cohort path can go dark while the node is fine.
+// OBSERVED 2026-08-04 via https://api.xrpscan.com/api/v1/validatorregistry (note
+// /api/v1/validators 302s here): all 108 domain-verified non-UNL rows were stale,
+// 49 of them frozen within the same few minutes of 2026-08-01T22:0xZ across
+// unrelated operators and mixed versions. That freeze geometry is incompatible
+// with 49 independent node faults; for OUR node the multi-feed check below showed
+// full participation throughout. Registries are INFORMATIONAL.
 //
 // Two footguns this tool exists to prevent, both of which read as a real outage:
 //   1. The stream message type is `validationReceived`, NOT `validation`.
@@ -25,11 +27,12 @@
 //      observed set to roughly the dUNL (~35) and cannot show an untrusted
 //      validator at all. That is INCONCLUSIVE, never NOT SEEN.
 //
-// KEY ROTATION: the stream carries only `validation_public_key` — the EPHEMERAL
-// SIGNING key. It does NOT carry `master_key` (verified 2026-08-04), so we cannot
-// match on the stable master key. After any `create_token` / manifest rotation the
-// default below is stale and this tool would report a false NOT SEEN. Read the
-// current value from the node and pass it:
+// KEY ROTATION: match on `validation_public_key` — the EPHEMERAL SIGNING key.
+// `master_key` is OPTIONAL on this stream: some validators' messages carry it
+// (~1/3 of a cross-feed sample, 2026-08-04) but OURS did not in any observed
+// message (0/7), so the stable master key cannot be relied on as the match. After
+// any `create_token` / manifest rotation the default below is stale and this tool
+// would report a false NOT SEEN. Read the current value from the node and pass it:
 //     xrpld validator_info   ->  .ephemeral_key
 //     node tools/network-sees-validator.mjs --signing-key n9...
 //
@@ -97,8 +100,9 @@ function watch(url) {
       seen.total++;
       const key = m.validation_public_key || '';
       seen.validators.add(key);
-      // `master_key` is absent from this stream; keep the comparison anyway so a
-      // future endpoint that adds it still matches, but never depend on it.
+      // `master_key` is optional on this stream and absent from OUR messages in
+      // every observed sample; keep the comparison for validators that do carry it,
+      // but never depend on it for our own match.
       if (key === SIGNING || key === MASTER || m.master_key === MASTER) {
         seen.ours++;
         if (m.ledger_index) seen.ourLedgers.add(Number(m.ledger_index));
@@ -140,7 +144,8 @@ if (SIGNING === DEFAULT_SIGNING) {
 }
 
 if (sawUs >= 2) {
-  console.log(`\nSEEN on ${sawUs}/${URLS.length} independent feeds. Mesh propagation confirmed.`);
+  console.log(`\nSEEN on ${sawUs}/${URLS.length} independent public feeds — multi-path propagation confirmed.`);
+  console.log('(Independent public feeds, not a full-mesh proof. Sufficient as a recreate gate.)');
   process.exit(0);
 }
 if (sawUs === 1) {
