@@ -172,8 +172,11 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   `amendment_blocked false`, manifest seq 4 byte-identical to xrpscan's.
 - `EXCLUDED: single-path-only propagation` by the 3/3 multi-feed result.
   Independent public feeds — strong multi-path evidence, not a full-mesh proof.
-- `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, peer isolation,
-  inbound firewall` — RPC and `nc` evidence in the `pr:34` discussion.
+- `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, current peer
+  isolation, inbound firewall as causes of NON-VALIDATION` — RPC and `nc` evidence
+  in the `pr:34` discussion. Scoped deliberately: this says the node is validating
+  now, not that peer topology is irrelevant to the registry question or to the
+  2026-07-31 outage.
 
 ### Registry state — xrpscan + VHS re-verified here, bithomp carried forward
 
@@ -324,9 +327,9 @@ What the firewall does **not** buy us. `OBSERVED: gcloud compute firewall-rules 
 --project=csyn-ldg-validator-prod` @ 2026-08-04 → `csyn-ldg-validator-p2p-in`,
 INGRESS, source `0.0.0.0/0`, `tcp:51235`, `DISABLED=False`. That establishes only
 that **A is not a firewall change** — the L4 surface is identical before and after.
-It does **not** mean we are already peer-reachable: today rippled refuses those
-connections at the handshake, so a scanner learns something listens and gets no
-session. Do not read the open port as "the exposure was already there" — that
+It does **not** mean we are already peer-reachable: under `peer_private 1` no peer
+session forms with a stranger, though the L4 connection may still be accepted. Do
+not read the open port as "the exposure was already there" — that
 conflates L4 reachability with peer-layer reachability, and the peer layer is
 exactly what A opens.
 
@@ -379,7 +382,7 @@ on-box signal. All were green throughout; none *could* have fired.
 - **Pete-only: finish Slack alert path** — still the second notification path (email alone buried the 7/31 page under flappy subjects). Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
 - **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions still ~2; zaphod/distributedagreement now in **loaded** config. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
-- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. **Under `peer_private 1`** the thin floor re-isolates if both live hubs drop again, because there is no discovery fallback; once option A is applied `autoConnect` supplies that fallback and this item narrows to peer diversity rather than isolation risk. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
+- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. **Under `peer_private 1`** the thin floor re-isolates if both live hubs drop again, because there is no discovery fallback; once option A is applied `autoConnect` supplies a fallback, which reduces that failure mode without erasing isolation risk, and the weight of this item shifts toward peer diversity. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
 - **Process lesson:** merged peer-set / metadata changes require **apply + recreate** before they count as live; track “staged vs loaded” explicitly (do not treat merge as activation).
 - **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5
   `monitoring.tf` alert policies reference it for diagnosis steps (dangling link). The
