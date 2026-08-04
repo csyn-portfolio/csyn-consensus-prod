@@ -542,12 +542,12 @@ resource "google_monitoring_alert_policy" "validator_low_peers" {
     condition_threshold {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/peer_count\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
-      threshold_value         = 2.5 # post-#26 multi-path equilibrium ~6-7; warn on sustained drop below 3
+      threshold_value         = 2.5 # set post-#26 when the multi-path pin raised the observed peer count; warn on sustained drop below 3
       duration                = "300s"
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
       aggregations {
         alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN" # absorbs single-peer blips among a ~6 set
+        per_series_aligner = "ALIGN_MEAN" # absorbs single-peer blips among the pinned set
       }
       trigger { count = 1 }
     }
