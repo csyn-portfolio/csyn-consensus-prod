@@ -508,7 +508,11 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
 # public hubs exist and ~2 are reliably up, so 2 peers was the structural
 # EQUILIBRIUM rather than an incident, while agreement held at 99.96%.
 #
-# RE-BASELINE PENDING (2026-08-04, discovery enabled): [ips_fixed] becomes the
+# RE-BASELINE PENDING — the config in `config/rippled.cfg.tftpl` sets
+# [peer_private] 0, but this comment cannot say whether the box is running it:
+# merging is not applying, and applying is not loading (that needs the clock-safe
+# recreate). Check the instance metadata and IAP `peers`, not this file. Once that
+# config IS live: [ips_fixed] becomes the
 # guaranteed FLOOR beneath discovery rather than the whole supply, so steady-state
 # peer count should rise and inbound sessions should appear. The 2.5 threshold
 # below is retained deliberately until post-recreate peer count has been observed
@@ -552,7 +556,7 @@ resource "google_monitoring_alert_policy" "validator_low_peers" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "86400s" }
   documentation {
-    content   = "The validator's connected peer count dropped below the 3-peer floor (mean < 2.5 for 5m) after the multi-path [ips_fixed] pin (PR #26; live equilibrium ~6-7). A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Check the `peers` admin RPC and reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Durable fix for ≥8 is a CS-operated peer node (public-hub pinning is exhausted)."
+    content   = "The validator's connected peer count dropped below the 3-peer floor (mean < 2.5 for 5m) after the multi-path [ips_fixed] pin (PR #26). For the current peer count read the `peers` admin RPC over IAP — a number written here would rot. A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Check the `peers` admin RPC and reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Durable fix for ≥8 is a CS-operated peer node (public-hub pinning is exhausted)."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.peer_count]
