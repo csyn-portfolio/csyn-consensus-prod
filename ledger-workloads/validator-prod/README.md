@@ -28,10 +28,14 @@ workloads without these:
 
 - **Validator-specific:** `[validation_seed]` lives in an **HSM**, never on disk
   (distinct from the dev tracking node); `provisioning_model = STANDARD` (never
-  Spot — dUNL clock continuity); `peer_private = 0` (privacy flag is forced for any validation-key node, so this
-  keeps validator hiding while restoring discovery + inbound — see the stanza
-  comment and TASKS.md 2026-08-04; do NOT
-  propagate); deletion_policy PREVENT + sensitive data-classification (already set).
+  Spot — dUNL clock continuity); `peer_private = 0` — this restores discovery and
+  inbound, and it does **not** keep the validator's address private: the forced
+  privacy flag buys only absence from Peer Crawler (`/crawl`), while our address
+  still propagates via endpoint gossip. Read the `[peer_private]` stanza in
+  `config/rippled.cfg.tftpl` before changing it; that stanza is the one home for
+  the trade-off. Slot bounds are set explicitly alongside it. The dev tracking node
+  also runs `0`, but for a different reason — do not treat the two as
+  interchangeable; deletion_policy PREVENT + sensitive data-classification (already set).
 - **NuDB durability across restart** (dev lesson #11): a dev xrpld came back
   `complete_ledgers: empty` after a VM reset — confirm the validator's ledger store
   survives reboot/maintenance before relying on it; STANDARD (non-Spot) + persistent
