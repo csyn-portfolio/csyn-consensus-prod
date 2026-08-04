@@ -17,8 +17,8 @@
 // /api/v1/validators 302s here): all 108 domain-verified non-UNL rows were stale,
 // 49 of them frozen within the same few minutes of 2026-08-01T22:0xZ across
 // unrelated operators and mixed versions. That freeze geometry is incompatible
-// with 49 independent node faults; for OUR node the multi-feed check below showed
-// full participation throughout. Registries are INFORMATIONAL.
+// with 49 independent node faults; for OUR node the multi-feed check below was SEEN
+// on 3/3 feeds in the measured windows. Registries are INFORMATIONAL.
 //
 // Two footguns this tool exists to prevent, both of which read as a real outage:
 //   1. The stream message type is `validationReceived`, NOT `validation`.
@@ -150,7 +150,7 @@ if (sawUs >= 2) {
 }
 if (sawUs === 1) {
   console.log(`\nINCONCLUSIVE: seen on only 1 feed. One path exists, but that does not`);
-  console.log('establish mesh-wide propagation. Re-run; if it stays single-path,');
+  console.log('establish multi-path propagation. Re-run; if it stays single-path,');
   console.log('treat it as a real fan-out/topology problem, not a registry issue.');
   process.exit(2);
 }

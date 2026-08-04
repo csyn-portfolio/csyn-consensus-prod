@@ -176,6 +176,12 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `EXCLUDED: peer-crawl invisibility as the cause of the staleness` — the privacy
   flag is forced for every validator (below), so all 108 are equally uncrawlable;
   it cannot explain why 162 domainless non-UNL rows update and 108 domain rows do not.
+- `EXCLUDED: a shared upstream feed going stale` (the rival to "xrpscan-specific",
+  raised because 49 simultaneous freezes are equally consistent with one upstream
+  dying) by cross-registry discriminator: `zerp.cloud` and `xrplvalidator.alloy.ee`
+  are frozen on xrpscan at 2026-08-01T22:0x yet LIVE on VHS @ 2026-08-04 ~14:2x UTC
+  — `current_index` 106066864/106066865, `agreement_1h` 1.00000 / 0.99784. A stale
+  shared upstream would have taken both registries down. Registry-specific confirmed.
 - `OPEN: VHS/data.xrpl.org has NEVER held an agreement report for our key`
   (`.../validator/<key>/reports` → `count: 0`; controls the same hour: UNL 1930,
   non-UNL 308). "Never" is a different class from "went stale" and the xrpscan

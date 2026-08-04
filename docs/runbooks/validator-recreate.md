@@ -148,12 +148,13 @@ data beyond ~5–10 min, not advancing):
 > and `validations.xrpl.org`, cited elsewhere in this repo, no longer resolves
 > (verify: `dig +short validations.xrpl.org`).
 >
-> A registry can also go dark for a whole **cohort** while the nodes are fine: on
+> A registry can also go dark for a whole **cohort**: on
 > 2026-08-04 all 108 domain-verified non-UNL rows on xrpscan were stale, 49 of them
 > frozen within the same few minutes of 2026-08-01T22:0xZ across unrelated operators
 > and mixed versions, while the domainless non-UNL and UNL rows on the same registry
-> kept updating. Our node was SEEN on 3/3 independent validation feeds throughout —
-> gating on that registry would have declared a 63-hour outage that never happened.
+> kept updating. Our node was SEEN on 3/3 independent validation feeds in the
+> measured windows on 2026-08-04 — gating on that registry would have declared a
+> 63-hour outage that never happened.
 > (The other 107 rows are not claimed healthy; only ours was measured.) Evidence:
 > [`TASKS.md`](../../TASKS.md) § "Scanner-invisibility investigation".
 
