@@ -388,6 +388,22 @@ on-box signal. All were green throughout; none *could* have fired.
 - **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
   false alarm on the cohort break above while the validator was healthy.
 
+**Implemented** (branch `feat/network-visibility-alert`):
+`ledger-workloads/validator-prod/visibility.tf` (metric descriptor + WARNING policy,
+5400s sustained, `EVALUATION_MISSING_DATA_INACTIVE`) and
+`.github/workflows/network-visibility.yml` (every 30 min + `workflow_dispatch`).
+Runner is GitHub Actions, not Cloud Run: the validator project's egress deny-floor
+is what retired the original poller, and this repo already has a WIF identity with
+internet. No VPC touched, no egress hole.
+Contract: exit 0 -> write 1 · exit 1 -> write 0 · exit 2 -> write NOTHING.
+- `OBSERVED:` `ledger-apply@csyn-platform` holds `roles/owner` on
+  `csyn-ldg-validator-prod`, so no substrate IAM grant is needed to write the metric.
+- `OPEN: least privilege` — that means an unattended scheduled workflow assumes an
+  owner-privileged SA to write one metric point. A dedicated `roles/monitoring.metricWriter`
+  identity would be correct; it needs a substrate change (Pete-apply-only).
+- Not live until `apply.yml` is dispatched (metadata != live applies to alert
+  policies too — PR #19 sat merged-but-not-live for a month).
+
 ## Option A applied and live-verified — 2026-08-04
 
 `peer_private 0` + explicit slot bounds shipped (`pr:38`, which superseded the
@@ -558,6 +574,11 @@ Pete confirmed cutover complete 2026-08-08.
   section above for the evidence and what it left open.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
   Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
+- [ ] **Least-privilege follow-up for the visibility probe** — it writes its metric
+  as `ledger-apply@csyn-platform`, which holds `roles/owner` on the validator
+  project. A dedicated `roles/monitoring.metricWriter` identity is the correct
+  shape; it needs a substrate change (Pete-apply-only). Do not treat `pr:36` as
+  closing this.
 - [x] ~~Correct the two false operator-facing comments in
   `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`~~ — landed in `pr:38`
   alongside the value change, so the file never described a posture it was not in.
