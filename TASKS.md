@@ -272,7 +272,7 @@ value; the validator force only flips the privacy flag afterward.
 | Config | IP privacy | Discovery | Inbound |
 |---|---|---|---|
 | validator + `peer_private 0` | **Yes (forced)** | **Yes** | **Yes** |
-| validator + `peer_private 1` (current) | Yes | **No** | **No** |
+| validator + `peer_private 1` (pre-A) | Yes | **No** | **No** |
 
 So setting it explicitly buys **no additional privacy** — rippled forces the flag
 for any node holding a validation key — and costs discovery and inbound peering.
@@ -355,9 +355,10 @@ on-box signal. All were green throughout; none *could* have fired.
   false alarm on the cohort break above while the validator was healthy.
 
 ## Next
-- [ ] **`pr:35` `peer_private 0`** — chosen 2026-08-04 (decision above). Needs an
-  r2 Grok gate, then merge, then a Pete-gated `apply.yml` dispatch, then a
-  clock-safe recreate (snapshot first). Merging alone changes nothing on the box.
+- [ ] **`pr:35` `peer_private 0`** — chosen 2026-08-04 (decision above). Path:
+  T2 dual-gate → merge → Pete-gated `apply.yml` dispatch → clock-safe recreate
+  (snapshot first). Merging alone changes nothing on the box. Where it sits on that
+  path lives on the PR, not here.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
   Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
 - [ ] **Correct two operator-facing comments in
