@@ -310,20 +310,28 @@ had no discovery to fall back on and went fully isolated — see the incident se
 above. That is a proven failure mode with a proven cost. Whether A also restores
 the registry listing is **unproven** and is not the warrant for this change.
 
-**The exposure, stated correctly.** Under `peer_private 0` our address propagates
-via endpoint gossip to nodes we never dial (mechanism above). Two things bound that
-cost. First, the privacy flag is still forced for a validation-key node, so we stay
-absent from Peer Crawler (`/crawl`) either way. Second, the P2P port is already open
-to the internet — `OBSERVED: gcloud compute firewall-rules list
---project=csyn-ldg-validator-prod` @ 2026-08-04 → `csyn-ldg-validator-p2p-in`,
-INGRESS, source `0.0.0.0/0`, `tcp:51235`, enabled. So A does not open a closed port;
-it makes an already-reachable address easy to find by gossip rather than by scan.
+**The exposure.** Under `peer_private 0` three things change and all three are real
+increases: rippled **accepts inbound peer sessions from strangers** (`wantIncoming`
+goes true), `autoConnect` turns on, and our address is **pushed into endpoint
+gossip** so nodes we never dialled learn it (mechanism above).
 
-**Applying it is not merging it.** `pr:35` needs an r2 gate (its r1 verdict was
-MERGE-WITH-FIXES and the fix commit has not been re-reviewed), then merge, then a
-Pete-gated `apply.yml` dispatch, then a clock-safe recreate with a snapshot first
-per [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md).
-Read the PR for its state; this entry does not record it.
+One bound survives: the privacy flag is still forced for a validation-key node, so
+we stay absent from Peer Crawler (`/crawl`) either way.
+
+What the firewall does **not** buy us. `OBSERVED: gcloud compute firewall-rules list
+--project=csyn-ldg-validator-prod` @ 2026-08-04 → `csyn-ldg-validator-p2p-in`,
+INGRESS, source `0.0.0.0/0`, `tcp:51235`, `DISABLED=False`. That establishes only
+that **A is not a firewall change** — the L4 surface is identical before and after.
+It does **not** mean we are already peer-reachable: today rippled refuses those
+connections at the handshake, so a scanner learns something listens and gets no
+session. Do not read the open port as "the exposure was already there" — that
+conflates L4 reachability with peer-layer reachability, and the peer layer is
+exactly what A opens.
+
+**Applying it is not merging it.** The path is: T2 dual-gate → merge → Pete-gated
+`apply.yml` dispatch → clock-safe recreate with a snapshot first, per
+[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md).
+Where `pr:35` sits on that path lives on the PR, not here.
 
 ### Alert scope — external validation visibility (scope implemented in `pr:36`)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
@@ -347,10 +355,14 @@ on-box signal. All were green throughout; none *could* have fired.
   clock-safe recreate (snapshot first). Merging alone changes nothing on the box.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
   Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
-- [ ] **Correct `config/rippled.cfg.tftpl:29` and `:64`** — both say `peer_private=1`
-  "does NOT block inbound". The source at 3.2.1 sets `wantIncoming = false` under
-  `peer_private 1`, and the prior session observed zero inbound peers across 63.8h
-  of uptime. Operator-facing comments that state the opposite of the mechanism.
+- [ ] **Correct two operator-facing comments in
+  `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`.** Lines 28-30 say
+  `peer_private=1` "does NOT block inbound"; lines 66-67 say "Validator accepts
+  inbound peers through the GCP firewall". Both are false: the 3.2.1 source sets
+  `wantIncoming = false` under `peer_private 1`, and the prior session observed
+  zero inbound peers across 63.8h of uptime. (Line 64, "does not block **outbound**",
+  is correct — leave it.) These comments become true once A is applied, so fix them
+  in the same change rather than separately.
 - Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
   need a fresh decision; the mechanism and trade-off are recorded above so it does
   not have to be re-derived.
@@ -363,7 +375,7 @@ on-box signal. All were green throughout; none *could* have fired.
 - **Pete-only: finish Slack alert path** — still the second notification path (email alone buried the 7/31 page under flappy subjects). Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
 - **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions still ~2; zaphod/distributedagreement now in **loaded** config. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
-- **≥8 peer target → CS-operated peer node (TBD) — still the structural fix.** Public-hub pinning exhausted; thin floor will re-isolate if both live hubs drop again.
+- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. **Under `peer_private 1`** the thin floor re-isolates if both live hubs drop again, because there is no discovery fallback; once option A is applied `autoConnect` supplies that fallback and this item narrows to peer diversity rather than isolation risk. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
 - **Process lesson:** merged peer-set / metadata changes require **apply + recreate** before they count as live; track “staged vs loaded” explicitly (do not treat merge as activation).
 - **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5
   `monitoring.tf` alert policies reference it for diagnosis steps (dangling link). The
