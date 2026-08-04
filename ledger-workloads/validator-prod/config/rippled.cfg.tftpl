@@ -31,8 +31,9 @@ protocol = http
 # flag. Under peer_private=1 the socket binds and strangers still get no peer
 # session. Under peer_private=0, the value set in this file, inbound sessions do
 # form. The forced
-# privacy flag only suppresses address ADVERTISEMENT and /crawl listing; it has
-# never been what blocks inbound. The GCP VPC firewall limits actual ingress.
+# privacy flag only affects how we present ourselves — address advertisement,
+# /crawl listing, and the handshake Crawl header; it has never been what blocks
+# inbound. The GCP VPC firewall limits actual ingress.
 [port_peer]
 port = 51235
 ip = 0.0.0.0
@@ -77,7 +78,7 @@ advisory_delete=0
 #   validator + 1 (prior) | yes           | no        | no      | no
 #
 # Why changed (Pete, 2026-08-04): 1 left [ips_fixed] as the ENTIRE peer set with no
-# discovery fallback and zero inbound peers across 63.8h of uptime — a contributing
+# discovery fallback and, structurally, no inbound peers at all — a contributing
 # condition in the 2026-07-31 isolation outage (the co-root was process debt: PR #23
 # was merged but never applied, so staged hubs were never loaded) and the reason the
 # ">=8 peers" target has stayed open. Public-hub pinning is exhausted.
