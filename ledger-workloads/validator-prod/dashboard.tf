@@ -91,9 +91,16 @@ resource "google_monitoring_dashboard" "validator" {
                 aggregation = { alignmentPeriod = "60s", perSeriesAligner = "ALIGN_MEAN" }
               } }
               sparkChartView = { sparkChartType = "SPARK_LINE" }
+              # Aligned with validator_low_peers (WARN below 8). Before that
+              # re-baseline the scorecard stayed green down to 2, so most of the
+              # leading-indicator band read healthy while the alert could fire.
+              # YELLOW tracks the alert; RED stays the SPOF band.
+              # YELLOW is 7.5, not 8, so it turns at exactly the point
+              # validator_low_peers fires — an 8 here would yellow the card in the
+              # (7.5, 8) band while the alert stayed silent. RED keeps the SPOF band.
               thresholds = [
-                { value = 2, color = "YELLOW", direction = "BELOW" },
-                { value = 1, color = "RED", direction = "BELOW" },
+                { value = 7.5, color = "YELLOW", direction = "BELOW" },
+                { value = 2, color = "RED", direction = "BELOW" },
               ]
             }
           }

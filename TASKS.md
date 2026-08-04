@@ -380,11 +380,20 @@ evidence below; for current state run the commands, do not read the numbers here
   `proposing=true` @ 21:13:54 UTC — **~7.4 min, inside the runbook's 10-min
   ceiling** but well past the ~2 min healthy path.
 - `OBSERVED:` sidecar peer count 9 (pre-reset) → 28 by ~21:10 UTC, before proposing returned → 38
-  @ 21:21:54 UTC. `INFERRED:` **both** autoConnect and inbound were live at that
-  reading, from the shipped caps: `[ips_fixed]`'s 11 endpoints bypass slot
-  accounting and sit outside the maxima, so an all-outbound ceiling is 11 + 20 = 31.
-  A count of 38 therefore requires at least 7 inbound sessions, and requires
-  discovery to have filled outbound beyond the fixed floor. Neither alone reaches 38.
+  @ 21:21:54 UTC. `OBSERVED: xrpld peers` over IAP @ ~21:5x UTC → **38 total = 10
+  inbound + 28 outbound**, inbound arriving from 10 distinct source IPs with at most
+  one session each. So both autoConnect and inbound were live. (The caps predicted
+  it before the inventory existed: `[ips_fixed]`'s 11 endpoints bypass slot
+  accounting, so an all-outbound ceiling is 11 + 20 = 31 and a count of 38 required
+  at least 7 inbound. The measured 10 is consistent and tighter.)
+- `OBSERVED:` inbound sits **at the `peers_in_max 10` cap**, not below it. `ipLimit`
+  behaved: max one session per source IP.
+- `OPEN:` **is 10 the right inbound bound, and what happens to the overflow?** The
+  cap is binding, not slack, so the measured 10 is the ceiling and not a measure of
+  how many peers want in. Two things follow that were not investigated: how many
+  connections are being refused, and whether repeated refusal has any reputational
+  cost on the overlay. 10 was chosen to bound a surface, not from a demand estimate.
+  Revisit alongside the threshold item below.
 - `OBSERVED:` `Advancing accepted ledger to 106073444 with >= 29 validations` @
   21:19:21 UTC — validations resumed.
 - `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` twice, ~2 min
@@ -404,17 +413,41 @@ evidence below; for current state run the commands, do not read the numbers here
   reading of the source. Worth settling before the next recreate: 999 may reappear, and
   until the field's meaning is established neither 999 nor a recovery to 14 should
   be treated as diagnostic in either direction.
-- `OPEN:` **per-session inventory**, not the existence of inbound. That inbound
-  sessions existed is inferred from the caps arithmetic above. What was not obtained is the
-  breakdown — which peers, which direction each, how many inbound at a given moment,
-  and whether any single source is consuming slots. `not observable: gcloud compute
-  ssh --tunnel-through-iap` fails with OS Login API not enabled on quota project
-  `csyn-platform`, so the `peers` admin RPC could not be run. Enabling that API is a
-  Terraform change in `cloud-syndicate-platform`, deliberately not done ad hoc.
-- [ ] **Re-baseline the low-peers threshold.** It is 2.5, set for an outbound-only
-  node whose equilibrium was ~2. Post-discovery the count is an order higher, so
-  the WARN can no longer fire before a serious degradation. Re-baseline after
-  24-48h of post-recreate data, per the note in `monitoring.tf`.
+- `RESOLVED:` the per-session inventory was obtained; see the inbound/outbound
+  split above. The earlier entry recorded this as `not observable` because
+  `gcloud compute ssh --tunnel-through-iap` returned "Cloud OS Login API has not
+  been used in project csyn-platform". **That was a wrong reading of a solvable
+  gate.** `oslogin.googleapis.com` is deliberately left DISABLED on the quota
+  project rather than being unavailable: the sanctioned pattern is to enable it for
+  the session, do the work, and disable it again.
+
+  The sequence, its trap (written as a heredoc **script** run with `bash <file>` — a
+  bare `trap ... EXIT` typed at an interactive prompt fires on shell exit, not when
+  the commands finish, so it does NOT tear down), and the teardown verification live
+  in **Step 0 of
+  [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)** —
+  one home, because the alert body points there too.
+
+  The 2026-08-04 run that produced the inventory above used the bare sequence
+  **without** a trap and verified teardown manually afterwards. It happened to
+  complete; that is luck, not method, which is why the trap is written in here. The IAM side is already standing:
+  `iap.tunnelResourceAccessor` + `compute.osLogin` are bound to
+  `csyn-ledger-validator-ops@cloudsyn.net` in `iam.tf`; only the quota-project API
+  is ephemeral. Root cause of the 403 is the documented quota-project corollary —
+  `billing_project = csyn-platform` routes the call through the platform project, so
+  an API used against a `ledger/` workload must be enabled there too.
+
+- [ ] **Low-peers threshold — INTERIM 7.5, still open.** Raised from 2.5 (WARN
+  below 8, the canon *target* floor) on 2026-08-04. It is above the
+  discovery-failure fallback — the live subset of `[ips_fixed]`, historically ~2-4
+  sessions — so it can distinguish "autoConnect died" from a normal day, which 2.5
+  could not. Canon's `alert < 5` was **not** adopted verbatim: at a supply in the
+  tens a drop to 6 is a serious loss and 4.5 would sit silent through it (that was
+  the first draft of this change, and it was wrong).
+  **Why this stays open:** chosen on ~45 min of post-recreate data, not the 24-48h
+  the recreate runbook asks for. Revisit on or after **2026-08-06** with real
+  steady-state data. Full reasoning: the block comment above
+  `google_monitoring_alert_policy.validator_low_peers` in `monitoring.tf`.
 - [ ] **Registry watch, no action implied.** Whether the scanner listing recovers is
   the uncontrolled discriminator described above. It was NOT the warrant for this
   change and nothing further should be built on it either way.
