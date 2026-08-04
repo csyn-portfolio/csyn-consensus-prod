@@ -237,8 +237,8 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   Stated in the past tense on purpose: that posture ended when `peer_private 0` was
   applied on 2026-08-04, so the condition the hypothesis names no longer holds and
   the hypothesis can no longer be tested as stated. What can be watched instead is
-  whether registry freshness changes now — see the discriminator note above, and
-  its warning that this is not a controlled test. Note this is the *narrow* claim
+  whether registry freshness changes now — see "The uncontrolled discriminator has
+  now run" below, and its warning that this is not a controlled test. Note this is the *narrow* claim
   about our node, not the general one below.
 - `EXCLUDED (still holds): "registries lag non-UNL validators as a class"` by the
   same-registry cohort table — 74/162 domainless non-UNL rows fresh on the xrpscan
