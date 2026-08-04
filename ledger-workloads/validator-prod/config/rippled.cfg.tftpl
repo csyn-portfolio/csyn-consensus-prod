@@ -29,7 +29,8 @@ protocol = http
 # whether a session forms is decided by wantIncoming, which comes from the
 # [peer_private] value below, NOT from this bind and NOT from the forced privacy
 # flag. Under peer_private=1 the socket binds and strangers still get no peer
-# session. Under peer_private=0 (current) inbound sessions do form. The forced
+# session. Under peer_private=0, the value set in this file, inbound sessions do
+# form. The forced
 # privacy flag only suppresses address ADVERTISEMENT and /crawl listing; it has
 # never been what blocks inbound. The GCP VPC firewall limits actual ingress.
 [port_peer]
@@ -81,8 +82,11 @@ advisory_delete=0
 # was merged but never applied, so staged hubs were never loaded) and the reason the
 # ">=8 peers" target has stayed open. Public-hub pinning is exhausted.
 #
-# ACCEPTED TRADE-OFF — WIDER THAN "peers we dial". The forced flag governs the
-# /crawl HTTP response only. Endpoint GOSSIP is gated on wantIncoming, which 0 turns
+# ACCEPTED TRADE-OFF — WIDER THAN "peers we dial". The forced flag governs how we
+# present ourselves: absence from the Peer Crawler (/crawl) response, and the
+# handshake Crawl header — OBSERVED at 3.2.1, src/xrpld/overlay/detail/PeerImp.cpp
+# passes `!config().peerPrivate` into makeResponse(). What it does NOT govern is
+# our address reaching others. Endpoint GOSSIP is gated on wantIncoming, which 0 turns
 # ON: PeerFinder Logic.h inserts an entry for ourselves at hops=0 into the endpoint
 # handout to every target when `config_.wantIncoming && counts_.inMax() > 0`;
 # recipients substitute our real socket address and relay it onward via the
@@ -117,6 +121,18 @@ advisory_delete=0
 # 20 outbound gives discovery room to actually find peers beyond the [ips_fixed]
 # floor — that discovery is the whole reason for peer_private=0. 10 inbound caps
 # the stranger-session surface that comes with it.
+#
+# CAPACITY — read this before assuming the node got a little bigger. Total
+# non-fixed slots become 20 + 10 = 30, against a derived default of ~21 before this
+# change, and the [ips_fixed] peers stack ON TOP because they bypass slot
+# accounting. Budget file descriptors, CPU and egress for that, not for 21.
+#
+# SURPRISE — in the explicit branch PeerfinderConfig.cpp sets maxPeers = 0 (it is
+# only derived in the auto branch). OverlayImpl::limit() returns
+# peerFinder_->config().maxPeers, so `max_peers` in the overlay property stream and
+# anything reading limit() will report 0. That is an artefact of configuring the
+# two sections explicitly — it does NOT mean no peers are allowed. Do not wire an
+# alert to that field.
 #
 # CONSEQUENCE, do not "optimise" this to 0: inbound slots are also what arms the
 # hops=0 self-advertisement (Logic.h requires counts_.inMax() > 0). Setting
