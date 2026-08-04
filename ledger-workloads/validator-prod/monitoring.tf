@@ -495,7 +495,7 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
-    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). **This is the primary validation SLO page.** Common causes: peer isolation (thin `[ips_fixed]` with no discovery fallback — episode 2026-07-31; `peer_private` set to 0 on 2026-08-04 to restore discovery + inbound), #7572 stuck-in-`connected` after recreate, amendment-block (also has its own page). A normal ~2–10 min clock-safe recreate will NOT trigger this (metric gaps → ignored via EVALUATION_MISSING_DATA_INACTIVE). If post-recreate and stuck in `connected` with `complete_ledgers` not advancing → FAIL path in docs/runbooks/validator-recreate.md. Else: IAP `server_info` / `peers` / `validators`, hub reachability on :51235."
+    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). **This is the primary validation SLO page.** Common causes: peer isolation (thin `[ips_fixed]` with no discovery fallback — episode 2026-07-31; whether discovery is currently enabled is decided by `[peer_private]` in `config/rippled.cfg.tftpl`, and whether that config is LIVE on the box is a separate question — check the instance metadata, not this doc), #7572 stuck-in-`connected` after recreate, amendment-block (also has its own page). A normal ~2–10 min clock-safe recreate will NOT trigger this (metric gaps → ignored via EVALUATION_MISSING_DATA_INACTIVE). If post-recreate and stuck in `connected` with `complete_ledgers` not advancing → FAIL path in docs/runbooks/validator-recreate.md. Else: IAP `server_info` / `peers` / `validators`, hub reachability on :51235."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.proposing]
@@ -508,17 +508,20 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
 # public hubs exist and ~2 are reliably up, so 2 peers was the structural
 # EQUILIBRIUM rather than an incident, while agreement held at 99.96%.
 #
-# RE-BASELINE PENDING (2026-08-04, discovery enabled): [ips_fixed] is now the
-# guaranteed FLOOR beneath discovery, so steady-state peer count should rise well
-# above 2 and inbound sessions should appear. The 1.5 threshold below is retained
-# deliberately as a conservative floor until post-recreate peer count has been
-# observed for 24-48h — re-baseline it then rather than assuming the old
-# equilibrium still describes this node. Page the OUTCOME
+# RE-BASELINE PENDING (2026-08-04, discovery enabled): [ips_fixed] becomes the
+# guaranteed FLOOR beneath discovery rather than the whole supply, so steady-state
+# peer count should rise and inbound sessions should appear. The 2.5 threshold
+# below is retained deliberately until post-recreate peer count has been observed
+# for 24-48h — re-baseline it then rather than assuming either the old
+# hard-private equilibrium or the post-#26 one still describes this node. Page the OUTCOME
 # (validator_not_proposing), warn on peers. Captured as cs-ledger-feedback against
-# the canon. Threshold 1.5 (NOT 3): equilibrium 2 < 3 would leave this policy
+# the canon. Threshold below 3: an equilibrium of 2 would leave this policy
 # PERMANENTLY OPEN (auto_close reopens daily) and train the channel to be ignored
-# (observability-sre, 2026-06-30). 1.5 fires only on a SUSTAINED drop to a single
-# peer (SPOF per peer-set-curation canon) or zero. The "below ideal ≥8" health
+# (observability-sre, 2026-06-30). The value actually configured on the condition
+# below is 2.5, set with the post-#26 multi-path equilibrium of ~6-7 in mind: it
+# fires on a SUSTAINED drop to two peers or fewer, which is the SPOF band per
+# peer-set-curation canon. (An earlier revision of this block described a 1.5
+# threshold that the condition no longer uses.) The "below ideal ≥8" health
 # view lives on the dashboard, not a perpetually-firing policy.
 # NOTE: `severity = WARNING` is an incident-classification LABEL, not a routing
 # gate — Cloud Monitoring fans EVERY policy to notification_channels regardless of

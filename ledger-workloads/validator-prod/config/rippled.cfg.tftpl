@@ -25,10 +25,13 @@ ip = 127.0.0.1
 admin = 127.0.0.1
 protocol = http
 
-# P2P peer port — bound on all interfaces so inbound peer connections
-# are accepted. The forced privacy flag suppresses address ADVERTISEMENT but has
-# never blocked inbound; with peer_private=0 the node also WANTS inbound, so expect
-# inbound sessions to appear. The GCP VPC firewall limits actual ingress.
+# P2P peer port. Binding here does NOT by itself mean inbound peers are accepted:
+# whether a session forms is decided by wantIncoming, which comes from the
+# [peer_private] value below, NOT from this bind and NOT from the forced privacy
+# flag. Under peer_private=1 the socket binds and strangers still get no peer
+# session. Under peer_private=0 (current) inbound sessions do form. The forced
+# privacy flag only suppresses address ADVERTISEMENT and /crawl listing; it has
+# never been what blocks inbound. The GCP VPC firewall limits actual ingress.
 [port_peer]
 port = 51235
 ip = 0.0.0.0
@@ -92,16 +95,45 @@ advisory_delete=0
 # lands: that is the durable fix and delivers peer diversity with NO endpoint gossip
 # from the validator itself.
 #
-# NOTE: a discovering node is floored at 10 outbound slots — do NOT add
-# [peers_out_max] below 10 (rippled refuses to load: "must be in range 10-1000").
 [peer_private]
 0
+
+# EXPLICIT slot posture — the inbound surface opened above is bounded here on
+# purpose rather than left to rippled's derived defaults, because "whatever the
+# default computes" is not a decision an operator can audit.
+#
+# Verified on the DEPLOYED tag, XRPLF/rippled 3.2.1:
+#   src/xrpld/core/detail/Config.cpp
+#     - [peers_out_max] must be in range 10-1000, else rippled THROWS at load
+#     - [peers_in_max] must be <= 1000
+#     - BOTH sections must be set or NEITHER — configuring one alone throws
+#       "Both sections [peers_in_max] and [peers_out_max] must be configured".
+#       That is a boot failure on a production validator; never add one alone.
+#     - [peers_max], if set, takes precedence and these two are ignored entirely.
+#   src/xrpld/peerfinder/detail/PeerfinderConfig.cpp
+#     - setting both takes the explicit branch: outPeers/inPeers come straight
+#       from these values and maxPeers is no longer derived.
+#
+# 20 outbound gives discovery room to actually find peers beyond the [ips_fixed]
+# floor — that discovery is the whole reason for peer_private=0. 10 inbound caps
+# the stranger-session surface that comes with it.
+#
+# CONSEQUENCE, do not "optimise" this to 0: inbound slots are also what arms the
+# hops=0 self-advertisement (Logic.h requires counts_.inMax() > 0). Setting
+# [peers_in_max] 0 would silence our endpoint gossip entirely — which is a
+# legitimate posture, but a DIFFERENT one than was chosen here, and it forfeits
+# the network reachability this change is meant to buy.
+[peers_out_max]
+20
+
+[peers_in_max]
+10
 
 # Curated mainnet hub peers for outbound bootstrap reliability.
 # [ips_fixed] peers bypass slot accounting and stay connected regardless of slot
 # pressure, so these stay the RELIABLE floor even now that discovery is on — they
-# are no longer the entire outbound set. Validator accepts inbound peers through
-# the GCP firewall (port 51235/tcp) — do NOT set peers_in_max=0 (testnet-only).
+# are no longer the entire outbound set. Inbound slots are set explicitly above;
+# see that stanza before changing them.
 #
 # Hubs VERIFIED 2026-06-17 against:
 #   https://xrpl.org/docs/infrastructure/configuration/server-modes/run-xrpld-as-a-validator
