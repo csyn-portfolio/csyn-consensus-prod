@@ -232,10 +232,14 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 
 - `OPEN:` **root cause.** Nothing observed so far is confirmed as the cause; the
   candidates below are open, not eliminated.
-- `OPEN:` untested candidate — **our node specifically is under-observed
-  because it is hard-private: zero inbound, no discovery, reachable only by the
-  peers it dials out to.** Untested. Note this is the *narrow* claim about our
-  node, not the general one below.
+- `OPEN:` candidate — **our node was under-observed because it was hard-private:
+  zero inbound, no discovery, reachable only by the peers it dialled out to.**
+  Stated in the past tense on purpose: that posture ended when `peer_private 0` was
+  applied on 2026-08-04, so the condition the hypothesis names no longer holds and
+  the hypothesis can no longer be tested as stated. What can be watched instead is
+  whether registry freshness changes now — see the discriminator note above, and
+  its warning that this is not a controlled test. Note this is the *narrow* claim
+  about our node, not the general one below.
 - `EXCLUDED (still holds): "registries lag non-UNL validators as a class"` by the
   same-registry cohort table — 74/162 domainless non-UNL rows fresh on the xrpscan
   fetch, and VHS non-UNL controls carrying 308 reports. Silence about **us** on VHS
@@ -397,8 +401,9 @@ evidence below; for current state run the commands, do not read the numbers here
   the sidecar emitting it lives in the sibling repo `csyn-consensus-infra`, out of
   scope for the applying session. The recovery is consistent with a sentinel used
   while the value cannot be computed during resync, but that is a guess, not a
-  reading of the source. Worth settling before the next recreate, when it will
-  almost certainly show 999 again and should not be mistaken for a fault.
+  reading of the source. Worth settling before the next recreate: 999 may reappear, and
+  until the field's meaning is established neither 999 nor a recovery to 14 should
+  be treated as diagnostic in either direction.
 - `OPEN:` **per-session inventory**, not the existence of inbound. That inbound
   sessions existed is inferred from the caps arithmetic above. What was not obtained is the
   breakdown — which peers, which direction each, how many inbound at a given moment,
@@ -434,8 +439,8 @@ evidence below; for current state run the commands, do not read the numbers here
 - [x] ~~Apply PR #23 peer curation + clock-safe recreate~~ — DONE 2026-07-31 (incident recovery above). Snapshot `validator-pre-recreate-20260731-2136`.
 - **Pete-only: finish Slack alert path** — still the second notification path (email alone buried the 7/31 page under flappy subjects). Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
-- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions still ~2; zaphod/distributedagreement now in **loaded** config. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
-- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. **Under `peer_private 1`** the thin floor re-isolates if both live hubs drop again, because there is no discovery fallback; once option A is applied `autoConnect` supplies a fallback, which reduces that failure mode without erasing isolation risk, and the weight of this item shifts toward peer diversity. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
+- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions were ~2 in the days after that recreate; zaphod/distributedagreement went into the **loaded** config then. For the count now, read the sidecar stream — the 2026-08-04 discovery change moved it by an order of magnitude. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
+- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. Under the former `peer_private 1` the thin floor would re-isolate if both live hubs dropped, because there was no discovery fallback. Since option A was applied on 2026-08-04 `autoConnect` supplies that fallback, which reduces the failure mode without erasing isolation risk, so the weight of this item has shifted toward peer diversity. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
 - **Process lesson:** merged peer-set / metadata changes require **apply + recreate** before they count as live; track “staged vs loaded” explicitly (do not treat merge as activation).
 - **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5
   `monitoring.tf` alert policies reference it for diagnosis steps (dangling link). The
