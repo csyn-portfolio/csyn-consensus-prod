@@ -357,7 +357,7 @@ on-box signal. All were green throughout; none *could* have fired.
 ## Option A applied and live-verified — 2026-08-04
 
 `peer_private 0` + explicit slot bounds shipped (`pr:38`, which superseded the
-un-reopenable `pr:35`), applied, and loaded onto the running daemon. Sequence and
+un-reopenable `pr:35`), applied, and loaded onto the daemon running at the time of the checks below. Sequence and
 evidence below; for current state run the commands, do not read the numbers here.
 
 - `OBSERVED: gh workflow run apply.yml -f configs=ledger-workloads/validator-prod`
@@ -376,8 +376,11 @@ evidence below; for current state run the commands, do not read the numbers here
   `proposing=true` @ 21:13:54 UTC — **~7.4 min, inside the runbook's 10-min
   ceiling** but well past the ~2 min healthy path.
 - `OBSERVED:` sidecar peer count 9 (pre-reset) → 28 within 2 min of proposing → 38
-  @ 21:21:54 UTC. `INFERRED:` discovery is working — 38 exceeds the 11 `[ips_fixed]`
-  endpoints by a wide margin, which only autoConnect can supply.
+  @ 21:21:54 UTC. `INFERRED:` **both** autoConnect and inbound were live at that
+  reading, from the shipped caps: `[ips_fixed]`'s 11 endpoints bypass slot
+  accounting and sit outside the maxima, so an all-outbound ceiling is 11 + 20 = 31.
+  A count of 38 therefore requires at least 7 inbound sessions, and requires
+  discovery to have filled outbound beyond the fixed floor. Neither alone reaches 38.
 - `OBSERVED:` `Advancing accepted ledger to 106073444 with >= 29 validations` @
   21:19:21 UTC — validations resumed.
 - `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` twice, ~2 min
@@ -388,16 +391,17 @@ evidence below; for current state run the commands, do not read the numbers here
 ### Open after this change
 
 - `OPEN: min_gap` read **14** before the reset and **999** after, unchanged since,
-  while `in_majority` stayed **0** across both. Not explained. It tripped no alert
+  while `in_majority` stayed **0** across both — the last reading in that series was 21:21:54 UTC and nothing since was sampled. Not explained. It tripped no alert
   and no `warn`/`err` line, and the sidecar source lives in the sibling repo
   `csyn-consensus-infra`, which was out of scope for the applying session. Do not
   assume benign: establish what the field measures before the next recreate.
-- `OPEN:` **inbound sessions were never directly confirmed.** The rising peer count
-  is consistent with inbound, outbound discovery, or both — it does not separate
-  them. The `peers` admin RPC would, and it was **not observable** this session:
-  `gcloud compute ssh --tunnel-through-iap` fails with OS Login API not enabled on
-  quota project `csyn-platform`. Enabling it is a Terraform change in
-  `cloud-syndicate-platform`, deliberately not done ad hoc.
+- `OPEN:` **per-session inventory**, not the existence of inbound. That inbound
+  sessions existed is settled by the arithmetic above. What was not obtained is the
+  breakdown — which peers, which direction each, how many inbound at a given moment,
+  and whether any single source is consuming slots. `not observable: gcloud compute
+  ssh --tunnel-through-iap` fails with OS Login API not enabled on quota project
+  `csyn-platform`, so the `peers` admin RPC could not be run. Enabling that API is a
+  Terraform change in `cloud-syndicate-platform`, deliberately not done ad hoc.
 - [ ] **Re-baseline the low-peers threshold.** It is 2.5, set for an outbound-only
   node whose equilibrium was ~2. Post-discovery the count is an order higher, so
   the WARN can no longer fire before a serious degradation. Re-baseline after
@@ -412,16 +416,9 @@ evidence below; for current state run the commands, do not read the numbers here
   section above for the evidence and what it left open.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
   Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
-- [ ] **Correct two operator-facing comments in
-  `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`.** Lines 28-30 say
-  `peer_private=1` "does NOT block inbound"; lines 66-67 say "Validator accepts
-  inbound peers through the GCP firewall". Both are false: the 3.2.1 source sets
-  `wantIncoming = false` under `peer_private 1`, and the prior session observed
-  zero inbound peers across 63.8h of uptime. (Line 64, "does not block **outbound**",
-  is correct — leave it.) Applying A does not make them true: the value becomes `0`,
-  so comments asserting what `peer_private=1` does are still wrong, just wrong about
-  a setting we no longer run. Rewrite them for the chosen posture, in the same
-  change that flips the value.
+- [x] ~~Correct the two false operator-facing comments in
+  `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`~~ — landed in `pr:38`
+  alongside the value change, so the file never described a posture it was not in.
 - Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
   need a fresh decision; the mechanism and trade-off are recorded above so it does
   not have to be re-derived.
