@@ -495,7 +495,7 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "1800s" }
   documentation {
-    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). **This is the primary validation SLO page.** Common causes: peer isolation (`peer_private=1` + thin `[ips_fixed]` — episode 2026-07-31), #7572 stuck-in-`connected` after recreate, amendment-block (also has its own page). A normal ~2–10 min clock-safe recreate will NOT trigger this (metric gaps → ignored via EVALUATION_MISSING_DATA_INACTIVE). If post-recreate and stuck in `connected` with `complete_ledgers` not advancing → FAIL path in docs/runbooks/validator-recreate.md. Else: IAP `server_info` / `peers` / `validators`, hub reachability on :51235."
+    content   = "The 5-minute average of the validator's `proposing` signal dropped below 0.5 — `server_state` is no longer `proposing`, so the node is NOT validating (UNL curators score this down). **This is the primary validation SLO page.** Common causes: peer isolation (thin `[ips_fixed]` with no discovery fallback — episode 2026-07-31; `peer_private` set to 0 on 2026-08-04 to restore discovery + inbound), #7572 stuck-in-`connected` after recreate, amendment-block (also has its own page). A normal ~2–10 min clock-safe recreate will NOT trigger this (metric gaps → ignored via EVALUATION_MISSING_DATA_INACTIVE). If post-recreate and stuck in `connected` with `complete_ledgers` not advancing → FAIL path in docs/runbooks/validator-recreate.md. Else: IAP `server_info` / `peers` / `validators`, hub reachability on :51235."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.proposing]
@@ -504,7 +504,7 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
 # --- LOW PEERS: dropped below the structural floor (WARNING, visibility-only) --
 # Deliberate deviation from observability-baseline.md canon, which lists
 # "peer count < 3" under PAGE. For THIS validator that is alert-debt: with
-# peer_private=1 (no discovery), [ips_fixed] IS the entire outbound set, only ~5
+# [ips_fixed] is the guaranteed peer floor (discovery enabled 2026-08-04), only ~5
 # citable public hubs exist, and ~2 are reliably up — so 2 peers is the structural
 # EQUILIBRIUM, not an incident, while agreement holds at 99.96%. Page the OUTCOME
 # (validator_not_proposing), warn on peers. Captured as cs-ledger-feedback against

@@ -26,8 +26,9 @@ admin = 127.0.0.1
 protocol = http
 
 # P2P peer port — bound on all interfaces so inbound peer connections
-# are accepted (peer_private=1 suppresses address advertisement but does
-# NOT block inbound; the GCP VPC firewall limits actual ingress).
+# are accepted. The forced privacy flag suppresses address ADVERTISEMENT but has
+# never blocked inbound; with peer_private=0 the node also WANTS inbound, so expect
+# inbound sessions to appear. The GCP VPC firewall limits actual ingress.
 [port_peer]
 port = 51235
 ip = 0.0.0.0
@@ -53,18 +54,46 @@ advisory_delete=0
 [ledger_history]
 2000
 
-# Validator hiding: suppress address advertisement to the overlay so
-# the validator's IP is not broadcast to untrusted peers.
-# Canon baseline for validators (cs-ledger:rippled). The testnet tracking
-# node relaxed this to 0 — do NOT propagate that deviation here.
+# Validator hiding: address advertisement is suppressed to the overlay either way.
+#
+# 0 here does NOT disable validator hiding. rippled FORCES the privacy flag for any
+# node holding a validation key; setting this stanza to 1 adds no privacy and only
+# switches off peer discovery and inbound peering. Verified in XRPLF/rippled
+# src/libxrpl/peerfinder/Config.cpp — wantIncoming and autoConnect are both derived
+# from the ORIGINAL config value, and the force runs AFTER them:
+#
+#   config.peerPrivate  = peerPrivate;                          // from cfg
+#   config.wantIncoming = (!config.peerPrivate) && (port != 0); // ORIGINAL value
+#   if (validationPublicKey) config.peerPrivate = true;         // forced AFTER
+#   config.autoConnect  = !standalone && !peerPrivate;          // ORIGINAL param
+#
+#                         | IP privacy   | Discovery | Inbound
+#   validator + 0 (here)  | yes (forced) | yes       | yes
+#   validator + 1 (prior) | yes          | no        | no
+#
+# Why changed (Pete, 2026-08-04): 1 left [ips_fixed] as the ENTIRE peer set with no
+# discovery fallback and zero inbound peers across 63.8h of uptime — the thin-peer
+# condition behind the 2026-07-31 isolation outage and the reason the ">=8 peers"
+# target has stayed open. Public-hub pinning is exhausted.
+#
+# ACCEPTED TRADE-OFF: with discovery on we dial peers we did not pin, and each one
+# learns our address from the TCP connection itself. The forced privacy flag stops
+# them GOSSIPING it (we stay out of Peer Crawler results), but the set of hosts that
+# know where the validator lives grows from the 9 pinned hubs to an open set. This
+# is a deliberate availability-over-concealment call by the final architect, not an
+# oversight. Revisit if the CS-operated proxy tier lands: that delivers the same
+# peer diversity without widening address exposure.
+#
+# NOTE: a discovering node is floored at 10 outbound slots — do NOT add
+# [peers_out_max] below 10 (rippled refuses to load: "must be in range 10-1000").
 [peer_private]
-1
+0
 
 # Curated mainnet hub peers for outbound bootstrap reliability.
-# peer_private=1 suppresses advertisement but does not block outbound;
-# [ips_fixed] peers bypass slot accounting and stay connected regardless
-# of slot pressure. Validator accepts inbound peers through the GCP firewall
-# (port 51235/tcp) — do NOT set peers_in_max=0 (that is testnet-only).
+# [ips_fixed] peers bypass slot accounting and stay connected regardless of slot
+# pressure, so these stay the RELIABLE floor even now that discovery is on — they
+# are no longer the entire outbound set. Validator accepts inbound peers through
+# the GCP firewall (port 51235/tcp) — do NOT set peers_in_max=0 (testnet-only).
 #
 # Hubs VERIFIED 2026-06-17 against:
 #   https://xrpl.org/docs/infrastructure/configuration/server-modes/run-xrpld-as-a-validator
@@ -85,8 +114,9 @@ advisory_delete=0
 #   sahyadri.isrdc.in   Connection REFUSED (hub down on :51235; reached, refused)
 # Added zaphod.alloy.ee (Alloy Networks, EU — long-standing HA bootstrap hub;
 # TCP-OK from this box, the one extra hub with a citable source) for a 3rd
-# reliably-connected distinct operator. peer_private=1 disables discovery, so
-# [ips_fixed] IS the entire outbound set — pin every reputable hub.
+# reliably-connected distinct operator. Under the prior peer_private=1 this list WAS
+# the entire outbound set; with discovery on it is the guaranteed floor beneath it.
+# Keep every reputable hub pinned — discovery supplements, it does not replace.
 #
 # 2026-07-23: + hub.distributedagreement.com; - sahyadri (TCP refused). Dead
 # [ips_fixed] entries are NOT free (retry churn + false capacity picture).
@@ -98,7 +128,7 @@ advisory_delete=0
 #   205.209.113.250 n9Juuy…  domain=distributedagreement  uptime~1550s  STABLE
 #   zaphod/kuwait: open → "No message of desired type" → close (FLAP — do not
 #   multi-pin those operators until post-handshake refusal is understood).
-# Shape: ALL five hostnames (DNS self-heal under peer_private=1) PLUS extra
+# Shape: ALL five hostnames (DNS self-heal for the fixed floor) PLUS extra
 # concurrent A-records for the Ripple pool + measured-stable DA IP. Hostnames
 # + overlapping IPs dedupe by endpoint (emplace fails → next A); they do NOT
 # double-attempt the same key. Flappers stay hostname-only. ≥8 still needs a

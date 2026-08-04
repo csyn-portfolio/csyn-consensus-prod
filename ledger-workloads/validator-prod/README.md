@@ -28,7 +28,9 @@ workloads without these:
 
 - **Validator-specific:** `[validation_seed]` lives in an **HSM**, never on disk
   (distinct from the dev tracking node); `provisioning_model = STANDARD` (never
-  Spot — dUNL clock continuity); `peer_private = 1` (dev relaxed it — do NOT
+  Spot — dUNL clock continuity); `peer_private = 0` (privacy flag is forced for any validation-key node, so this
+  keeps validator hiding while restoring discovery + inbound — see the stanza
+  comment and TASKS.md 2026-08-04; do NOT
   propagate); deletion_policy PREVENT + sensitive data-classification (already set).
 - **NuDB durability across restart** (dev lesson #11): a dev xrpld came back
   `complete_ledgers: empty` after a VM reset — confirm the validator's ledger store
