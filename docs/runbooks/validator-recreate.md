@@ -114,9 +114,27 @@ data beyond ~5–10 min, not advancing):
 
 - Dashboard `3fa8610d-1b5f-4440-a04c-d53a54ae6ab7` (`csyn-ldg-validator-prod`):
   `proposing=1`, `peer_count ≥ 3`, `unl_active=1`.
-- xrpscan `agreement_1h` returns to `1.00000` over the next hour
-  (`https://api.xrpscan.com/api/v1/validator/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`).
+- **The network sees our validations** — run from any machine with internet
+  (the validator itself cannot reach this under the egress deny-floor):
+
+  ```bash
+  node tools/network-sees-validator.mjs --seconds 80
+  # exit 0 = SEEN · exit 1 = NOT SEEN (meaningful) · exit 2 = INCONCLUSIVE (re-run)
+  ```
+
+  This subscribes to the `validations` stream on a public rippled node that has
+  no peering relationship with us. A validation observed there proves ours left
+  the box **and** crossed the overlay — the only external check that does.
 - The `peer_count < 3` page condition is cleared.
+
+> **Do not gate a recreate on a registry.** This step previously read xrpscan's
+> `agreement_1h` via `api.xrpscan.com/api/v1/validator/<key>`. That endpoint
+> returns HTTP 200 with the body `Error` (verify: `curl -sS -w '%{http_code}\n'
+> https://api.xrpscan.com/api/v1/validator/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`),
+> and `validations.xrpl.org` — cited elsewhere in this repo — no longer resolves
+> (verify: `dig +short validations.xrpl.org`). Registries also lag or omit a
+> **non-UNL** validator entirely while it is validating normally; see the
+> 2026-08-04 finding in [`TASKS.md`](../../TASKS.md).
 
 ---
 **Invariants:** snapshot before any node touch; never `docker rm -f` a validator;
