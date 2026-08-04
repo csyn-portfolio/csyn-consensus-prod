@@ -132,83 +132,90 @@ Apply after merge.
 - [x] Final ops check 2026-08-01 ~20:53 UTC: proposing, peers 5–7, sidecar proposing=true, amendment_blocked=false.
 - Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
 
-## Registry staleness is NOT a validator fault — 2026-08-04
+## Scanner-invisibility investigation — 2026-08-04 (xrpscan ingest break)
 
-**Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: no node
-defect, no incident.** The validator is validating and the network receives it;
-xrpscan/VHS staleness is a property of those registries and of being **non-UNL**.
+**Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
+validator is healthy and propagating; the staleness is an xrpscan-side ingest
+break affecting a whole cohort.** A separate, real config finding fell out of the
+investigation (`peer_private`, below) — that one is ours and is worth acting on.
 
-**Rule:** a registry (`xrpscan`, VHS/`data.xrpl.org`, livenet) is a *lagging,
-non-authoritative* indicator for a non-UNL validator. Never open an incident, and
-never gate a recreate, on registry presence or `last_seen`. The authoritative
-external check is the `validations` stream — `tools/network-sees-validator.mjs`.
+**Rule:** a registry (`xrpscan`, VHS/`data.xrpl.org`, livenet) is INFORMATIONAL.
+Never open an incident, and never gate a recreate, on registry `last_seen`. They
+fail as a class. The external check is the `validations` stream across **>= 2
+independent feeds** — `tools/network-sees-validator.mjs`.
 
-- `OBSERVED: node tools/network-sees-validator.mjs --seconds 40` (against
-  `wss://xrplcluster.com`, which has no peering relationship with us) → `OUR
-  validations: 10 (on 10 ledgers)`, `expected closes ~10`, `longest unbroken run:
-  10 ledgers` → full contiguous participation @ 2026-08-04 ~13:0x UTC.
-- `OBSERVED: server_info via IAP` → `server_state proposing`, `pubkey_validator`
-  = our master key, `validated_ledger` current (age 4s), `validator_list {count 2,
-  status active}`, `amendment_blocked false`, `peers 9` @ 2026-08-04 ~12:35 UTC.
-- `OBSERVED: validator_info + manifest` → `seq 4`, ephemeral `n9Lx3VU74…`, manifest
-  blob byte-identical to the one xrpscan holds → no key/manifest divergence.
-- `OBSERVED: curl https://api.xrpscan.com/api/v1/validators` → our record present,
-  `last_seen 2026-08-01T22:02:50Z` while all 35 UNL validators were <1h fresh.
-- `OBSERVED: curl https://data.xrpl.org/v1/network/validator/<key>/reports` →
-  `count: 0`; controls the same hour: a UNL validator `1930`, a non-UNL validator
-  `308`. VHS has never held a report for our key.
-- `EXCLUDED: amendment-block` by sidecar `amendment_blocked=false` across the whole
-  window + no amendment activating near the cliff (last `fixCleanup3_2_0`, Jul 29).
-- `EXCLUDED: UNL expiry` by `validators` RPC — both publishers available, 35 keys
-  each, expiries 2027-Apr / 2027-Jul.
-- `EXCLUDED: peer isolation (the 7/31 failure mode)` by two `peers` samples 60s
-  apart — all 9 peers current and each receiving ~1 MB/min from us.
-- `EXCLUDED: inbound/firewall` by `nc -z 34.174.33.70 51235` → open from the public
-  internet. Zero inbound peers is the *expected* equilibrium under `peer_private 1`.
-- `INFERRED: relay of our validations to any given observer is intermittent` from
-  `OBSERVED` consecutive runs of the same command returning 112, 109, then **35**
-  distinct validators — the 35-run carried the dUNL only and none of ours. rippled
-  drops **untrusted** validations under load and `[relay_validations]` may be set
-  trusted-only, so a single short window showing zero is not evidence of an outage.
-- `OPEN: why xrpscan's last_seen froze at 2026-08-01T22:02:50Z specifically`
-  (~76 min after the 3.2.1 container cutover at 20:46Z). Correlation only; no
-  mechanism established, and it has no operational consequence given the above.
+- `OBSERVED: curl https://api.xrpscan.com/api/v1/validators` @ 2026-08-04 ~13:45 UTC
+  → cohort freshness: UNL 35/35 fresh; UNL-with-domain 29/29 fresh; non-UNL
+  WITHOUT domain 74/162 fresh; **non-UNL WITH domain 0/108 fresh**. Ours is
+  non-UNL with domain `validator1.cloudsyndicate.io`.
+- `OBSERVED:` same fetch → **49 of those 108 froze inside the 2026-08-01T22:00Z
+  hour** across unrelated operators: `xrpsync.com` 22:03:40, `xrplvalidator.alloy.ee`
+  22:03:40, **ours 22:02:50**, `zerp.cloud` 22:05:20, `xrpltool.com` 22:05:51; a
+  further 37 froze together at 2026-07-30T09Z. Different versions, operators and
+  countries, one moment ⇒ registry-side ingest break, not a per-node fault.
+- `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` → SEEN on **3/3**
+  independent feeds (`xrplcluster.com`, `s2.ripple.com`, `xrpl.ws`), 17-18
+  validations each on an unbroken run of 17-18 ledgers @ 2026-08-04 ~14:0x UTC.
+- `OBSERVED: server_info / validators / validator_info via IAP` → `proposing`,
+  `pubkey_validator` = our master key, `validated_ledger` current, `validator_list
+  {count 2, status active}`, `amendment_blocked false`, manifest seq 4 byte-identical
+  to xrpscan's @ 2026-08-04 ~12:35 UTC.
+- `EXCLUDED: mesh under-propagation` by the 3/3 multi-feed result above.
+- `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, peer isolation,
+  inbound firewall` — see the RPC and `nc` evidence in the PR #34 discussion.
+- `EXCLUDED: "registries lag non-UNL validators"` (an earlier draft conclusion of
+  this very entry) by the cohort table: 74 non-UNL validators are fresh, and VHS's
+  non-UNL control carries 308 reports. The correct control is same-cohort, not UNL.
+- `EXCLUDED: peer-crawl invisibility as the cause of the staleness` — the privacy
+  flag is forced for every validator (below), so all 108 are equally uncrawlable;
+  it cannot explain why 162 domainless non-UNL rows update and 108 domain rows do not.
+- `OPEN: VHS/data.xrpl.org has NEVER held an agreement report for our key`
+  (`.../validator/<key>/reports` → `count: 0`; controls the same hour: UNL 1930,
+  non-UNL 308). "Never" is a different class from "went stale" and the xrpscan
+  break does not account for it. Not closed.
 
-**Canon corrections landed by this pass:**
-- `peer_private 1` is **mandatory** on a validator (rippled forces it whenever a
-  validation key is loaded — `cs-ledger:rippled` § Peer set curation). It is not a
-  knob; do not propose relaxing it for "inbound diversity."
-- There is **no released xrpld 3.3.0** — latest release is 3.2.1. Peers reporting
-  `xrpld-3.3` run pre-release `3.3.0-b1`/`rc1` builds; that line carries no
-  peer-protocol or validation-relay change.
-- A validator's own validations can never be squelched at the first hop (explicit
-  own-key immunity in `PeerImp.cpp`), so squelching cannot cause invisibility.
+### Config finding — `[peer_private] 1` is all cost, no benefit (ACT ON THIS)
+`OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
 
-**Stale references retired:** `validations.xrpl.org` no longer resolves
-(`dig +short validations.xrpl.org` → empty) and `api.xrpscan.com/api/v1/validator/
-<key>` returns HTTP 200 with body `Error`. Both were cited as ground truth in
-[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md);
-Step 5 now points at `tools/network-sees-validator.mjs`. The historical mentions in
-the 7/31 incident entry above and in `docs/superpowers/plans/` are left as written
-— they record what was true then.
+```cpp
+config.peerPrivate  = peerPrivate;                          // from cfg
+config.wantIncoming = (!config.peerPrivate) && (port != 0); // ORIGINAL value
+if (validationPublicKey) config.peerPrivate = true;         // forced AFTER
+config.autoConnect  = !standalone && !peerPrivate;          // ORIGINAL param
+```
+
+`wantIncoming` and `autoConnect` are both derived from the **original** config
+value; the validator force only flips the privacy flag afterward.
+
+| Config | IP privacy | Discovery | Inbound |
+|---|---|---|---|
+| validator + `peer_private 0` | **Yes (forced)** | **Yes** | **Yes** |
+| validator + `peer_private 1` (current) | Yes | **No** | **No** |
+
+So setting it explicitly buys **no additional privacy** — rippled forces the flag
+for any node holding a validation key — and costs discovery and inbound peering.
+`OBSERVED:` zero inbound peers in 63.8h of uptime, and 0 of 4 directly-connected
+hubs list our IP across ~690 crawl entries (the latter is the forced flag and would
+persist either way). This is the mechanism behind the thin peer set that caused the
+**2026-07-31 isolation outage** and behind the still-open ">=8 peers" item.
+
+**Canon correction:** `cs-ledger:rippled` § Peer set curation says "a validator MUST
+stay `peer_private 1` — rippled forces it internally whenever a validation key is
+present." Half true: rippled forces the *privacy flag*, not the *topology
+restrictions*. xrpl.org documents `peer_private` as optional — one of three
+connection strategies, required only for the proxies and public-hubs configurations.
 
 ### Alert scope — external validation visibility (NOT yet built)
-The 12 live policies watch `proposing`, `peer_count`, amendments and UNL. All were
-green throughout, and none *could* have fired, because every signal they read is
-on-box. Nothing asserts the **network** still receives us.
+`OBSERVED:` Monitoring API → 12 alert policies, all enabled, every one reading an
+on-box signal. All were green throughout; none *could* have fired.
 
-- **Signal:** run `tools/network-sees-validator.mjs` on a schedule from an
-  egress-capable runner (the validator cannot — deny-floor); write result to a
-  custom metric `custom.googleapis.com/xrpl/validator/network_sees_us` (1/0).
-- **Runner:** Cloud Scheduler → Cloud Run job in an egress-capable project. It must
-  NOT run on the validator VM and must not need a new egress hole there.
-- **Condition:** alert only on **sustained** absence — exit 1 (meaningful NOT SEEN)
-  for ≥3 consecutive runs. Exit 2 (INCONCLUSIVE) must never page: the untrusted-relay
-  variability above would otherwise produce routine false pages.
-- **Severity:** WARNING, not PAGE — this is a visibility signal, and `proposing`
-  already pages for the validating outcome itself.
-- **Do not** implement by scraping xrpscan/VHS; that design would have fired a
-  62-hour false alarm on 2026-08-01 while the validator was healthy.
+- **Signal:** `tools/network-sees-validator.mjs` on a schedule from an egress-capable
+  runner (the validator cannot — deny-floor) → `custom.googleapis.com/xrpl/validator/network_sees_us`.
+- **Condition:** page only on exit 1 (>= 2 feeds carried untrusted validations and
+  none showed us) sustained across >= 3 runs. Exit 2 must NEVER page.
+- **Severity:** WARNING. `proposing` already pages for the validating outcome.
+- **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
+  false alarm on the cohort break above while the validator was healthy.
 
 ## Next
 - [ ] **Build the external-visibility alert** (scope above). Terraform in

@@ -115,26 +115,38 @@ data beyond ~5–10 min, not advancing):
 - Dashboard `3fa8610d-1b5f-4440-a04c-d53a54ae6ab7` (`csyn-ldg-validator-prod`):
   `proposing=1`, `peer_count ≥ 3`, `unl_active=1`.
 - **The network sees our validations** — run from any machine with internet
-  (the validator itself cannot reach this under the egress deny-floor):
+  (the validator itself cannot reach this under the egress deny-floor).
+  **Run it twice, a few minutes apart** — a single window is statistically weak,
+  because a feed relaying trusted-only validations in that window cannot show an
+  untrusted validator at all:
 
   ```bash
-  node tools/network-sees-validator.mjs --seconds 80
-  # exit 0 = SEEN · exit 1 = NOT SEEN (meaningful) · exit 2 = INCONCLUSIVE (re-run)
+  # after a token rotation, first read the current signing key:
+  #   xrpld validator_info   ->  .ephemeral_key   (pass as --signing-key)
+  node tools/network-sees-validator.mjs --seconds 70
+  # exit 0 = SEEN on >=2 independent feeds · 1 = NOT SEEN (meaningful) · 2 = INCONCLUSIVE
   ```
 
-  This subscribes to the `validations` stream on a public rippled node that has
-  no peering relationship with us. A validation observed there proves ours left
-  the box **and** crossed the overlay — the only external check that does.
+  PASS requires **exit 0 on two consecutive runs**. It subscribes to the
+  `validations` stream on three independent public rippled nodes; an observation
+  at a node with no peering relationship to us proves our validation left the box
+  and crossed the overlay on that path. Requiring >= 2 feeds is what distinguishes
+  healthy mesh propagation from a single lucky path.
 - The `peer_count < 3` page condition is cleared.
 
-> **Do not gate a recreate on a registry.** This step previously read xrpscan's
-> `agreement_1h` via `api.xrpscan.com/api/v1/validator/<key>`. That endpoint
+> **Registries are INFORMATIONAL — never a PASS/FAIL gate.** This step previously
+> read xrpscan's `agreement_1h` via `api.xrpscan.com/api/v1/validator/<key>`, which
 > returns HTTP 200 with the body `Error` (verify: `curl -sS -w '%{http_code}\n'
 > https://api.xrpscan.com/api/v1/validator/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`),
-> and `validations.xrpl.org` — cited elsewhere in this repo — no longer resolves
-> (verify: `dig +short validations.xrpl.org`). Registries also lag or omit a
-> **non-UNL** validator entirely while it is validating normally; see the
-> 2026-08-04 finding in [`TASKS.md`](../../TASKS.md).
+> and `validations.xrpl.org`, cited elsewhere in this repo, no longer resolves
+> (verify: `dig +short validations.xrpl.org`).
+>
+> Registries also fail as a **class**: on 2026-08-04 all 108 domain-verified
+> non-UNL validators on xrpscan were stale, 49 of them frozen within the same few
+> minutes of 2026-08-01T22:0xZ across unrelated operators, while the validators
+> themselves were healthy. Gating on that would have declared a 63-hour outage
+> that never happened. Evidence: [`TASKS.md`](../../TASKS.md) § "Scanner-invisibility
+> investigation".
 
 ---
 **Invariants:** snapshot before any node touch; never `docker rm -f` a validator;
