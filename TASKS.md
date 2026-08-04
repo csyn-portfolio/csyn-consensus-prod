@@ -382,7 +382,7 @@ on-box signal. All were green throughout; none *could* have fired.
 
 - **Signal:** `tools/network-sees-validator.mjs` on a schedule from an egress-capable
   runner (the validator cannot — deny-floor) → `custom.googleapis.com/xrpl/validator/network_sees_us`.
-- **Condition:** page only on exit 1 (>= 2 feeds carried untrusted validations and
+- **Condition:** WARN only on exit 1 (>= 2 feeds carried untrusted validations and
   none showed us) sustained across >= 3 runs. Exit 2 must NEVER page.
 - **Severity:** WARNING. `proposing` already pages for the validating outcome.
 - **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
@@ -395,7 +395,19 @@ on-box signal. All were green throughout; none *could* have fired.
 Runner is GitHub Actions, not Cloud Run: the validator project's egress deny-floor
 is what retired the original poller, and this repo already has a WIF identity with
 internet. No VPC touched, no egress hole.
-Contract: exit 0 -> write 1 · exit 1 -> write 0 · exit 2 -> write NOTHING.
+Contract: exit 0 -> write 1 · exit 1 -> write 0 · exit 2 -> write NOTHING —
+plus `network_sees_us_heartbeat` = 1 on **every** run regardless of outcome, with a
+MetricAbsence policy on it.
+- `OPEN` **closed by design, recorded because it nearly shipped:** the verdict series
+  is sparse by design, so a policy that treats its absence as healthy is silent when
+  the *checker itself* is dark — a disabled workflow would have looked identical to a
+  healthy network. That is the 2026-08-04 blind spot rebuilt one layer up. The
+  heartbeat + absence pair is what separates "the network cannot see us" from "nobody
+  is looking". Do not resolve a quiet visibility alert by widening its missing-data
+  handling; the two questions are deliberately two policies.
+- **ACCEPTED RISK (Pete, 2026-08-04):** shipping with the owner-privileged identity
+  below rather than blocking on a substrate change. Recorded as a decision, not an
+  oversight; the follow-up is in Next.
 - `OBSERVED:` `ledger-apply@csyn-platform` holds `roles/owner` on
   `csyn-ldg-validator-prod`, so no substrate IAM grant is needed to write the metric.
 - `OPEN: least privilege` — that means an unattended scheduled workflow assumes an
