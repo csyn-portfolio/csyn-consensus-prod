@@ -114,9 +114,49 @@ data beyond ~5–10 min, not advancing):
 
 - Dashboard `3fa8610d-1b5f-4440-a04c-d53a54ae6ab7` (`csyn-ldg-validator-prod`):
   `proposing=1`, `peer_count ≥ 3`, `unl_active=1`.
-- xrpscan `agreement_1h` returns to `1.00000` over the next hour
-  (`https://api.xrpscan.com/api/v1/validator/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`).
+- **The network sees our validations** — run from any machine with internet
+  (the validator itself cannot reach this under the egress deny-floor).
+  **Run it twice, a few minutes apart** — a single window is statistically weak,
+  because a feed relaying trusted-only validations in that window cannot show an
+  untrusted validator at all:
+
+  ```bash
+  # after a token rotation, first read the current signing key:
+  #   xrpld validator_info   ->  .ephemeral_key   (pass as --signing-key)
+  node tools/network-sees-validator.mjs --seconds 70
+  # exit 0 = SEEN on >=2 independent feeds · 1 = NOT SEEN (meaningful) · 2 = INCONCLUSIVE
+  ```
+
+  PASS requires **exit 0 on two consecutive runs**. It subscribes to the
+  `validations` stream on three independent public rippled nodes; an observation
+  at a node with no peering relationship to us proves our validation left the box
+  and crossed the overlay on that path. Requiring >= 2 feeds is what distinguishes
+  multi-path propagation from a single lucky path.
+
+  Handling the other exits — neither is a reason to recreate on its own:
+
+  | Exit | Meaning | Do |
+  |---|---|---|
+  | `2` | INCONCLUSIVE — feeds were relaying trusted-only, or a feed errored | Re-run up to **3 times**, widening `--seconds` (e.g. 70 → 150). Still exit 2 after 3 tries → escalate as a *diagnostic* gap, not a node fault; the recreate PASS stays unproven either way. |
+  | `1` | NOT SEEN — >= 2 feeds carried untrusted validations and none showed us | **Before escalating:** confirm on-box `server_state: proposing` and `pubkey_validator` = our master key, and confirm `--signing-key` matches `validator_info.ephemeral_key` (a rotated token with a stale default is the most likely cause of a false exit 1). |
 - The `peer_count < 3` page condition is cleared.
+
+> **Registries are INFORMATIONAL — never a PASS/FAIL gate.** This step previously
+> read xrpscan's `agreement_1h` via `api.xrpscan.com/api/v1/validator/<key>`, which
+> returns HTTP 200 with the body `Error` (verify: `curl -sS -w '%{http_code}\n'
+> https://api.xrpscan.com/api/v1/validator/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`),
+> and `validations.xrpl.org`, cited elsewhere in this repo, no longer resolves
+> (verify: `dig +short validations.xrpl.org`).
+>
+> A registry can also go dark for a whole **cohort**: on
+> 2026-08-04 all 108 domain-verified non-UNL rows on xrpscan were stale, 49 of them
+> frozen within the same few minutes of 2026-08-01T22:0xZ across unrelated operators
+> and mixed versions, while the domainless non-UNL and UNL rows on the same registry
+> kept updating. Our node was SEEN on 3/3 independent validation feeds in the
+> measured windows on 2026-08-04 — gating on that registry would have declared a
+> 63-hour outage that never happened.
+> (The other 107 rows are not claimed healthy; only ours was measured.) Evidence:
+> [`TASKS.md`](../../TASKS.md) § "Scanner-invisibility investigation".
 
 ---
 **Invariants:** snapshot before any node touch; never `docker rm -f` a validator;
