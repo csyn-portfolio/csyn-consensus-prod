@@ -196,8 +196,9 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   freeze date from xrpscan's.
   `not observable: https://bithomp.com/api/cors/v2/validators returns HTTP 403`
   unauthenticated, and `https://bithomp.com/validator/<key>` returns HTTP 204 with
-  a 0-byte body (client-rendered). Treat this bullet as corroborating only; the
-  retraction above stands on xrpscan + VHS without it.
+  a 0-byte body (client-rendered). Treat this bullet as corroborating only. For
+  what the retraction is licensed by, read the Retraction callout above — this
+  bullet does not restate it.
 
 ### Cohort measurements (retained; the conclusion built on them is withdrawn)
 
