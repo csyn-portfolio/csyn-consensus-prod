@@ -1,0 +1,111 @@
+name: network-visibility
+
+# Asks the ONE question no on-box signal can answer: does the network still
+# receive our validations?
+#
+# Every alert in ledger-workloads/validator-prod/monitoring.tf reads a local
+# signal. During the 2026-08-04 scanner-invisibility investigation all 12 were
+# green and none *could* have fired, because none of them looks at the network's
+# view of us. This workflow closes that gap.
+#
+# Why GitHub Actions and not Cloud Run: the validator project's VPC egress
+# deny-floor permits only tcp:51235 and tcp:443 to the restricted VIP, which is
+# exactly why the original public-API Cloud Run poller was retired (see
+# sidecar.tf header). This repo already holds a WIF identity with internet
+# access, so the runner lives here. It touches no VPC and opens no egress hole.
+#
+# Metric contract (see visibility.tf):
+#   exit 0 -> write 1   SEEN on >= 2 independent feeds
+#   exit 1 -> write 0   NOT SEEN while >= 2 feeds carried untrusted validations
+#   exit 2 -> write NOTHING (inconclusive; absence is handled by
+#             EVALUATION_MISSING_DATA_INACTIVE, a 0 here would page routinely)
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'   # every 30 min, offset off the hour to dodge scheduler pileups
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: 'Observation window per feed, seconds'
+        required: false
+        default: '70'
+      signing_key:
+        description: 'Override the ephemeral signing key (read .ephemeral_key from validator_info after a token rotation)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  id-token: write   # WIF
+
+concurrency:
+  group: network-visibility
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROJECT_ID: csyn-ldg-validator-prod
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Node 20+ is required: the script uses the global WebSocket, which is not
+      # available on Node 18.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Probe the validations stream
+        id: probe
+        continue-on-error: true   # exit 1 and 2 are outcomes, not workflow failures
+        run: |
+          set +e
+          ARGS="--seconds ${{ github.event.inputs.seconds || '70' }}"
+          if [ -n "${{ github.event.inputs.signing_key }}" ]; then
+            ARGS="$ARGS --signing-key ${{ github.event.inputs.signing_key }}"
+          fi
+          node tools/network-sees-validator.mjs $ARGS | tee /tmp/probe.out
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        # Only authenticate when there is a point to write. An inconclusive run
+        # must not mint a credential it will not use.
+        if: steps.probe.outputs.code == '0' || steps.probe.outputs.code == '1'
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_PLAN }}
+          service_account: ledger-apply@csyn-platform.iam.gserviceaccount.com
+
+      - name: Write the metric point
+        if: steps.probe.outputs.code == '0' || steps.probe.outputs.code == '1'
+        run: |
+          set -euo pipefail
+          VALUE=$([ "${{ steps.probe.outputs.code }}" = "0" ] && echo 1 || echo 0)
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat > /tmp/ts.json <<JSON
+          {"timeSeries":[{
+            "metric":{"type":"custom.googleapis.com/xrpl/validator/network_sees_us"},
+            "resource":{"type":"generic_task","labels":{
+              "project_id":"${PROJECT_ID}","location":"us-south1",
+              "namespace":"xrpl-validator","job":"network-visibility","task_id":"github-actions"}},
+            "points":[{"interval":{"endTime":"${NOW}"},"value":{"doubleValue":${VALUE}}}]
+          }]}
+          JSON
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+            -H "Content-Type: application/json" \
+            -d @/tmp/ts.json \
+            "https://monitoring.googleapis.com/v3/projects/${PROJECT_ID}/timeSeries"
+          echo "wrote network_sees_us=${VALUE} at ${NOW}"
+
+      - name: Report
+        run: |
+          CODE="${{ steps.probe.outputs.code }}"
+          case "$CODE" in
+            0) echo "::notice::SEEN on >=2 independent feeds — wrote 1" ;;
+            1) echo "::warning::NOT SEEN while >=2 feeds carried untrusted validations — wrote 0. If a token rotation just happened, update --signing-key before treating this as real." ;;
+            2) echo "::notice::INCONCLUSIVE — no metric point written (this is correct, not a failure)" ;;
+            *) echo "::error::probe exited $CODE (unexpected)"; exit 1 ;;
+          esac
+          cat /tmp/probe.out || true

@@ -228,7 +228,7 @@ present." Half true: rippled forces the *privacy flag*, not the *topology
 restrictions*. xrpl.org documents `peer_private` as optional — one of three
 connection strategies, required only for the proxies and public-hubs configurations.
 
-### Alert scope — external validation visibility (NOT yet built)
+### Alert — external validation visibility (BUILT, awaiting apply)
 `OBSERVED:` Monitoring API → 12 alert policies, all enabled, every one reading an
 on-box signal. All were green throughout; none *could* have fired.
 
@@ -240,9 +240,28 @@ on-box signal. All were green throughout; none *could* have fired.
 - **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
   false alarm on the cohort break above while the validator was healthy.
 
+**Implemented** (branch `feat/network-visibility-alert`):
+`ledger-workloads/validator-prod/visibility.tf` (metric descriptor + WARNING policy,
+5400s sustained, `EVALUATION_MISSING_DATA_INACTIVE`) and
+`.github/workflows/network-visibility.yml` (every 30 min + `workflow_dispatch`).
+Runner is GitHub Actions, not Cloud Run: the validator project's egress deny-floor
+is what retired the original poller, and this repo already has a WIF identity with
+internet. No VPC touched, no egress hole.
+Contract: exit 0 -> write 1 · exit 1 -> write 0 · exit 2 -> write NOTHING.
+- `OBSERVED:` `ledger-apply@csyn-platform` holds `roles/owner` on
+  `csyn-ldg-validator-prod`, so no substrate IAM grant is needed to write the metric.
+- `OPEN: least privilege` — that means an unattended scheduled workflow assumes an
+  owner-privileged SA to write one metric point. A dedicated `roles/monitoring.metricWriter`
+  identity would be correct; it needs a substrate change (Pete-apply-only).
+- Not live until `apply.yml` is dispatched (metadata != live applies to alert
+  policies too — PR #19 sat merged-but-not-live for a month).
+
 ## Next
-- [ ] **Build the external-visibility alert** (scope above). Terraform in
-  `monitoring.tf` + a scheduled runner; T2 dual-gate before merge; Pete-gated apply.
+- [x] ~~Build the external-visibility alert~~ — BUILT on `feat/network-visibility-alert`
+  (`visibility.tf` + `network-visibility.yml`). T2 dual-gate, then **Pete-gated `apply.yml`
+  dispatch** to make the policy live.
+- [ ] **Least-privilege follow-up:** dedicated metric-writer SA for the visibility
+  probe instead of owner-privileged `ledger-apply` (substrate, Pete-apply-only).
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
 - [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
