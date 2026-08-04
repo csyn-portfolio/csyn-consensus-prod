@@ -232,10 +232,14 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 
 - `OPEN:` **root cause.** Nothing observed so far is confirmed as the cause; the
   candidates below are open, not eliminated.
-- `OPEN:` untested candidate — **our node specifically is under-observed
-  because it is hard-private: zero inbound, no discovery, reachable only by the
-  peers it dials out to.** Untested. Note this is the *narrow* claim about our
-  node, not the general one below.
+- `OPEN:` candidate — **our node was under-observed because it was hard-private:
+  zero inbound, no discovery, reachable only by the peers it dialled out to.**
+  Stated in the past tense on purpose: that posture ended when `peer_private 0` was
+  applied on 2026-08-04, so the condition the hypothesis names no longer holds and
+  the hypothesis can no longer be tested as stated. What can be watched instead is
+  whether registry freshness changes now — see "The uncontrolled discriminator has
+  now run" below, and its warning that this is not a controlled test. Note this is the *narrow* claim
+  about our node, not the general one below.
 - `EXCLUDED (still holds): "registries lag non-UNL validators as a class"` by the
   same-registry cohort table — 74/162 domainless non-UNL rows fresh on the xrpscan
   fetch, and VHS non-UNL controls carrying 308 reports. Silence about **us** on VHS
@@ -247,14 +251,13 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
   actually ran.** Not evidence either way.
-- **An uncontrolled discriminator exists, if `pr:35` is applied.** `peer_private 0`
-  (decision below) varies this candidate's variable — inbound reachability and
-  discovery. Should registry freshness recover afterward, that supports the
-  candidate; the same change alters peer identity and topology, so it is not a
-  controlled test and recovery would not prove it. Note it as an observation
-  opportunity, not a plan: A was chosen for the isolation failure mode, not for
-  this question. Separately, `pr:36` is designed to alert when the network stops
-  seeing us. For the state of either PR, read the PR.
+- **The uncontrolled discriminator has now run.** `peer_private 0` was applied and
+  loaded on 2026-08-04 (see the post-apply section below), which varied this
+  candidate's variable — inbound reachability and discovery. It also changed peer
+  identity and topology at the same time, so it is not a controlled test: if
+  registry freshness recovers, that supports the candidate but does not prove it,
+  and if it does not recover, that weakens the candidate without eliminating it.
+  Nobody should build on either outcome without saying which.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -303,7 +306,7 @@ forced flag does buy is narrower: absence from Peer Crawler (`/crawl`) results.
 the table: (A) flip `peer_private` to 0; (B) build a CS-operated proxy tier in
 front of the validator, the posture xrpl.org prescribes for institutional
 validators; (C) neither. **B was declined** — no proxies. **A was chosen**, and
-ships via `pr:35`. (An earlier reading of the same day's instruction recorded both
+shipped via `pr:38`. (An earlier reading of the same day's instruction recorded both
 as declined; that was a misreading of "no proxies" as declining everything, and is
 corrected here.)
 
@@ -333,10 +336,11 @@ not read the open port as "the exposure was already there" — that
 conflates L4 reachability with peer-layer reachability, and the peer layer is
 exactly what A opens.
 
-**Applying it is not merging it.** The path is: T2 dual-gate → merge → Pete-gated
-`apply.yml` dispatch → clock-safe recreate with a snapshot first, per
-[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md).
-Where `pr:35` sits on that path lives on the PR, not here.
+**Applying was not merging.** The path taken was: T2 dual-gate → merge →
+Pete-gated `apply.yml` dispatch → clock-safe recreate with a snapshot first, per
+[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). All
+four steps completed on 2026-08-04; the evidence is in the post-apply section
+below.
 
 ### Alert scope — external validation visibility (scope implemented in `pr:36`)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
@@ -354,23 +358,76 @@ on-box signal. All were green throughout; none *could* have fired.
 - **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
   false alarm on the cohort break above while the validator was healthy.
 
+## Option A applied and live-verified — 2026-08-04
+
+`peer_private 0` + explicit slot bounds shipped (`pr:38`, which superseded the
+un-reopenable `pr:35`), applied, and loaded onto the daemon running at the time of the checks below. Sequence and
+evidence below; for current state run the commands, do not read the numbers here.
+
+- `OBSERVED: gh workflow run apply.yml -f configs=ledger-workloads/validator-prod`
+  → run 30950653638 completed success @ 2026-08-04 ~21:05 UTC.
+- `OBSERVED: gcloud compute instances describe csyn-ldg-validator --zone=us-south1-a
+  --project=csyn-ldg-validator-prod` metadata `rippled-cfg` → `[peer_private] 0`,
+  `[peers_out_max] 20`, `[peers_in_max] 10`. Metadata only at this point — the
+  daemon was still on its old on-disk copy.
+- `OBSERVED:` startup-script metadata contains `docker rm -f rippled 2>/dev/null
+  || true` before `docker run`, and rewrites `/etc/opt/ripple/rippled.cfg` from
+  metadata every boot. Checked BEFORE the reset: without that guard the reset is a
+  silent no-op on the old config.
+- `OBSERVED:` snapshot `validator-pre-recreate-20260804-2105` (150 GB) READY before
+  the reset — the rollback point.
+- `OBSERVED: gcloud compute instances reset` @ 21:06:29 UTC. Sidecar reached
+  `proposing=true` @ 21:13:54 UTC — **~7.4 min, inside the runbook's 10-min
+  ceiling** but well past the ~2 min healthy path.
+- `OBSERVED:` sidecar peer count 9 (pre-reset) → 28 by ~21:10 UTC, before proposing returned → 38
+  @ 21:21:54 UTC. `INFERRED:` **both** autoConnect and inbound were live at that
+  reading, from the shipped caps: `[ips_fixed]`'s 11 endpoints bypass slot
+  accounting and sit outside the maxima, so an all-outbound ceiling is 11 + 20 = 31.
+  A count of 38 therefore requires at least 7 inbound sessions, and requires
+  discovery to have filled outbound beyond the fixed floor. Neither alone reaches 38.
+- `OBSERVED:` `Advancing accepted ledger to 106073444 with >= 29 validations` @
+  21:19:21 UTC — validations resumed.
+- `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` twice, ~2 min
+  apart @ ~21:19 and ~21:21 UTC → SEEN on 2/3 then 3/3 independent feeds, 18/18
+  ledgers unbroken each. The runbook's two-consecutive-exit-0 gate: PASS.
+- `SEARCHED:` sidecar log stream for `^warn ` / `^err ` since 21:06:35Z → none.
+
+### Open after this change
+
+- `OBSERVED: min_gap` read **14** before the reset, **999** from the reset through
+  21:21:54 UTC, and **14** again by 21:33:24 UTC — so it recovered on its own after
+  roughly 20 minutes, with `in_majority` **0** throughout. It tripped no alert and
+  no `warn`/`err` line. `OPEN:` what the field measures is still not established —
+  the sidecar emitting it lives in the sibling repo `csyn-consensus-infra`, out of
+  scope for the applying session. The recovery is consistent with a sentinel used
+  while the value cannot be computed during resync, but that is a guess, not a
+  reading of the source. Worth settling before the next recreate: 999 may reappear, and
+  until the field's meaning is established neither 999 nor a recovery to 14 should
+  be treated as diagnostic in either direction.
+- `OPEN:` **per-session inventory**, not the existence of inbound. That inbound
+  sessions existed is inferred from the caps arithmetic above. What was not obtained is the
+  breakdown — which peers, which direction each, how many inbound at a given moment,
+  and whether any single source is consuming slots. `not observable: gcloud compute
+  ssh --tunnel-through-iap` fails with OS Login API not enabled on quota project
+  `csyn-platform`, so the `peers` admin RPC could not be run. Enabling that API is a
+  Terraform change in `cloud-syndicate-platform`, deliberately not done ad hoc.
+- [ ] **Re-baseline the low-peers threshold.** It is 2.5, set for an outbound-only
+  node whose equilibrium was ~2. Post-discovery the count is an order higher, so
+  the WARN can no longer fire before a serious degradation. Re-baseline after
+  24-48h of post-recreate data, per the note in `monitoring.tf`.
+- [ ] **Registry watch, no action implied.** Whether the scanner listing recovers is
+  the uncontrolled discriminator described above. It was NOT the warrant for this
+  change and nothing further should be built on it either way.
+
 ## Next
-- [ ] **`pr:35` `peer_private 0`** — chosen 2026-08-04 (decision above). Path:
-  T2 dual-gate → merge → Pete-gated `apply.yml` dispatch → clock-safe recreate
-  (snapshot first). Merging alone changes nothing on the box. Where it sits on that
-  path lives on the PR, not here.
+- [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
+  after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
+  section above for the evidence and what it left open.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
   Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
-- [ ] **Correct two operator-facing comments in
-  `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`.** Lines 28-30 say
-  `peer_private=1` "does NOT block inbound"; lines 66-67 say "Validator accepts
-  inbound peers through the GCP firewall". Both are false: the 3.2.1 source sets
-  `wantIncoming = false` under `peer_private 1`, and the prior session observed
-  zero inbound peers across 63.8h of uptime. (Line 64, "does not block **outbound**",
-  is correct — leave it.) Applying A does not make them true: the value becomes `0`,
-  so comments asserting what `peer_private=1` does are still wrong, just wrong about
-  a setting we no longer run. Rewrite them for the chosen posture, in the same
-  change that flips the value.
+- [x] ~~Correct the two false operator-facing comments in
+  `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`~~ — landed in `pr:38`
+  alongside the value change, so the file never described a posture it was not in.
 - Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
   need a fresh decision; the mechanism and trade-off are recorded above so it does
   not have to be re-derived.
@@ -382,8 +439,8 @@ on-box signal. All were green throughout; none *could* have fired.
 - [x] ~~Apply PR #23 peer curation + clock-safe recreate~~ — DONE 2026-07-31 (incident recovery above). Snapshot `validator-pre-recreate-20260731-2136`.
 - **Pete-only: finish Slack alert path** — still the second notification path (email alone buried the 7/31 page under flappy subjects). Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
-- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions still ~2; zaphod/distributedagreement now in **loaded** config. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
-- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. **Under `peer_private 1`** the thin floor re-isolates if both live hubs drop again, because there is no discovery fallback; once option A is applied `autoConnect` supplies a fallback, which reduces that failure mode without erasing isolation risk, and the weight of this item shifts toward peer diversity. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
+- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions were ~2 in the days after that recreate; zaphod/distributedagreement went into the **loaded** config then. For the count now, read the sidecar stream — the 2026-08-04 discovery change moved it by an order of magnitude. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
+- **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. Under the former `peer_private 1` the thin floor would re-isolate if both live hubs dropped, because there was no discovery fallback. Since option A was applied on 2026-08-04 `autoConnect` supplies that fallback, which reduces the failure mode without erasing isolation risk, so the weight of this item has shifted toward peer diversity. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
 - **Process lesson:** merged peer-set / metadata changes require **apply + recreate** before they count as live; track “staged vs loaded” explicitly (do not treat merge as activation).
 - **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5
   `monitoring.tf` alert policies reference it for diagnosis steps (dangling link). The
