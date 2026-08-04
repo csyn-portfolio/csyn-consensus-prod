@@ -25,9 +25,15 @@ ip = 127.0.0.1
 admin = 127.0.0.1
 protocol = http
 
-# P2P peer port — bound on all interfaces so inbound peer connections
-# are accepted (peer_private=1 suppresses address advertisement but does
-# NOT block inbound; the GCP VPC firewall limits actual ingress).
+# P2P peer port. Binding here does NOT by itself mean inbound peers are accepted:
+# whether a session forms is decided by wantIncoming, which comes from the
+# [peer_private] value below, NOT from this bind and NOT from the forced privacy
+# flag. Under peer_private=1 the socket binds and strangers still get no peer
+# session. Under peer_private=0, the value set in this file, inbound sessions do
+# form. The forced
+# privacy flag only affects how we present ourselves — address advertisement,
+# /crawl listing, and the handshake Crawl header; it has never been what blocks
+# inbound. The GCP VPC firewall limits actual ingress.
 [port_peer]
 port = 51235
 ip = 0.0.0.0
@@ -53,18 +59,98 @@ advisory_delete=0
 [ledger_history]
 2000
 
-# Validator hiding: suppress address advertisement to the overlay so
-# the validator's IP is not broadcast to untrusted peers.
-# Canon baseline for validators (cs-ledger:rippled). The testnet tracking
-# node relaxed this to 0 — do NOT propagate that deviation here.
+# SOFT private. Read the exposure note below before changing this value.
+#
+# rippled FORCES the privacy flag for any node holding a validation key — upstream
+# calls this the "soft" version in its own comment — but the force runs AFTER
+# wantIncoming and autoConnect are derived from the ORIGINAL cfg value. Verified on
+# the DEPLOYED tag, XRPLF/rippled 3.2.1
+# src/xrpld/peerfinder/detail/PeerfinderConfig.cpp (the file is
+# src/libxrpl/peerfinder/Config.cpp on develop):
+#
+#   config.peerPrivate  = peerPrivate;                          // from cfg
+#   config.wantIncoming = (!config.peerPrivate) && (port != 0); // ORIGINAL value
+#   if (validationPublicKey) config.peerPrivate = true;         // forced AFTER
+#   config.autoConnect  = !standalone && !peerPrivate;          // ORIGINAL param
+#
+#                         | /crawl hidden | Discovery | Inbound | Endpoint gossip
+#   validator + 0 (here)  | yes (forced)  | yes       | yes     | YES — see below
+#   validator + 1 (prior) | yes           | no        | no      | no
+#
+# Why changed (Pete, 2026-08-04): 1 left [ips_fixed] as the ENTIRE peer set with no
+# discovery fallback and, structurally, no inbound peers at all — a contributing
+# condition in the 2026-07-31 isolation outage (the co-root was process debt: PR #23
+# was merged but never applied, so staged hubs were never loaded) and the reason the
+# ">=8 peers" target has stayed open. Public-hub pinning is exhausted.
+#
+# ACCEPTED TRADE-OFF — WIDER THAN "peers we dial". The forced flag governs how we
+# present ourselves: absence from the Peer Crawler (/crawl) response, and the
+# handshake Crawl header — OBSERVED at 3.2.1, src/xrpld/overlay/detail/PeerImp.cpp
+# passes `!config().peerPrivate` into makeResponse(). What it does NOT govern is
+# our address reaching others. Endpoint GOSSIP is gated on wantIncoming, which 0 turns
+# ON: PeerFinder Logic.h inserts an entry for ourselves at hops=0 into the endpoint
+# handout to every target when `config_.wantIncoming && counts_.inMax() > 0`;
+# recipients substitute our real socket address and relay it onward via the
+# Livecache. So our address propagates to nodes we never connected to — not merely
+# to peers we dialled. We remain absent from Peer Crawler results, which is a
+# narrower guarantee than "the address stays private".
+#
+# This is a deliberate availability-over-concealment call by the final architect,
+# made with the exposure above understood. Revisit if the CS-operated proxy tier
+# lands: that is the durable fix and delivers peer diversity with NO endpoint gossip
+# from the validator itself.
+#
 [peer_private]
-1
+0
+
+# EXPLICIT slot posture — the inbound surface opened above is bounded here on
+# purpose rather than left to rippled's derived defaults, because "whatever the
+# default computes" is not a decision an operator can audit.
+#
+# Verified on the DEPLOYED tag, XRPLF/rippled 3.2.1:
+#   src/xrpld/core/detail/Config.cpp
+#     - [peers_out_max] must be in range 10-1000, else rippled THROWS at load
+#     - [peers_in_max] must be <= 1000
+#     - BOTH sections must be set or NEITHER — configuring one alone throws
+#       "Both sections [peers_in_max] and [peers_out_max] must be configured".
+#       That is a boot failure on a production validator; never add one alone.
+#     - [peers_max], if set, takes precedence and these two are ignored entirely.
+#   src/xrpld/peerfinder/detail/PeerfinderConfig.cpp
+#     - setting both takes the explicit branch: outPeers/inPeers come straight
+#       from these values and maxPeers is no longer derived.
+#
+# 20 outbound gives discovery room to actually find peers beyond the [ips_fixed]
+# floor — that discovery is the whole reason for peer_private=0. 10 inbound caps
+# the stranger-session surface that comes with it.
+#
+# CAPACITY — read this before assuming the node got a little bigger. Total
+# non-fixed slots become 20 + 10 = 30, against a derived default of ~21 before this
+# change, and the [ips_fixed] peers stack ON TOP because they bypass slot
+# accounting. Budget file descriptors, CPU and egress for that, not for 21.
+#
+# SURPRISE — in the explicit branch PeerfinderConfig.cpp sets maxPeers = 0 (it is
+# only derived in the auto branch). OverlayImpl::limit() returns
+# peerFinder_->config().maxPeers, so `max_peers` in the overlay property stream and
+# anything reading limit() will report 0. That is an artefact of configuring the
+# two sections explicitly — it does NOT mean no peers are allowed. Do not wire an
+# alert to that field.
+#
+# CONSEQUENCE, do not "optimise" this to 0: inbound slots are also what arms the
+# hops=0 self-advertisement (Logic.h requires counts_.inMax() > 0). Setting
+# [peers_in_max] 0 would silence our endpoint gossip entirely — which is a
+# legitimate posture, but a DIFFERENT one than was chosen here, and it forfeits
+# the network reachability this change is meant to buy.
+[peers_out_max]
+20
+
+[peers_in_max]
+10
 
 # Curated mainnet hub peers for outbound bootstrap reliability.
-# peer_private=1 suppresses advertisement but does not block outbound;
-# [ips_fixed] peers bypass slot accounting and stay connected regardless
-# of slot pressure. Validator accepts inbound peers through the GCP firewall
-# (port 51235/tcp) — do NOT set peers_in_max=0 (that is testnet-only).
+# [ips_fixed] peers bypass slot accounting and stay connected regardless of slot
+# pressure, so these stay the RELIABLE floor even now that discovery is on — they
+# are no longer the entire outbound set. Inbound slots are set explicitly above;
+# see that stanza before changing them.
 #
 # Hubs VERIFIED 2026-06-17 against:
 #   https://xrpl.org/docs/infrastructure/configuration/server-modes/run-xrpld-as-a-validator
@@ -85,8 +171,9 @@ advisory_delete=0
 #   sahyadri.isrdc.in   Connection REFUSED (hub down on :51235; reached, refused)
 # Added zaphod.alloy.ee (Alloy Networks, EU — long-standing HA bootstrap hub;
 # TCP-OK from this box, the one extra hub with a citable source) for a 3rd
-# reliably-connected distinct operator. peer_private=1 disables discovery, so
-# [ips_fixed] IS the entire outbound set — pin every reputable hub.
+# reliably-connected distinct operator. Under the prior peer_private=1 this list WAS
+# the entire outbound set; with discovery on it is the guaranteed floor beneath it.
+# Keep every reputable hub pinned — discovery supplements, it does not replace.
 #
 # 2026-07-23: + hub.distributedagreement.com; - sahyadri (TCP refused). Dead
 # [ips_fixed] entries are NOT free (retry churn + false capacity picture).
@@ -98,7 +185,7 @@ advisory_delete=0
 #   205.209.113.250 n9Juuy…  domain=distributedagreement  uptime~1550s  STABLE
 #   zaphod/kuwait: open → "No message of desired type" → close (FLAP — do not
 #   multi-pin those operators until post-handshake refusal is understood).
-# Shape: ALL five hostnames (DNS self-heal under peer_private=1) PLUS extra
+# Shape: ALL five hostnames (DNS self-heal for the fixed floor) PLUS extra
 # concurrent A-records for the Ripple pool + measured-stable DA IP. Hostnames
 # + overlapping IPs dedupe by endpoint (emplace fails → next A); they do NOT
 # double-attempt the same key. Flappers stay hostname-only. ≥8 still needs a
