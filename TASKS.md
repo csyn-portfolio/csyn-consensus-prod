@@ -135,17 +135,19 @@ Apply after merge.
 ## Scanner-invisibility investigation — 2026-08-04 (root cause NOT established)
 
 **Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
-validator is healthy and validating; every public registry we can query fails to
-show it current; the reason is NOT established.**
+validator is healthy and validating; every registry successfully re-queried this
+session fails to show it current; the reason is NOT established.**
 
 > [!IMPORTANT]
 > **Retraction.** The version of this entry merged in `pr:34` concluded the ongoing
 > staleness was "specific to xrpscan's domain-verified non-UNL path." **That is
-> withdrawn.** A second registry (bithomp) was observed stale from an unrelated
-> date, and a third (VHS) has no record of the key at all — a fault confined to one registry's
-> ingest path cannot produce three registries failing three different ways. The
-> cohort observations below are retained as measurements; the conclusion drawn from
-> them is not.
+> withdrawn.** Two registries were re-queried this session and neither is explained
+> by that conclusion: xrpscan is frozen, and VHS returns no record for the key at
+> all — an ingest break inside xrpscan does not account for a registry that has no
+> row to freeze. A third data point (bithomp, stale from an unrelated date) points
+> the same way but comes from the **prior session and could not be re-executed
+> here**, so it is not load-bearing for this retraction. The cohort observations
+> below are retained as measurements; the conclusion drawn from them is not.
 
 **Rule (unchanged, and the one durable output):** a registry (`xrpscan`,
 VHS/`data.xrpl.org`, bithomp, livenet) is INFORMATIONAL and cannot be a sole
@@ -168,7 +170,7 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, peer isolation,
   inbound firewall` — RPC and `nc` evidence in the `pr:34` discussion.
 
-### Registry state — three registries, three different failures
+### Registry state — xrpscan + VHS re-verified here, bithomp carried forward
 
 - `OBSERVED: curl -sL https://api.xrpscan.com/api/v1/validatorregistry` @
   2026-08-04 ~15:52 UTC (note `/api/v1/validators` 302s to this) → our row
@@ -177,17 +179,20 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   ~13:45 UTC read ~2h earlier; ~66h stale as of this read.**
 - `OBSERVED: curl https://data.xrpl.org/v1/network/validator/<key>/reports` @
   2026-08-04 ~15:52 UTC → `{"result":"success","count":0,"reports":[]}`.
-  `OBSERVED: .../v1/network/validators` same minute → 305 rows, **our key absent
-  from the list entirely.** VHS has never held a record for us, not merely a stale
-  one. Controls read the same day: UNL 1930 reports, non-UNL 308.
-- `OBSERVED @ 2026-08-04 ~14:xx UTC` (prior session) → bithomp stale since
-  **2026-07-31T02:45**, still advertising version **3.2.0** — a version we left on
-  2026-08-01 (see the 3.2.1 pin above). A **different** freeze date from xrpscan's,
-  which is what withdraws the single-path conclusion.
+  `SEARCHED: .../v1/network/validators` (305 rows) same minute for our master key
+  → **absent**. So VHS currently holds **no row and no reports** for us — a
+  different failure from a stale row. Controls read the same day: UNL 1930
+  reports, non-UNL 308.
+  `OPEN:` whether VHS ever held a record. The two calls above read **present**
+  state; no VHS history endpoint was queried, so "never" is not earned here.
+- `OBSERVED @ 2026-08-04 ~14:xx UTC` (**prior session, not re-executed here**) →
+  bithomp stale since **2026-07-31T02:45**, still advertising version **3.2.0** —
+  a version we left on 2026-08-01 (see the 3.2.1 pin above), i.e. a different
+  freeze date from xrpscan's.
   `not observable: https://bithomp.com/api/cors/v2/validators returns HTTP 403`
   unauthenticated, and `https://bithomp.com/validator/<key>` returns HTTP 204 with
-  a 0-byte body (client-rendered). **This one reading could not be re-executed this
-  session** and rests on the prior session's observation.
+  a 0-byte body (client-rendered). Treat this bullet as corroborating only; the
+  retraction above stands on xrpscan + VHS without it.
 
 ### Cohort measurements (retained; the conclusion built on them is withdrawn)
 
@@ -198,38 +203,47 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   hour** across unrelated operators: `xrpsync.com` 22:03:40, `xrplvalidator.alloy.ee`
   22:03:40, **ours 22:02:50**, `zerp.cloud` 22:05:20, `xrpltool.com` 22:05:51; a
   further 37 froze together at 2026-07-30T09Z. `INFERRED:` that geometry is
-  incompatible with 49 independent node faults. It is not evidence that all 108
-  nodes were healthy; only ours has multi-feed proof.
+  incompatible with 49 independent node faults — mixed versions freezing in the
+  same minute, `ledger_index` still advancing across the window, and the domainless
+  non-UNL and UNL rows on the SAME registry continuing to update. It is not
+  evidence that all 108 nodes were healthy; only ours has multi-feed proof.
 - `EXCLUDED: H5 "an upstream feed shared by BOTH registries is still stale"` by
   cross-registry divergence @ 2026-08-04 ~14:2x UTC: `zerp.cloud` and
   `xrplvalidator.alloy.ee` frozen on xrpscan at 2026-08-01T22:0x yet LIVE on VHS,
   `current_index` 106066864/106066865, `agreement_1h` 1.00000 / 0.99784.
-- `EXCLUDED: peer-crawl invisibility as the cause of the xrpscan cohort freeze` —
-  the privacy flag is forced for every validator (below), so all 108 are equally
-  uncrawlable; it cannot explain why 162 domainless non-UNL rows update and 108
-  domain rows do not. **Scope note:** this excludes crawl-invisibility for the
-  *cohort freeze*, not for our own absence from VHS.
+- `EXCLUDED: peer-crawl invisibility as the discriminator for the xrpscan cohort
+  freeze` — the privacy flag is forced for every validator (below), so all 108 are
+  equally uncrawlable; it therefore does not distinguish the 162 domainless non-UNL
+  rows that update from the 108 domain rows that do not. **Scope note:** this rules
+  crawl-invisibility out as the *split* explanation for the cohort freeze; it does
+  not rule out a crawl-related contribution generally, and says nothing about our
+  own absence from VHS.
 
 ### What remains open
 
-- `OPEN:` **root cause.** No hypothesis survives that explains all three registries.
-- `OPEN:` leading unproven hypothesis — public registries under-observe non-UNL
-  validators generally, and ours may be worse because it is **hard-private: zero
-  inbound, no discovery, reachable only by the peers it dials out to.** Untested.
-- `EXCLUDED (withdrawn):` "registries lag non-UNL validators" was recorded as
-  excluded on the xrpscan cohort table alone. With bithomp and VHS in the picture
-  that exclusion **no longer holds** and the hypothesis is reinstated as OPEN above.
+- `OPEN:` **root cause.** Nothing observed so far is confirmed as the cause; the
+  candidates below are open, not eliminated.
+- `OPEN:` leading unproven candidate — **our node specifically is under-observed
+  because it is hard-private: zero inbound, no discovery, reachable only by the
+  peers it dials out to.** Untested. Note this is the *narrow* claim about our
+  node, not the general one below.
+- `EXCLUDED (still holds): "registries lag non-UNL validators as a class"` by the
+  same-registry cohort table — 74/162 domainless non-UNL rows fresh on the xrpscan
+  fetch, and VHS non-UNL controls carrying 308 reports. Silence about **us** on
+  bithomp and VHS does not touch those controls. The general exclusion stands; only
+  the narrower per-node hypothesis above is open.
 - `OPEN: H5b "a shared event at freeze ONSET (2026-08-01T22:0x)"` — the
-  discriminator ran at T+63h and cannot reach back; no VHS `last_seen` history at
-  onset is available to us.
+  cross-registry discriminator ran at the ~14:2x UTC check, ~63h after onset, and
+  cannot reach back; no VHS `last_seen` history at onset is available to us.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
   actually ran.** Not evidence either way.
-- **Next discriminator if this is picked up:** the proxy tier (below) changes
-  exactly the variable in the leading hypothesis — inbound reachability and
-  discovery — without changing the validator's own exposure. If registry freshness
-  recovers after the proxies are live, that supports the hypothesis; it is an
-  uncontrolled intervention, not a controlled test, so recovery would not prove it.
+- **Next discriminator if this is picked up:** the proxy tier (below) primarily
+  varies inbound reachability and discovery at the network edge, which is the
+  variable in the leading candidate — though it also changes peer identity and
+  topology, so it is not a single-variable change. If registry freshness recovers
+  after the proxies are live, that supports the candidate; it is an uncontrolled
+  intervention, not a controlled test, so recovery would not prove it.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -279,9 +293,10 @@ forced flag does buy is narrower: absence from Peer Crawler (`/crawl`) results.
 address is never published; CS stands up its own public-facing peer nodes in front
 of it, which is the posture xrpl.org prescribes for institutional validators. This
 restores inbound reach and discovery at the network edge instead of at the
-validator. `pr:35` (`peer_private 0`) is superseded and closed unmerged —
-its Grok r1 gate and the mechanism above are why B was chosen, not a rejection of
-the finding.
+validator. `pr:35` (`peer_private 0`) is **superseded** by this decision and will
+not be merged — closing it is tracked in Next below; for its current state read
+the PR. Its Grok r1 gate and the mechanism above are why B was chosen; the
+underlying finding is not rejected.
 
 ### Alert scope — external validation visibility (built in `pr:36`, not applied)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
