@@ -310,10 +310,12 @@ had no discovery to fall back on and went fully isolated — see the incident se
 above. That is a proven failure mode with a proven cost. Whether A also restores
 the registry listing is **unproven** and is not the warrant for this change.
 
-**The exposure.** Under `peer_private 0` three things change and all three are real
-increases: rippled **accepts inbound peer sessions from strangers** (`wantIncoming`
-goes true), `autoConnect` turns on, and our address is **pushed into endpoint
-gossip** so nodes we never dialled learn it (mechanism above).
+**The exposure.** Under `peer_private 0` two things increase attack surface:
+rippled **accepts inbound peer sessions from strangers** (`wantIncoming` goes true),
+and our address is **pushed into endpoint gossip** so nodes we never dialled learn
+it (mechanism above). A third thing changes but is not exposure — `autoConnect`
+turns on, which is outbound discovery, and is the reliability property A is being
+taken for.
 
 One bound survives: the privacy flag is still forced for a validation-key node, so
 we stay absent from Peer Crawler (`/crawl`) either way.
@@ -361,8 +363,10 @@ on-box signal. All were green throughout; none *could* have fired.
   inbound peers through the GCP firewall". Both are false: the 3.2.1 source sets
   `wantIncoming = false` under `peer_private 1`, and the prior session observed
   zero inbound peers across 63.8h of uptime. (Line 64, "does not block **outbound**",
-  is correct — leave it.) These comments become true once A is applied, so fix them
-  in the same change rather than separately.
+  is correct — leave it.) Applying A does not make them true: the value becomes `0`,
+  so comments asserting what `peer_private=1` does are still wrong, just wrong about
+  a setting we no longer run. Rewrite them for the chosen posture, in the same
+  change that flips the value.
 - Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
   need a fresh decision; the mechanism and trade-off are recorded above so it does
   not have to be re-derived.
