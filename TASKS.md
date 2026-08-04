@@ -244,13 +244,14 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
   actually ran.** Not evidence either way.
-- **No discriminator is planned as of this entry.** The intervention that would
-  have varied this candidate's variable — inbound reachability and discovery, via a
-  proxy tier — was declined (see the decision below). No replacement is scheduled;
-  whether some later work happens to vary it is not something this entry can
-  enumerate. The mitigation being pursued is detection rather than diagnosis:
-  `pr:36` is designed to alert when the network stops seeing us. For whether it is
-  live, see the alert-scope section below — this bullet does not answer that.
+- **An uncontrolled discriminator exists, if `pr:35` is applied.** `peer_private 0`
+  (decision below) varies this candidate's variable — inbound reachability and
+  discovery. Should registry freshness recover afterward, that supports the
+  candidate; the same change alters peer identity and topology, so it is not a
+  controlled test and recovery would not prove it. Note it as an observation
+  opportunity, not a plan: A was chosen for the isolation failure mode, not for
+  this question. Separately, `pr:36` is designed to alert when the network stops
+  seeing us. For the state of either PR, read the PR.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -295,23 +296,34 @@ onward via the Livecache. `wantIncoming` is exactly what `peer_private 0` turns 
 So under `peer_private 0` our address reaches nodes we never dialled. What the
 forced flag does buy is narrower: absence from Peer Crawler (`/crawl`) results.
 
-**DECISION — Pete, 2026-08-04: no change ships. The validator stays as it is.**
-Three options were on the table: (A) flip `peer_private` to 0; (B) build a
-CS-operated proxy tier in front of the validator, the posture xrpl.org prescribes
-for institutional validators; (C) neither. **A was declined** once the exposure was
-described correctly — under `peer_private 0` our address gossips to nodes we never
-dial. **B was declined** by Pete the same day: no proxies. So the validator keeps
-`peer_private 1` and continues with zero inbound, no discovery, and outbound-only
-peering to its fixed hub set.
+**DECISION — Pete, 2026-08-04: option A, `peer_private 0`.** Three options were on
+the table: (A) flip `peer_private` to 0; (B) build a CS-operated proxy tier in
+front of the validator, the posture xrpl.org prescribes for institutional
+validators; (C) neither. **B was declined** — no proxies. **A was chosen**, and
+ships via `pr:35`. (An earlier reading of the same day's instruction recorded both
+as declined; that was a misreading of "no proxies" as declining everything, and is
+corrected here.)
 
-`pr:35` (`peer_private 0`) will not be merged; closing it is tracked in Next below,
-and for its current state read the PR. The mechanism finding above is **not**
-rejected — it stands as recorded canon; what was declined is acting on it.
+**The reason to take A is the outage, not the scanners.** Under `peer_private 1`
+`autoConnect` is off, so when both live hub sessions dropped on 2026-07-31 the node
+had no discovery to fall back on and went fully isolated — see the incident section
+above. That is a proven failure mode with a proven cost. Whether A also restores
+the registry listing is **unproven** and is not the warrant for this change.
 
-**Consequence to hold onto:** the untested candidate for the registry
-question is that our node is under-observed *because* it is hard-private. Declining
-both options leaves that candidate untested and the registry question open. That is
-an accepted cost, taken knowingly.
+**The exposure, stated correctly.** Under `peer_private 0` our address propagates
+via endpoint gossip to nodes we never dial (mechanism above). Two things bound that
+cost. First, the privacy flag is still forced for a validation-key node, so we stay
+absent from Peer Crawler (`/crawl`) either way. Second, the P2P port is already open
+to the internet — `OBSERVED: gcloud compute firewall-rules list
+--project=csyn-ldg-validator-prod` @ 2026-08-04 → `csyn-ldg-validator-p2p-in`,
+INGRESS, source `0.0.0.0/0`, `tcp:51235`, enabled. So A does not open a closed port;
+it makes an already-reachable address easy to find by gossip rather than by scan.
+
+**Applying it is not merging it.** `pr:35` needs an r2 gate (its r1 verdict was
+MERGE-WITH-FIXES and the fix commit has not been re-reviewed), then merge, then a
+Pete-gated `apply.yml` dispatch, then a clock-safe recreate with a snapshot first
+per [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md).
+Read the PR for its state; this entry does not record it.
 
 ### Alert scope — external validation visibility (scope implemented in `pr:36`)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
@@ -330,11 +342,15 @@ on-box signal. All were green throughout; none *could* have fired.
   false alarm on the cohort break above while the validator was healthy.
 
 ## Next
+- [ ] **`pr:35` `peer_private 0`** — chosen 2026-08-04 (decision above). Needs an
+  r2 Grok gate, then merge, then a Pete-gated `apply.yml` dispatch, then a
+  clock-safe recreate (snapshot first). Merging alone changes nothing on the box.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
-  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here. With A
-  and B both declined, this is the action still carried forward from the
-  2026-08-04 investigation.
-- [ ] **Close `pr:35`** — declined, see the decision above.
+  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
+- [ ] **Correct `config/rippled.cfg.tftpl:29` and `:64`** — both say `peer_private=1`
+  "does NOT block inbound". The source at 3.2.1 sets `wantIncoming = false` under
+  `peer_private 1`, and the prior session observed zero inbound peers across 63.8h
+  of uptime. Operator-facing comments that state the opposite of the mechanism.
 - Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
   need a fresh decision; the mechanism and trade-off are recorded above so it does
   not have to be re-derived.
