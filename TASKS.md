@@ -229,7 +229,7 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 
 - `OPEN:` **root cause.** Nothing observed so far is confirmed as the cause; the
   candidates below are open, not eliminated.
-- `OPEN:` leading unproven candidate — **our node specifically is under-observed
+- `OPEN:` primary untested candidate — **our node specifically is under-observed
   because it is hard-private: zero inbound, no discovery, reachable only by the
   peers it dials out to.** Untested. Note this is the *narrow* claim about our
   node, not the general one below.
@@ -244,12 +244,13 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
   actually ran.** Not evidence either way.
-- **No discriminator is planned.** The intervention that would have varied the
-  leading candidate's variable — inbound reachability and discovery, via a proxy
-  tier — was declined (see the decision below). Nothing else on the roadmap changes
-  that variable, so this question stays open unless someone reopens it deliberately.
-  The standing mitigation is detection, not diagnosis: `pr:36` alerts if the network
-  stops seeing us, which is the outcome that actually matters.
+- **No discriminator is planned as of this entry.** The intervention that would
+  have varied this candidate's variable — inbound reachability and discovery, via a
+  proxy tier — was declined (see the decision below). No replacement is scheduled;
+  whether some later work happens to vary it is not something this entry can
+  enumerate. The mitigation being pursued is detection rather than diagnosis:
+  `pr:36` is designed to alert when the network stops seeing us. It is not applied,
+  so it alerts nothing yet — see the alert-scope section for the verify command.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -307,11 +308,10 @@ peering to its fixed hub set.
 and for its current state read the PR. The mechanism finding above is **not**
 rejected — it stands as recorded canon; what was declined is acting on it.
 
-**Consequence to hold onto:** the leading candidate for the registry question is
-that our node is under-observed *because* it is hard-private. Declining both
-options means that candidate stays untested and the registry question stays open
-indefinitely. That is an accepted cost, not an oversight — the validator itself is
-healthy and validating, which is the property that matters.
+**Consequence to hold onto:** the primary untested candidate for the registry
+question is that our node is under-observed *because* it is hard-private. Declining
+both options leaves that candidate untested and the registry question open. That is
+an accepted cost, taken knowingly.
 
 ### Alert scope — external validation visibility (built in `pr:36`, not applied)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
@@ -331,8 +331,9 @@ on-box signal. All were green throughout; none *could* have fired.
 
 ## Next
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
-  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here. This is
-  now the **only** action carried out of the 2026-08-04 investigation.
+  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here. With A
+  and B both declined, this is the action still carried forward from the
+  2026-08-04 investigation.
 - [ ] **Close `pr:35`** — declined, see the decision above.
 - Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
   need a fresh decision; the mechanism and trade-off are recorded above so it does
