@@ -354,11 +354,62 @@ on-box signal. All were green throughout; none *could* have fired.
 - **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
   false alarm on the cohort break above while the validator was healthy.
 
+## Option A applied and live-verified — 2026-08-04
+
+`peer_private 0` + explicit slot bounds shipped (`pr:38`, which superseded the
+un-reopenable `pr:35`), applied, and loaded onto the running daemon. Sequence and
+evidence below; for current state run the commands, do not read the numbers here.
+
+- `OBSERVED: gh workflow run apply.yml -f configs=ledger-workloads/validator-prod`
+  → run 30950653638 completed success @ 2026-08-04 ~21:05 UTC.
+- `OBSERVED: gcloud compute instances describe csyn-ldg-validator --zone=us-south1-a
+  --project=csyn-ldg-validator-prod` metadata `rippled-cfg` → `[peer_private] 0`,
+  `[peers_out_max] 20`, `[peers_in_max] 10`. Metadata only at this point — the
+  daemon was still on its old on-disk copy.
+- `OBSERVED:` startup-script metadata contains `docker rm -f rippled 2>/dev/null
+  || true` before `docker run`, and rewrites `/etc/opt/ripple/rippled.cfg` from
+  metadata every boot. Checked BEFORE the reset: without that guard the reset is a
+  silent no-op on the old config.
+- `OBSERVED:` snapshot `validator-pre-recreate-20260804-2105` (150 GB) READY before
+  the reset — the rollback point.
+- `OBSERVED: gcloud compute instances reset` @ 21:06:29 UTC. Sidecar reached
+  `proposing=true` @ 21:13:54 UTC — **~7.4 min, inside the runbook's 10-min
+  ceiling** but well past the ~2 min healthy path.
+- `OBSERVED:` sidecar peer count 9 (pre-reset) → 28 within 2 min of proposing → 38
+  @ 21:21:54 UTC. `INFERRED:` discovery is working — 38 exceeds the 11 `[ips_fixed]`
+  endpoints by a wide margin, which only autoConnect can supply.
+- `OBSERVED:` `Advancing accepted ledger to 106073444 with >= 29 validations` @
+  21:19:21 UTC — validations resumed.
+- `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` twice, ~2 min
+  apart @ ~21:19 and ~21:21 UTC → SEEN on 2/3 then 3/3 independent feeds, 18/18
+  ledgers unbroken each. The runbook's two-consecutive-exit-0 gate: PASS.
+- `SEARCHED:` sidecar log stream for `^warn ` / `^err ` since 21:06:35Z → none.
+
+### Open after this change
+
+- `OPEN: min_gap` read **14** before the reset and **999** after, unchanged since,
+  while `in_majority` stayed **0** across both. Not explained. It tripped no alert
+  and no `warn`/`err` line, and the sidecar source lives in the sibling repo
+  `csyn-consensus-infra`, which was out of scope for the applying session. Do not
+  assume benign: establish what the field measures before the next recreate.
+- `OPEN:` **inbound sessions were never directly confirmed.** The rising peer count
+  is consistent with inbound, outbound discovery, or both — it does not separate
+  them. The `peers` admin RPC would, and it was **not observable** this session:
+  `gcloud compute ssh --tunnel-through-iap` fails with OS Login API not enabled on
+  quota project `csyn-platform`. Enabling it is a Terraform change in
+  `cloud-syndicate-platform`, deliberately not done ad hoc.
+- [ ] **Re-baseline the low-peers threshold.** It is 2.5, set for an outbound-only
+  node whose equilibrium was ~2. Post-discovery the count is an order higher, so
+  the WARN can no longer fire before a serious degradation. Re-baseline after
+  24-48h of post-recreate data, per the note in `monitoring.tf`.
+- [ ] **Registry watch, no action implied.** Whether the scanner listing recovers is
+  the uncontrolled discriminator described above. It was NOT the warrant for this
+  change and nothing further should be built on it either way.
+
 ## Next
-- [ ] **`pr:35` `peer_private 0`** — chosen 2026-08-04 (decision above). Path:
-  T2 dual-gate → merge → Pete-gated `apply.yml` dispatch → clock-safe recreate
-  (snapshot first). Merging alone changes nothing on the box. Where it sits on that
-  path lives on the PR, not here.
+- [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
+  after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
+  section above for the evidence and what it left open.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
   Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
 - [ ] **Correct two operator-facing comments in
