@@ -132,70 +132,106 @@ Apply after merge.
 - [x] Final ops check 2026-08-01 ~20:53 UTC: proposing, peers 5–7, sidecar proposing=true, amendment_blocked=false.
 - Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
 
-## Scanner-invisibility investigation — 2026-08-04 (xrpscan cohort freeze, registry-side)
+## Scanner-invisibility investigation — 2026-08-04 (root cause NOT established)
 
 **Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
-validator is healthy and propagating; the ongoing staleness is specific to
-xrpscan's domain-verified non-UNL path.** Naming the specific xrpscan subsystem
-would need their confirmation; what is earned is the cohort scope, below. A separate, real config finding fell out of the
-investigation (`peer_private`, below) — that one is ours and is worth acting on.
+validator is healthy and validating; every public registry we can query fails to
+show it current; the reason is NOT established.**
 
-**Rule:** a registry (`xrpscan`, VHS/`data.xrpl.org`, livenet) is INFORMATIONAL and
-cannot be a sole PASS/FAIL gate — one registry's cohort path can go dark while the
-node is fine. Never open an incident, and never gate a recreate, on registry
+> [!IMPORTANT]
+> **Retraction.** The version of this entry merged in `pr:34` concluded the ongoing
+> staleness was "specific to xrpscan's domain-verified non-UNL path." **That is
+> withdrawn.** A second registry (bithomp) was observed stale from an unrelated
+> date, and a third (VHS) has no record of the key at all — a fault confined to one registry's
+> ingest path cannot produce three registries failing three different ways. The
+> cohort observations below are retained as measurements; the conclusion drawn from
+> them is not.
+
+**Rule (unchanged, and the one durable output):** a registry (`xrpscan`,
+VHS/`data.xrpl.org`, bithomp, livenet) is INFORMATIONAL and cannot be a sole
+PASS/FAIL gate. Never open an incident, and never gate a recreate, on registry
 `last_seen`. The external check is the `validations` stream across **>= 2
 independent feeds** — `tools/network-sees-validator.mjs`.
 
-- `OBSERVED: curl https://api.xrpscan.com/api/v1/validatorregistry` @ 2026-08-04
-  ~13:45 UTC (note `/api/v1/validators` 302s to this) → cohort freshness: UNL 35/35 fresh; UNL-with-domain 29/29 fresh; non-UNL
-  WITHOUT domain 74/162 fresh; **non-UNL WITH domain 0/108 fresh**. Ours is
-  non-UNL with domain `validator1.cloudsyndicate.io`.
+### Node health — re-verified, not inferred
+
+- `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` @ 2026-08-04
+  ~15:52 UTC → SEEN on **3/3** independent feeds (`xrplcluster.com`,
+  `s2.ripple.com`, `xrpl.ws`), 17 validations each on an unbroken run of 17
+  ledgers. Same result as the ~14:0x UTC run, ~2h apart.
+- `OBSERVED: server_info / validators / validator_info via IAP` @ 2026-08-04
+  ~12:35 UTC → `proposing`, `pubkey_validator` = our master key,
+  `validated_ledger` current, `validator_list {count 2, status active}`,
+  `amendment_blocked false`, manifest seq 4 byte-identical to xrpscan's.
+- `EXCLUDED: single-path-only propagation` by the 3/3 multi-feed result.
+  Independent public feeds — strong multi-path evidence, not a full-mesh proof.
+- `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, peer isolation,
+  inbound firewall` — RPC and `nc` evidence in the `pr:34` discussion.
+
+### Registry state — three registries, three different failures
+
+- `OBSERVED: curl -sL https://api.xrpscan.com/api/v1/validatorregistry` @
+  2026-08-04 ~15:52 UTC (note `/api/v1/validators` 302s to this) → our row
+  `last_seen 2026-08-01T22:02:50.828Z`, `ledger_index 106007196`, version 3.2.1,
+  domain `validator1.cloudsyndicate.io`. **Byte-identical `last_seen` to the
+  ~13:45 UTC read ~2h earlier; ~66h stale as of this read.**
+- `OBSERVED: curl https://data.xrpl.org/v1/network/validator/<key>/reports` @
+  2026-08-04 ~15:52 UTC → `{"result":"success","count":0,"reports":[]}`.
+  `OBSERVED: .../v1/network/validators` same minute → 305 rows, **our key absent
+  from the list entirely.** VHS has never held a record for us, not merely a stale
+  one. Controls read the same day: UNL 1930 reports, non-UNL 308.
+- `OBSERVED @ 2026-08-04 ~14:xx UTC` (prior session) → bithomp stale since
+  **2026-07-31T02:45**, still advertising version **3.2.0** — a version we left on
+  2026-08-01 (see the 3.2.1 pin above). A **different** freeze date from xrpscan's,
+  which is what withdraws the single-path conclusion.
+  `not observable: https://bithomp.com/api/cors/v2/validators returns HTTP 403`
+  unauthenticated, and `https://bithomp.com/validator/<key>` returns HTTP 204 with
+  a 0-byte body (client-rendered). **This one reading could not be re-executed this
+  session** and rests on the prior session's observation.
+
+### Cohort measurements (retained; the conclusion built on them is withdrawn)
+
+- `OBSERVED:` the ~13:45 UTC xrpscan fetch → cohort freshness: UNL 35/35 fresh;
+  UNL-with-domain 29/29 fresh; non-UNL WITHOUT domain 74/162 fresh; **non-UNL WITH
+  domain 0/108 fresh.** Ours is non-UNL with domain.
 - `OBSERVED:` same fetch → **49 of those 108 froze inside the 2026-08-01T22:00Z
   hour** across unrelated operators: `xrpsync.com` 22:03:40, `xrplvalidator.alloy.ee`
   22:03:40, **ours 22:02:50**, `zerp.cloud` 22:05:20, `xrpltool.com` 22:05:51; a
-  further 37 froze together at 2026-07-30T09Z. Different versions, operators and
-  countries, one moment. `INFERRED:` that freeze geometry is incompatible with 49
-  independent node faults — mixed versions in the same minute, ledger_index still
-  advancing across the window, and the domainless non-UNL and UNL rows on the SAME
-  registry kept updating. It is not evidence that all 108 nodes were healthy; only
-  ours has multi-feed proof.
-- `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` → SEEN on **3/3**
-  independent feeds (`xrplcluster.com`, `s2.ripple.com`, `xrpl.ws`), 17-18
-  validations each on an unbroken run of 17-18 ledgers @ 2026-08-04 ~14:0x UTC.
-- `OBSERVED: server_info / validators / validator_info via IAP` → `proposing`,
-  `pubkey_validator` = our master key, `validated_ledger` current, `validator_list
-  {count 2, status active}`, `amendment_blocked false`, manifest seq 4 byte-identical
-  to xrpscan's @ 2026-08-04 ~12:35 UTC.
-- `EXCLUDED: single-path-only propagation` by the 3/3 multi-feed result above.
-  That is strong multi-path evidence on independent public feeds, not a full-mesh proof.
-- `EXCLUDED: amendment-block, UNL expiry, key/manifest divergence, peer isolation,
-  inbound firewall` — see the RPC and `nc` evidence in the PR #34 discussion.
-- `EXCLUDED: "registries lag non-UNL validators"` (an earlier draft conclusion of
-  this very entry) by the cohort table: 74 non-UNL validators are fresh, and VHS's
-  non-UNL control carries 308 reports. The correct control is same-cohort, not UNL.
-- `EXCLUDED: peer-crawl invisibility as the cause of the staleness` — the privacy
-  flag is forced for every validator (below), so all 108 are equally uncrawlable;
-  it cannot explain why 162 domainless non-UNL rows update and 108 domain rows do not.
-- Rival hypotheses to "xrpscan-specific", raised because 49 simultaneous freezes are
-  equally consistent with one upstream dying. Stated quotationally; only the first
-  is closed:
-  - `EXCLUDED: H5 "an upstream feed shared by BOTH registries is still stale"` by
-    cross-registry divergence: `zerp.cloud` and `xrplvalidator.alloy.ee` are frozen
-    on xrpscan at 2026-08-01T22:0x yet LIVE on VHS @ 2026-08-04 ~14:2x UTC —
-    `current_index` 106066864/106066865, `agreement_1h` 1.00000 / 0.99784.
-  - `OPEN: H5b "a shared event at freeze ONSET (2026-08-01T22:0x)"` — the
-    discriminator ran at T+63h and cannot reach back. VHS could have frozen at onset
-    and recovered; no VHS `last_seen` history at onset is available to us.
-  - `OPEN: H4b "the dead path is upstream of xrpscan but consumed only by xrpscan"`
-    — produces the same geometry and is indistinguishable from "inside xrpscan" by
-    any measurement available to us. So the earned claim is that the ONGOING freeze
-    is specific to **xrpscan's path**, not that the fault is inside xrpscan.
-- `OPEN: VHS/data.xrpl.org has NEVER held an agreement report for our key`
-  (`.../validator/<key>/reports` → `count: 0`; controls the same hour: UNL 1930,
-  non-UNL 308). "Never" is a different class from "went stale" and the xrpscan
-  break does not account for it. Not closed.
+  further 37 froze together at 2026-07-30T09Z. `INFERRED:` that geometry is
+  incompatible with 49 independent node faults. It is not evidence that all 108
+  nodes were healthy; only ours has multi-feed proof.
+- `EXCLUDED: H5 "an upstream feed shared by BOTH registries is still stale"` by
+  cross-registry divergence @ 2026-08-04 ~14:2x UTC: `zerp.cloud` and
+  `xrplvalidator.alloy.ee` frozen on xrpscan at 2026-08-01T22:0x yet LIVE on VHS,
+  `current_index` 106066864/106066865, `agreement_1h` 1.00000 / 0.99784.
+- `EXCLUDED: peer-crawl invisibility as the cause of the xrpscan cohort freeze` —
+  the privacy flag is forced for every validator (below), so all 108 are equally
+  uncrawlable; it cannot explain why 162 domainless non-UNL rows update and 108
+  domain rows do not. **Scope note:** this excludes crawl-invisibility for the
+  *cohort freeze*, not for our own absence from VHS.
 
-### Config finding — `[peer_private] 1` is all cost, no benefit (ACT ON THIS)
+### What remains open
+
+- `OPEN:` **root cause.** No hypothesis survives that explains all three registries.
+- `OPEN:` leading unproven hypothesis — public registries under-observe non-UNL
+  validators generally, and ours may be worse because it is **hard-private: zero
+  inbound, no discovery, reachable only by the peers it dials out to.** Untested.
+- `EXCLUDED (withdrawn):` "registries lag non-UNL validators" was recorded as
+  excluded on the xrpscan cohort table alone. With bithomp and VHS in the picture
+  that exclusion **no longer holds** and the hypothesis is reinstated as OPEN above.
+- `OPEN: H5b "a shared event at freeze ONSET (2026-08-01T22:0x)"` — the
+  discriminator ran at T+63h and cannot reach back; no VHS `last_seen` history at
+  onset is available to us.
+- `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
+  freshness across the cohort) **returned n=0 in the comparison cohort and never
+  actually ran.** Not evidence either way.
+- **Next discriminator if this is picked up:** the proxy tier (below) changes
+  exactly the variable in the leading hypothesis — inbound reachability and
+  discovery — without changing the validator's own exposure. If registry freshness
+  recovers after the proxies are live, that supports the hypothesis; it is an
+  uncontrolled intervention, not a controlled test, so recovery would not prove it.
+
+### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
 
 ```cpp
@@ -228,7 +264,30 @@ present." Half true: rippled forces the *privacy flag*, not the *topology
 restrictions*. xrpl.org documents `peer_private` as optional — one of three
 connection strategies, required only for the proxies and public-hubs configurations.
 
-### Alert scope — external validation visibility (NOT yet built)
+**Exposure correction (this cost a wrong approval).** An earlier framing of this
+finding said the forced privacy flag stops peers gossiping our address. It does
+not. `OBSERVED:` at the deployed tag XRPLF/rippled 3.2.1,
+`src/xrpld/peerfinder/detail/Logic.h` inserts an entry for **ourselves at hops=0**
+into the endpoint handout to every target when `config_.wantIncoming &&
+counts_.inMax() > 0`; recipients substitute our real socket address and relay it
+onward via the Livecache. `wantIncoming` is exactly what `peer_private 0` turns on.
+So under `peer_private 0` our address reaches nodes we never dialled. What the
+forced flag does buy is narrower: absence from Peer Crawler (`/crawl`) results.
+
+**DECISION — Pete, 2026-08-04: option B, a CS-operated proxy tier.** Not the
+`peer_private 0` config flip. The validator **keeps `peer_private 1`** and its
+address is never published; CS stands up its own public-facing peer nodes in front
+of it, which is the posture xrpl.org prescribes for institutional validators. This
+restores inbound reach and discovery at the network edge instead of at the
+validator. `pr:35` (`peer_private 0`) is superseded and closed unmerged —
+its Grok r1 gate and the mechanism above are why B was chosen, not a rejection of
+the finding.
+
+### Alert scope — external validation visibility (built in `pr:36`, not applied)
+Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
+verify with `gcloud alpha monitoring policies list --project=<validator project>`;
+merging `pr:36` does not apply it.
+
 `OBSERVED:` Monitoring API → 12 alert policies, all enabled, every one reading an
 on-box signal. All were green throughout; none *could* have fired.
 
@@ -241,8 +300,13 @@ on-box signal. All were green throughout; none *could* have fired.
   false alarm on the cohort break above while the validator was healthy.
 
 ## Next
-- [ ] **Build the external-visibility alert** (scope above). Terraform in
-  `monitoring.tf` + a scheduled runner; T2 dual-gate before merge; Pete-gated apply.
+- [ ] **Design + build the CS-operated proxy tier** (decision above, Pete
+  2026-08-04). Public-facing peer nodes in front of the validator; validator keeps
+  `peer_private 1`. First-of-kind resources → `gcp-arch-expert:gcp-ask` pre-consult
+  before authoring. Also the intended discriminator for the open registry question.
+- [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
+  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
+- [ ] **Close `pr:35`** as superseded by option B.
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
 - [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
