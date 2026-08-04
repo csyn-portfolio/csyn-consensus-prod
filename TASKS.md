@@ -229,7 +229,7 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 
 - `OPEN:` **root cause.** Nothing observed so far is confirmed as the cause; the
   candidates below are open, not eliminated.
-- `OPEN:` primary untested candidate — **our node specifically is under-observed
+- `OPEN:` untested candidate — **our node specifically is under-observed
   because it is hard-private: zero inbound, no discovery, reachable only by the
   peers it dials out to.** Untested. Note this is the *narrow* claim about our
   node, not the general one below.
@@ -249,8 +249,8 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   proxy tier — was declined (see the decision below). No replacement is scheduled;
   whether some later work happens to vary it is not something this entry can
   enumerate. The mitigation being pursued is detection rather than diagnosis:
-  `pr:36` is designed to alert when the network stops seeing us. It is not applied,
-  so it alerts nothing yet — see the alert-scope section for the verify command.
+  `pr:36` is designed to alert when the network stops seeing us. For whether it is
+  live, see the alert-scope section below — this bullet does not answer that.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -308,7 +308,7 @@ peering to its fixed hub set.
 and for its current state read the PR. The mechanism finding above is **not**
 rejected — it stands as recorded canon; what was declined is acting on it.
 
-**Consequence to hold onto:** the primary untested candidate for the registry
+**Consequence to hold onto:** the untested candidate for the registry
 question is that our node is under-observed *because* it is hard-private. Declining
 both options leaves that candidate untested and the registry question open. That is
 an accepted cost, taken knowingly.
