@@ -244,12 +244,12 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
   actually ran.** Not evidence either way.
-- **Next discriminator if this is picked up:** the proxy tier (below) primarily
-  varies inbound reachability and discovery at the network edge, which is the
-  variable in the leading candidate — though it also changes peer identity and
-  topology, so it is not a single-variable change. If registry freshness recovers
-  after the proxies are live, that supports the candidate; it is an uncontrolled
-  intervention, not a controlled test, so recovery would not prove it.
+- **No discriminator is planned.** The intervention that would have varied the
+  leading candidate's variable — inbound reachability and discovery, via a proxy
+  tier — was declined (see the decision below). Nothing else on the roadmap changes
+  that variable, so this question stays open unless someone reopens it deliberately.
+  The standing mitigation is detection, not diagnosis: `pr:36` alerts if the network
+  stops seeing us, which is the outcome that actually matters.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -294,15 +294,24 @@ onward via the Livecache. `wantIncoming` is exactly what `peer_private 0` turns 
 So under `peer_private 0` our address reaches nodes we never dialled. What the
 forced flag does buy is narrower: absence from Peer Crawler (`/crawl`) results.
 
-**DECISION — Pete, 2026-08-04: option B, a CS-operated proxy tier.** Not the
-`peer_private 0` config flip. The validator **keeps `peer_private 1`** and its
-address is never published; CS stands up its own public-facing peer nodes in front
-of it, which is the posture xrpl.org prescribes for institutional validators. This
-restores inbound reach and discovery at the network edge instead of at the
-validator. `pr:35` (`peer_private 0`) is **superseded** by this decision and will
-not be merged — closing it is tracked in Next below; for its current state read
-the PR. Its Grok r1 gate and the mechanism above are why B was chosen; the
-underlying finding is not rejected.
+**DECISION — Pete, 2026-08-04: no change ships. The validator stays as it is.**
+Three options were on the table: (A) flip `peer_private` to 0; (B) build a
+CS-operated proxy tier in front of the validator, the posture xrpl.org prescribes
+for institutional validators; (C) neither. **A was declined** once the exposure was
+described correctly — under `peer_private 0` our address gossips to nodes we never
+dial. **B was declined** by Pete the same day: no proxies. So the validator keeps
+`peer_private 1` and continues with zero inbound, no discovery, and outbound-only
+peering to its fixed hub set.
+
+`pr:35` (`peer_private 0`) will not be merged; closing it is tracked in Next below,
+and for its current state read the PR. The mechanism finding above is **not**
+rejected — it stands as recorded canon; what was declined is acting on it.
+
+**Consequence to hold onto:** the leading candidate for the registry question is
+that our node is under-observed *because* it is hard-private. Declining both
+options means that candidate stays untested and the registry question stays open
+indefinitely. That is an accepted cost, not an oversight — the validator itself is
+healthy and validating, which is the property that matters.
 
 ### Alert scope — external validation visibility (built in `pr:36`, not applied)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
@@ -321,13 +330,13 @@ on-box signal. All were green throughout; none *could* have fired.
   false alarm on the cohort break above while the validator was healthy.
 
 ## Next
-- [ ] **Design + build the CS-operated proxy tier** (decision above, Pete
-  2026-08-04). Public-facing peer nodes in front of the validator; validator keeps
-  `peer_private 1`. First-of-kind resources → `gcp-arch-expert:gcp-ask` pre-consult
-  before authoring. Also the intended discriminator for the open registry question.
 - [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
-  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
-- [ ] **Close `pr:35`** as superseded by option B.
+  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here. This is
+  now the **only** action carried out of the 2026-08-04 investigation.
+- [ ] **Close `pr:35`** — declined, see the decision above.
+- Not planned: the CS-operated proxy tier (declined 2026-08-04). Reopening it would
+  need a fresh decision; the mechanism and trade-off are recorded above so it does
+  not have to be re-derived.
 - [x] ~~Merge PR #1~~ — MERGED 2026-06-20.
 - [x] ~~Merge substrate PR #204~~ — MERGED 2026-06-20.
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
