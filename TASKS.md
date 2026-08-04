@@ -135,8 +135,8 @@ Apply after merge.
 ## Scanner-invisibility investigation — 2026-08-04 (xrpscan cohort freeze, registry-side)
 
 **Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
-validator is healthy and propagating; the staleness is a registry-side freeze of
-xrpscan's domain-verified non-UNL cohort.** Naming the specific xrpscan subsystem
+validator is healthy and propagating; the ongoing staleness is specific to
+xrpscan's domain-verified non-UNL path.** Naming the specific xrpscan subsystem
 would need their confirmation; what is earned is the cohort scope, below. A separate, real config finding fell out of the
 investigation (`peer_private`, below) — that one is ours and is worth acting on.
 
@@ -176,12 +176,20 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `EXCLUDED: peer-crawl invisibility as the cause of the staleness` — the privacy
   flag is forced for every validator (below), so all 108 are equally uncrawlable;
   it cannot explain why 162 domainless non-UNL rows update and 108 domain rows do not.
-- `EXCLUDED: a shared upstream feed going stale` (the rival to "xrpscan-specific",
-  raised because 49 simultaneous freezes are equally consistent with one upstream
-  dying) by cross-registry discriminator: `zerp.cloud` and `xrplvalidator.alloy.ee`
-  are frozen on xrpscan at 2026-08-01T22:0x yet LIVE on VHS @ 2026-08-04 ~14:2x UTC
-  — `current_index` 106066864/106066865, `agreement_1h` 1.00000 / 0.99784. A stale
-  shared upstream would have taken both registries down. Registry-specific confirmed.
+- Rival hypotheses to "xrpscan-specific", raised because 49 simultaneous freezes are
+  equally consistent with one upstream dying. Stated quotationally; only the first
+  is closed:
+  - `EXCLUDED: H5 "an upstream feed shared by BOTH registries is still stale"` by
+    cross-registry divergence: `zerp.cloud` and `xrplvalidator.alloy.ee` are frozen
+    on xrpscan at 2026-08-01T22:0x yet LIVE on VHS @ 2026-08-04 ~14:2x UTC —
+    `current_index` 106066864/106066865, `agreement_1h` 1.00000 / 0.99784.
+  - `OPEN: H5b "a shared event at freeze ONSET (2026-08-01T22:0x)"` — the
+    discriminator ran at T+63h and cannot reach back. VHS could have frozen at onset
+    and recovered; no VHS `last_seen` history at onset is available to us.
+  - `OPEN: H4b "the dead path is upstream of xrpscan but consumed only by xrpscan"`
+    — produces the same geometry and is indistinguishable from "inside xrpscan" by
+    any measurement available to us. So the earned claim is that the ONGOING freeze
+    is specific to **xrpscan's path**, not that the fault is inside xrpscan.
 - `OPEN: VHS/data.xrpl.org has NEVER held an agreement report for our key`
   (`.../validator/<key>/reports` → `count: 0`; controls the same hour: UNL 1930,
   non-UNL 308). "Never" is a different class from "went stale" and the xrpscan
