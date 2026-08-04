@@ -54,35 +54,43 @@ advisory_delete=0
 [ledger_history]
 2000
 
-# Validator hiding: address advertisement is suppressed to the overlay either way.
+# SOFT private. Read the exposure note below before changing this value.
 #
-# 0 here does NOT disable validator hiding. rippled FORCES the privacy flag for any
-# node holding a validation key; setting this stanza to 1 adds no privacy and only
-# switches off peer discovery and inbound peering. Verified in XRPLF/rippled
-# src/libxrpl/peerfinder/Config.cpp — wantIncoming and autoConnect are both derived
-# from the ORIGINAL config value, and the force runs AFTER them:
+# rippled FORCES the privacy flag for any node holding a validation key — upstream
+# calls this the "soft" version in its own comment — but the force runs AFTER
+# wantIncoming and autoConnect are derived from the ORIGINAL cfg value. Verified on
+# the DEPLOYED tag, XRPLF/rippled 3.2.1
+# src/xrpld/peerfinder/detail/PeerfinderConfig.cpp (the file is
+# src/libxrpl/peerfinder/Config.cpp on develop):
 #
 #   config.peerPrivate  = peerPrivate;                          // from cfg
 #   config.wantIncoming = (!config.peerPrivate) && (port != 0); // ORIGINAL value
 #   if (validationPublicKey) config.peerPrivate = true;         // forced AFTER
 #   config.autoConnect  = !standalone && !peerPrivate;          // ORIGINAL param
 #
-#                         | IP privacy   | Discovery | Inbound
-#   validator + 0 (here)  | yes (forced) | yes       | yes
-#   validator + 1 (prior) | yes          | no        | no
+#                         | /crawl hidden | Discovery | Inbound | Endpoint gossip
+#   validator + 0 (here)  | yes (forced)  | yes       | yes     | YES — see below
+#   validator + 1 (prior) | yes           | no        | no      | no
 #
 # Why changed (Pete, 2026-08-04): 1 left [ips_fixed] as the ENTIRE peer set with no
-# discovery fallback and zero inbound peers across 63.8h of uptime — the thin-peer
-# condition behind the 2026-07-31 isolation outage and the reason the ">=8 peers"
-# target has stayed open. Public-hub pinning is exhausted.
+# discovery fallback and zero inbound peers across 63.8h of uptime — a contributing
+# condition in the 2026-07-31 isolation outage (the co-root was process debt: PR #23
+# was merged but never applied, so staged hubs were never loaded) and the reason the
+# ">=8 peers" target has stayed open. Public-hub pinning is exhausted.
 #
-# ACCEPTED TRADE-OFF: with discovery on we dial peers we did not pin, and each one
-# learns our address from the TCP connection itself. The forced privacy flag stops
-# them GOSSIPING it (we stay out of Peer Crawler results), but the set of hosts that
-# know where the validator lives grows from the 9 pinned hubs to an open set. This
-# is a deliberate availability-over-concealment call by the final architect, not an
-# oversight. Revisit if the CS-operated proxy tier lands: that delivers the same
-# peer diversity without widening address exposure.
+# ACCEPTED TRADE-OFF — WIDER THAN "peers we dial". The forced flag governs the
+# /crawl HTTP response only. Endpoint GOSSIP is gated on wantIncoming, which 0 turns
+# ON: PeerFinder Logic.h inserts an entry for ourselves at hops=0 into the endpoint
+# handout to every target when `config_.wantIncoming && counts_.inMax() > 0`;
+# recipients substitute our real socket address and relay it onward via the
+# Livecache. So our address propagates to nodes we never connected to — not merely
+# to peers we dialled. We remain absent from Peer Crawler results, which is a
+# narrower guarantee than "the address stays private".
+#
+# This is a deliberate availability-over-concealment call by the final architect,
+# made with the exposure above understood. Revisit if the CS-operated proxy tier
+# lands: that is the durable fix and delivers peer diversity with NO endpoint gossip
+# from the validator itself.
 #
 # NOTE: a discovering node is floored at 10 outbound slots — do NOT add
 # [peers_out_max] below 10 (rippled refuses to load: "must be in range 10-1000").

@@ -503,10 +503,17 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
 
 # --- LOW PEERS: dropped below the structural floor (WARNING, visibility-only) --
 # Deliberate deviation from observability-baseline.md canon, which lists
-# "peer count < 3" under PAGE. For THIS validator that is alert-debt: with
-# [ips_fixed] is the guaranteed peer floor (discovery enabled 2026-08-04), only ~5
-# citable public hubs exist, and ~2 are reliably up — so 2 peers is the structural
-# EQUILIBRIUM, not an incident, while agreement holds at 99.96%. Page the OUTCOME
+# "peer count < 3" under PAGE. For THIS validator that was alert-debt under the OLD
+# hard-private posture: [ips_fixed] was the ENTIRE peer supply, only ~5 citable
+# public hubs exist and ~2 are reliably up, so 2 peers was the structural
+# EQUILIBRIUM rather than an incident, while agreement held at 99.96%.
+#
+# RE-BASELINE PENDING (2026-08-04, discovery enabled): [ips_fixed] is now the
+# guaranteed FLOOR beneath discovery, so steady-state peer count should rise well
+# above 2 and inbound sessions should appear. The 1.5 threshold below is retained
+# deliberately as a conservative floor until post-recreate peer count has been
+# observed for 24-48h — re-baseline it then rather than assuming the old
+# equilibrium still describes this node. Page the OUTCOME
 # (validator_not_proposing), warn on peers. Captured as cs-ledger-feedback against
 # the canon. Threshold 1.5 (NOT 3): equilibrium 2 < 3 would leave this policy
 # PERMANENTLY OPEN (auto_close reopens daily) and train the channel to be ignored
