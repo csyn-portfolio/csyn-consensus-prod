@@ -415,6 +415,11 @@ MetricAbsence policy on it.
   identity would be correct; it needs a substrate change (Pete-apply-only).
 - Not live until `apply.yml` is dispatched (metadata != live applies to alert
   policies too — PR #19 sat merged-but-not-live for a month).
+- **Post-apply seed is REQUIRED, not optional.** A MetricAbsence condition may not
+  arm on a series that has never received a point, so right after the apply both
+  policies can be quiet for the wrong reason. Dispatch the workflow once
+  (`gh workflow run network-visibility.yml`) and confirm a heartbeat point landed
+  before treating silence as coverage.
 
 ## Option A applied and live-verified — 2026-08-04
 
