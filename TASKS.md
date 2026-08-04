@@ -247,14 +247,13 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
   actually ran.** Not evidence either way.
-- **An uncontrolled discriminator exists, if `pr:35` is applied.** `peer_private 0`
-  (decision below) varies this candidate's variable — inbound reachability and
-  discovery. Should registry freshness recover afterward, that supports the
-  candidate; the same change alters peer identity and topology, so it is not a
-  controlled test and recovery would not prove it. Note it as an observation
-  opportunity, not a plan: A was chosen for the isolation failure mode, not for
-  this question. Separately, `pr:36` is designed to alert when the network stops
-  seeing us. For the state of either PR, read the PR.
+- **The uncontrolled discriminator has now run.** `peer_private 0` was applied and
+  loaded on 2026-08-04 (see the post-apply section below), which varied this
+  candidate's variable — inbound reachability and discovery. It also changed peer
+  identity and topology at the same time, so it is not a controlled test: if
+  registry freshness recovers, that supports the candidate but does not prove it,
+  and if it does not recover, that weakens the candidate without eliminating it.
+  Nobody should build on either outcome without saying which.
 
 ### Config finding — `[peer_private]` is SOFT-forced (mechanism; see decision below)
 `OBSERVED:` XRPLF/rippled `src/libxrpl/peerfinder/Config.cpp`:
@@ -303,7 +302,7 @@ forced flag does buy is narrower: absence from Peer Crawler (`/crawl`) results.
 the table: (A) flip `peer_private` to 0; (B) build a CS-operated proxy tier in
 front of the validator, the posture xrpl.org prescribes for institutional
 validators; (C) neither. **B was declined** — no proxies. **A was chosen**, and
-ships via `pr:35`. (An earlier reading of the same day's instruction recorded both
+shipped via `pr:38`. (An earlier reading of the same day's instruction recorded both
 as declined; that was a misreading of "no proxies" as declining everything, and is
 corrected here.)
 
@@ -333,10 +332,11 @@ not read the open port as "the exposure was already there" — that
 conflates L4 reachability with peer-layer reachability, and the peer layer is
 exactly what A opens.
 
-**Applying it is not merging it.** The path is: T2 dual-gate → merge → Pete-gated
-`apply.yml` dispatch → clock-safe recreate with a snapshot first, per
-[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md).
-Where `pr:35` sits on that path lives on the PR, not here.
+**Applying was not merging.** The path taken was: T2 dual-gate → merge →
+Pete-gated `apply.yml` dispatch → clock-safe recreate with a snapshot first, per
+[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). All
+four steps completed on 2026-08-04; the evidence is in the post-apply section
+below.
 
 ### Alert scope — external validation visibility (scope implemented in `pr:36`)
 Scope below is implemented in `pr:36`. Whether it is live is not recorded here —
@@ -375,7 +375,7 @@ evidence below; for current state run the commands, do not read the numbers here
 - `OBSERVED: gcloud compute instances reset` @ 21:06:29 UTC. Sidecar reached
   `proposing=true` @ 21:13:54 UTC — **~7.4 min, inside the runbook's 10-min
   ceiling** but well past the ~2 min healthy path.
-- `OBSERVED:` sidecar peer count 9 (pre-reset) → 28 within 2 min of proposing → 38
+- `OBSERVED:` sidecar peer count 9 (pre-reset) → 28 by ~21:10 UTC, before proposing returned → 38
   @ 21:21:54 UTC. `INFERRED:` **both** autoConnect and inbound were live at that
   reading, from the shipped caps: `[ips_fixed]`'s 11 endpoints bypass slot
   accounting and sit outside the maxima, so an all-outbound ceiling is 11 + 20 = 31.
@@ -390,13 +390,17 @@ evidence below; for current state run the commands, do not read the numbers here
 
 ### Open after this change
 
-- `OPEN: min_gap` read **14** before the reset and **999** after, unchanged since,
-  while `in_majority` stayed **0** across both — the last reading in that series was 21:21:54 UTC and nothing since was sampled. Not explained. It tripped no alert
-  and no `warn`/`err` line, and the sidecar source lives in the sibling repo
-  `csyn-consensus-infra`, which was out of scope for the applying session. Do not
-  assume benign: establish what the field measures before the next recreate.
+- `OBSERVED: min_gap` read **14** before the reset, **999** from the reset through
+  21:21:54 UTC, and **14** again by 21:33:24 UTC — so it recovered on its own after
+  roughly 20 minutes, with `in_majority` **0** throughout. It tripped no alert and
+  no `warn`/`err` line. `OPEN:` what the field measures is still not established —
+  the sidecar emitting it lives in the sibling repo `csyn-consensus-infra`, out of
+  scope for the applying session. The recovery is consistent with a sentinel used
+  while the value cannot be computed during resync, but that is a guess, not a
+  reading of the source. Worth settling before the next recreate, when it will
+  almost certainly show 999 again and should not be mistaken for a fault.
 - `OPEN:` **per-session inventory**, not the existence of inbound. That inbound
-  sessions existed is settled by the arithmetic above. What was not obtained is the
+  sessions existed is inferred from the caps arithmetic above. What was not obtained is the
   breakdown — which peers, which direction each, how many inbound at a given moment,
   and whether any single source is consuming slots. `not observable: gcloud compute
   ssh --tunnel-through-iap` fails with OS Login API not enabled on quota project
