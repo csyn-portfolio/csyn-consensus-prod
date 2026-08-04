@@ -135,18 +135,20 @@ Apply after merge.
 ## Scanner-invisibility investigation — 2026-08-04 (root cause NOT established)
 
 **Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
-validator is healthy and validating; every registry successfully re-queried this
-session fails to show it current; the reason is NOT established.**
+validator is healthy and validating; the two registries re-queried this session
+(xrpscan, VHS) both fail to show it current; the reason is NOT established.**
 
 > [!IMPORTANT]
 > **Retraction.** The version of this entry merged in `pr:34` concluded the ongoing
 > staleness was "specific to xrpscan's domain-verified non-UNL path." **That is
-> withdrawn.** Two registries were re-queried this session and neither is explained
-> by that conclusion: xrpscan is frozen, and VHS returns no record for the key at
-> all — an ingest break inside xrpscan does not account for a registry that has no
-> row to freeze. A third data point (bithomp, stale from an unrelated date) points
-> the same way but comes from the **prior session and could not be re-executed
-> here**, so it is not load-bearing for this retraction. The cohort observations
+> withdrawn.** The withdrawal rests on **one** leg, re-queried this session: VHS
+> returns no record for the key at all, and an ingest break inside xrpscan cannot
+> account for a *different* registry that has no row to freeze. (xrpscan's own
+> freeze is consistent with the withdrawn conclusion and is not evidence against
+> it — it is the observation that conclusion was built on.) A third data point
+> (bithomp, stale from an unrelated date) points the same way but comes from the
+> **prior session and could not be re-executed here**, so it is not load-bearing.
+> The cohort observations
 > below are retained as measurements; the conclusion drawn from them is not.
 
 **Rule (unchanged, and the one durable output):** a registry (`xrpscan`,
@@ -160,7 +162,10 @@ independent feeds** — `tools/network-sees-validator.mjs`.
 - `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` @ 2026-08-04
   ~15:52 UTC → SEEN on **3/3** independent feeds (`xrplcluster.com`,
   `s2.ripple.com`, `xrpl.ws`), 17 validations each on an unbroken run of 17
-  ledgers. Same result as the ~14:0x UTC run, ~2h apart.
+  ledgers.
+- `OBSERVED: node tools/network-sees-validator.mjs --seconds 70` @ 2026-08-04
+  ~14:0x UTC → SEEN on the same 3/3 feeds, 17-18 validations each on an unbroken
+  run of 17-18 ledgers. Two independent runs ~1.8h apart, same outcome.
 - `OBSERVED: server_info / validators / validator_info via IAP` @ 2026-08-04
   ~12:35 UTC → `proposing`, `pubkey_validator` = our master key,
   `validated_ledger` current, `validator_list {count 2, status active}`,
@@ -185,8 +190,8 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   reports, non-UNL 308.
   `OPEN:` whether VHS ever held a record. The two calls above read **present**
   state; no VHS history endpoint was queried, so "never" is not earned here.
-- `OBSERVED @ 2026-08-04 ~14:xx UTC` (**prior session, not re-executed here**) →
-  bithomp stale since **2026-07-31T02:45**, still advertising version **3.2.0** —
+- `OBSERVED: bithomp validator lookup, exact endpoint unrecorded` @ 2026-08-04
+  ~14:xx UTC (**prior session, not re-executed here**) → stale since **2026-07-31T02:45**, still advertising version **3.2.0** —
   a version we left on 2026-08-01 (see the 3.2.1 pin above), i.e. a different
   freeze date from xrpscan's.
   `not observable: https://bithomp.com/api/cors/v2/validators returns HTTP 403`
@@ -229,11 +234,11 @@ independent feeds** — `tools/network-sees-validator.mjs`.
   node, not the general one below.
 - `EXCLUDED (still holds): "registries lag non-UNL validators as a class"` by the
   same-registry cohort table — 74/162 domainless non-UNL rows fresh on the xrpscan
-  fetch, and VHS non-UNL controls carrying 308 reports. Silence about **us** on
-  bithomp and VHS does not touch those controls. The general exclusion stands; only
+  fetch, and VHS non-UNL controls carrying 308 reports. Silence about **us** on VHS
+  does not touch those controls. The general exclusion stands; only
   the narrower per-node hypothesis above is open.
 - `OPEN: H5b "a shared event at freeze ONSET (2026-08-01T22:0x)"` — the
-  cross-registry discriminator ran at the ~14:2x UTC check, ~63h after onset, and
+  cross-registry discriminator ran at the ~14:2x UTC check, ~64h after onset, and
   cannot reach back; no VHS `last_seen` history at onset is available to us.
 - `INCONCLUSIVE:` the intended discriminator (IP-resolvability vs registry
   freshness across the cohort) **returned n=0 in the comparison cohort and never
