@@ -501,53 +501,61 @@ resource "google_monitoring_alert_policy" "validator_not_proposing" {
   depends_on = [google_monitoring_metric_descriptor.proposing]
 }
 
-# --- LOW PEERS: dropped below the structural floor (WARNING, visibility-only) --
-# Deliberate deviation from observability-baseline.md canon, which lists
-# "peer count < 3" under PAGE. For THIS validator that was alert-debt under the OLD
-# hard-private posture: [ips_fixed] was the ENTIRE peer supply, only ~5 citable
-# public hubs exist and ~2 are reliably up, so 2 peers was the structural
-# EQUILIBRIUM rather than an incident, while agreement held at 99.96%.
+# --- LOW PEERS: below the canon 8-peer target (WARNING, visibility-only) -------
+# Threshold rationale — read before changing the number.
 #
-# RE-BASELINE PENDING — the config in `config/rippled.cfg.tftpl` sets
-# [peer_private] 0, but this comment cannot say whether the box is running it:
-# merging is not applying, and applying is not loading (that needs the clock-safe
-# recreate). Check the instance metadata and IAP `peers`, not this file. Once that
-# config IS live: [ips_fixed] becomes the
-# guaranteed FLOOR beneath discovery rather than the whole supply, so steady-state
-# peer count should rise and inbound sessions should appear. The 2.5 threshold
-# below is retained deliberately until post-recreate peer count has been observed
-# for 24-48h — re-baseline it then rather than assuming either the old
-# hard-private equilibrium or the post-#26 one still describes this node. Page the OUTCOME
-# (validator_not_proposing), warn on peers. Captured as cs-ledger-feedback against
-# the canon. Threshold below 3: an equilibrium of 2 would leave this policy
-# PERMANENTLY OPEN (auto_close reopens daily) and train the channel to be ignored
-# (observability-sre, 2026-06-30). The value actually configured on the condition
-# below is 2.5, set with the post-#26 multi-path equilibrium of ~6-7 in mind: it
-# fires on a SUSTAINED drop to two peers or fewer, which is the SPOF band per
-# peer-set-curation canon. (An earlier revision of this block described a 1.5
-# threshold that the condition no longer uses.) The "below ideal ≥8" health
-# view lives on the dashboard, not a perpetually-firing policy.
-# NOTE: `severity = WARNING` is an incident-classification LABEL, not a routing
-# gate — Cloud Monitoring fans EVERY policy to notification_channels regardless of
-# severity. Harmless today (channels are email+slack, no real pager); if a true
-# pager channel is ever added, SPLIT channels so peer noise stays off it.
+# Canon (observability-baseline.md) sets peer_count target >= 8, alert < 5, page < 3.
+# This policy carried a 2.5 threshold as a DOCUMENTED DEVIATION, justified by the
+# hard-private posture: with `peer_private 1` there was no discovery, [ips_fixed] was
+# the ENTIRE peer supply, only ~5 citable public hubs exist and ~2 were reliably up.
+# Two peers was the structural equilibrium, so a canon-shaped threshold would have sat
+# PERMANENTLY OPEN (auto_close reopens daily) and trained the channel to be ignored.
+#
+# That justification is VOID as of 2026-08-04: `peer_private 0` restored autoConnect,
+# so [ips_fixed] is a floor beneath discovery rather than the whole supply, and the
+# steady-state count is an order of magnitude above the old equilibrium. (For what it
+# is now, read the `peers` admin RPC — see the runbook. A count written here rots.)
+#
+# Set to 7.5 — WARN on a sustained mean below 8, the canon TARGET floor. The reasoning
+# is mechanical, not fitted to a measurement:
+#   - ABOVE the discovery-failure fallback. If autoConnect stops working the node falls
+#     back toward the live subset of [ips_fixed], historically ~2-4 sessions. A
+#     threshold at or below that band cannot distinguish "discovery died" from a normal
+#     hard-private day, which is exactly the blind spot 2.5 had.
+#   - BELOW anything observed with discovery on, by a wide margin, so it cannot flap.
+#   - Canon's `alert < 5` was written for a differently-shaped node and is NOT adopted
+#     verbatim: at a supply in the tens, a drop to 6 is a serious connectivity loss and
+#     must fire. 4.5 would stay silent through it.
+# The PAGE remains the OUTCOME (`validator_not_proposing`); this stays a WARNING and a
+# leading indicator.
+#
+# STILL PROVISIONAL. Chosen on ~45 minutes of post-recreate data, not the 24-48h the
+# recreate runbook asks for. Revisit once that data exists: if the count proves stable
+# and well above 8, this can rise toward it; if discovery turns out to vary widely, the
+# duration or aligner should absorb that rather than the threshold dropping back down.
+# Tracked in TASKS.md — do not treat this note as the tracker.
+#
+# NOTE: `severity = WARNING` is an incident-classification LABEL, not a routing gate —
+# Cloud Monitoring fans EVERY policy to notification_channels regardless of severity.
+# Harmless today (channels are email+slack, no real pager); if a true pager channel is
+# ever added, SPLIT channels so peer noise stays off it.
 resource "google_monitoring_alert_policy" "validator_low_peers" {
   project      = module.validator.project_id
-  display_name = "XRPL validator LOW PEERS — below the 3-peer floor (WARNING)"
+  display_name = "XRPL validator LOW PEERS — below the canon 8-peer target (WARNING)"
   combiner     = "OR"
   severity     = "WARNING"
 
   conditions {
-    display_name = "WARN: LOW PEERS — peer_count mean < 2.5 for 5m"
+    display_name = "WARN: LOW PEERS — peer_count mean < 8 for 5m"
     condition_threshold {
       filter                  = "metric.type=\"custom.googleapis.com/xrpl/validator/peer_count\" AND resource.type=\"generic_task\""
       comparison              = "COMPARISON_LT"
-      threshold_value         = 2.5 # set post-#26 when the multi-path pin raised the observed peer count; warn on sustained drop below 3
+      threshold_value         = 7.5 # canon TARGET floor; rationale in the block comment above
       duration                = "300s"
       evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
       aggregations {
         alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN" # absorbs single-peer blips among the pinned set
+        per_series_aligner = "ALIGN_MEAN" # absorbs churn as discovery adds and drops sessions
       }
       trigger { count = 1 }
     }
@@ -556,7 +564,7 @@ resource "google_monitoring_alert_policy" "validator_low_peers" {
   notification_channels = local.alert_channels
   alert_strategy { auto_close = "86400s" }
   documentation {
-    content   = "The validator's connected peer count dropped below the 3-peer floor (mean < 2.5 for 5m) after the multi-path [ips_fixed] pin (PR #26). For the current peer count read the `peers` admin RPC over IAP — a number written here would rot. A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Check the `peers` admin RPC and reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Durable fix for ≥8 is a CS-operated peer node (public-hub pinning is exhausted)."
+    content   = "The validator's connected peer count fell below the canon 8-peer target (mean < 8 for 5m). This threshold assumes peer discovery is in force — the config INTENDS it (`[peer_private]` in `config/rippled.cfg.tftpl`), but whether the running daemon loaded it is a separate question: confirm with instance metadata and the `peers` admin RPC, not from this text. If discovery is in force, a sustained drop here means peer acquisition is degrading — autoConnect failing or the network path narrowing — and the node is drifting toward its `[ips_fixed]` floor. A single peer is a SPOF for both ledger sync and validation relay (peer-set-curation canon). **WARNING only — the PAGE is `validator_not_proposing`.** Diagnose: the `peers` admin RPC over IAP — OS Login is disabled by default on the quota project, so follow Step 0 of `docs/runbooks/validator-recreate.md` for the enable/use/disable sequence — plus reachability of the pinned hubs in `config/rippled.cfg.tftpl` `[ips_fixed]` (one home — do not re-copy the host list here). Episode 2026-07-31: peers went to 0 and the not-proposing PAGE followed ~90m later; treat a sustained low-peers WARN as a leading indicator. Diagnose the discovery path first; a CS-operated peer node is the floor for the case where discovery fails, not the first answer to a thin count (public-hub pinning is exhausted)."
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.peer_count]

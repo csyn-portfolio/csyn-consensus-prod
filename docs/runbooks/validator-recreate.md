@@ -6,35 +6,67 @@ into the **running** validator. *Metadata ≠ live* — a `tofu apply` only writ
 config to instance metadata; the running daemon keeps its old on-disk copy until the
 COS startup re-runs and recreates the container.
 
-**Current pending application of this runbook — peer-set activation.** `[ips_fixed]`
-gained `zaphod.alloy.ee` (PR #9, already applied to instance metadata). Live peer
-sessions are **2 of 5** pinned hubs (`r.ripple.com` + `hubs.xrpkuwait.com` peered;
-`sahyadri.isrdc.in` down; `hub.xrpl-commons.org` flaky; `zaphod.alloy.ee` staged but
-**not yet loaded**). This recreate loads zaphod → expect **≥3** live sessions.
-Per `observability-baseline.md`: `peer_count` target **≥8**, alert **<5**, **page <3** —
-this recreate **clears the `<3` page condition**. The path to ≥8 is a CS-operated peer
-node (see *Follow-on* below); pinning more public hubs is exhausted (all ~5 citable
-public hubs are already in `[ips_fixed]`).
+**This runbook is general — it has no "currently pending" application.** An earlier
+revision pinned one here (the 2026-07-31 peer-set activation), which then rotted into
+a description of a state the node had left. Applications are logged in `TASKS.md` as
+they happen; this file describes the procedure only.
+
+Per `observability-baseline.md`: `peer_count` target **>= 8**, alert **< 5**, page
+**< 3**. This repo's `validator_low_peers` policy warns below **8** — see the block
+comment above it in `monitoring.tf` for why canon's `alert < 5` is not adopted
+verbatim. For the count right now, run Step 0; a number written here would rot.
 
 ## Why a sync-soak gate (read before every recreate)
 
 xrpld **3.2.0** has an **OPEN, not-reproduced-by-XRPLF** report
 ([XRPLF/rippled#7572](https://github.com/XRPLF/rippled/issues/7572)): a 3.2.0 node can
 get stuck in `server_state: connected` acquiring **0 ledger data** on a host where 3.1.3
-syncs fine (upstream suspects disk IOPS; no fix, no root cause as of 2026-06-21). Our
-node is currently **past** this (proposing), but a recreate **re-runs the full sync
+syncs fine (upstream suspects disk IOPS; no fix, no root cause as of 2026-06-21). A node that is
+proposing is **past** this, but a recreate **re-runs the full sync
 path**. So every recreate must clear an explicit sync-soak gate (Step 4) before it is
 declared done, with the Step-1 snapshot as the rollback point. A node stuck in
 `connected` is **not validating** — misses pile up and UNL curators score it down.
 
 ## Step 0 — Pre-checks (read-only + named approval to SSH)
 
+**SSH needs the OS Login API turned on first, and off again after.** It is
+deliberately DISABLED on the quota project, so a bare `gcloud compute ssh` returns
+*"Cloud OS Login API has not been used in project csyn-platform"*. That is the
+quota-project corollary — `billing_project = csyn-platform` routes the call through
+the platform project, so an API used against a `ledger/` workload must be enabled
+there too. The IAM is already standing (`iap.tunnelResourceAccessor` +
+`compute.osLogin` on `csyn-ledger-validator-ops@cloudsyn.net`, see `iam.tf`); only
+the API is ephemeral.
+
+Run it as a **script**, not as pasted lines. A bare `trap ... EXIT` typed at an
+interactive prompt fires when your shell exits, not when the commands finish, so it
+would not tear down. The quoted heredoc also keeps the remote command's own quoting
+intact through `bash` → `gcloud --command` → `docker exec` → `sh -c`.
+
 ```bash
+cat > /tmp/validator-precheck.sh <<'EOS'
+#!/usr/bin/env bash
+set -uo pipefail
+trap 'gcloud services disable oslogin.googleapis.com --project=csyn-platform --force -q' EXIT
+gcloud services enable oslogin.googleapis.com --project=csyn-platform
 gcloud compute ssh csyn-ldg-validator --zone=us-south1-a \
-  --project=csyn-ldg-validator-prod --tunnel-through-iap \
-  --command='for c in server_info server_state peers; do echo "=====$c====="; \
-    sudo docker exec rippled sh -c "xrpld $c 2>/dev/null || rippled $c 2>/dev/null"; done'
+  --project=csyn-ldg-validator-prod --tunnel-through-iap --quiet \
+  --command='for c in server_info server_state peers; do echo "=====$c====="; sudo docker exec rippled sh -c "xrpld $c 2>/dev/null || rippled $c 2>/dev/null"; done'
+EOS
+bash /tmp/validator-precheck.sh
 ```
+
+Then **verify the teardown** — empty output is the pass. A non-empty result means the
+API was left enabled, which is the failure this pattern exists to prevent; disable it
+by hand. Do this even on a clean run: a hard-killed terminal skips the trap.
+
+```bash
+gcloud services list --enabled --project=csyn-platform \
+  --filter="config.name=oslogin.googleapis.com" --format="value(config.name)"
+```
+
+If `enable` returns before the API is actually serving, the ssh can still 403. That
+is a normal gcloud enablement race — re-run the script; the trap leaves no residue.
 
 - **Baseline to compare against:** record current `server_state` (expect `proposing`),
   `pubkey_validator` (= our master key `nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`),
@@ -83,13 +115,15 @@ will reset and resync even though NuDB persists on the bind-mounted disk.
 
 ## Step 4 — SYNC-SOAK GATE (the pass/fail decision)
 
-Poll the node (same IAP-SSH + `docker exec` form as Step 0). Healthy path ~2 min; **hard
+Poll the node by re-running the Step 0 script — it re-enables OS Login, reads, and tears
+down on each pass, so a multi-minute soak leaves the API off between polls. Healthy path
+~2 min; **hard
 ceiling 10 min**.
 
 ```bash
 xrpld server_info    # watch server_state advance + complete_ledgers grow
 xrpld server_state   # connected → syncing/tracking → full → proposing
-xrpld peers          # zaphod.alloy.ee should now appear; peer_count ≥ 3
+xrpld peers          # peer_count recovering; see the PASS floor below
 ```
 
 **PASS — declare done only when ALL hold within 10 min:**
@@ -97,7 +131,11 @@ xrpld peers          # zaphod.alloy.ee should now appear; peer_count ≥ 3
 - `pubkey_validator` = our key (token reloaded correctly — not running as a tracking node)
 - `complete_ledgers` advancing **and** validations resuming in logs
   (`Advancing accepted ledger … with >= N validations`)
-- `peer_count ≥ 3` (zaphod live)
+- `peer_count` at or above **8**, the `validator_low_peers` WARN floor — the
+  recreate is not done while the node sits in a band its own alert would fire on.
+  With `[peer_private] 0` discovery repopulates well past 8; if it stalls below,
+  treat it as the discovery-failure case, not as a passing soak. (Under the old
+  hard-private posture this line read `>= 3`, which is now below the alert floor.)
 - the **down** (5m no logs) and **stuck** (15m no `LedgerConsensus`) log alerts did not
   fire (or auto-closed)
 
@@ -113,7 +151,8 @@ data beyond ~5–10 min, not advancing):
 ## Step 5 — Verify steady state (post-gate)
 
 - Dashboard `3fa8610d-1b5f-4440-a04c-d53a54ae6ab7` (`csyn-ldg-validator-prod`):
-  `proposing=1`, `peer_count ≥ 3`, `unl_active=1`.
+  `proposing=1`, `unl_active=1`, and `peer_count` at or above 8, the
+  `validator_low_peers` WARN floor.
 - **The network sees our validations** — run from any machine with internet
   (the validator itself cannot reach this under the egress deny-floor).
   **Run it twice, a few minutes apart** — a single window is statistically weak,
@@ -139,7 +178,6 @@ data beyond ~5–10 min, not advancing):
   |---|---|---|
   | `2` | INCONCLUSIVE — feeds were relaying trusted-only, or a feed errored | Re-run up to **3 times**, widening `--seconds` (e.g. 70 → 150). Still exit 2 after 3 tries → escalate as a *diagnostic* gap, not a node fault; the recreate PASS stays unproven either way. |
   | `1` | NOT SEEN — >= 2 feeds carried untrusted validations and none showed us | **Before escalating:** confirm on-box `server_state: proposing` and `pubkey_validator` = our master key, and confirm `--signing-key` matches `validator_info.ephemeral_key` (a rotated token with a stale default is the most likely cause of a false exit 1). |
-- The `peer_count < 3` page condition is cleared.
 
 > **Registries are INFORMATIONAL — never a PASS/FAIL gate.** This step previously
 > read xrpscan's `agreement_1h` via `api.xrpscan.com/api/v1/validator/<key>`, which
@@ -163,7 +201,11 @@ data beyond ~5–10 min, not advancing):
 deny-floor / VPC-SC untouched; `[validator_token]` is loaded from Secret Manager — verify
 `pubkey_validator`, not just `server_state`.
 
-**Follow-on (separate work item, not this runbook):** the path to the `≥8` peer target is
-a **CS-operated peer node** (TBD) — public-hub pinning is exhausted (all ~5 citable public
-hubs already in `[ips_fixed]`). Until then, a 5-hub `[ips_fixed]` with zaphod live floats
-around 3 reliable sessions, which clears the page line but stays in `<5` ticket territory.
+**Follow-on (separate work item, not this runbook):** a **CS-operated peer node** (TBD).
+Public-hub pinning is exhausted — all ~5 citable public hubs are already in `[ips_fixed]`,
+and only a subset of any pinned list is reliably up at a given time. The reason to want it
+has changed: it is no longer the only route to a workable peer count (discovery supplies
+that while `[peer_private]` is `0`), but **defense in depth for the case where discovery
+fails** — a CS-run peer we dial outbound is a floor that does not depend on public hubs
+being healthy. For the count now, run Step 0; an earlier revision of this paragraph
+recorded a live figure here and it rotted.
