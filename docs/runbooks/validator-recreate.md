@@ -93,8 +93,38 @@ gcloud compute disks snapshot <DATA_DISK> --zone=us-south1-a \
 
 Ledger data is on the bind-mounted data disk, so container removal loses nothing; the
 snapshot is the rollback point if the sync-soak gate fails. (For a **binary** change,
-snapshot the boot disk too.)
+snapshot the boot disk too — name it `validator-pre-<reason>-boot-<STAMP>`.)
 
+### Snapshot retention (keep this project clean)
+
+Manual pre-change snapshots accumulate cost and clutter. **Default policy:**
+
+| Keep | Why |
+|------|-----|
+| **1** latest successful `validator-pre-recreate-*` **data** snapshot | rollback for the last config/recreate |
+| **0–1** boot snapshot, **only** while a binary upgrade is still in soak (≤14d) | rollback for image cutovers |
+
+**After the sync-soak gate PASSES** (Step 4 + network-sees gate):
+
+1. Keep the snapshot you just took as the new “latest.”
+2. Delete older `validator-pre-recreate-*` data snaps (and any boot snap older than the
+   current live binary pin).
+3. Do **not** keep a chain of historical recreate snaps “just in case” — NuDB history is
+   on the live data disk; old snaps are only pre-change rollback points.
+
+```bash
+# Inventory (run after every recreate)
+gcloud compute snapshots list --project=csyn-ldg-validator-prod \
+  --format='table(name,diskSizeGb,storageBytes,creationTimestamp,sourceDisk.basename())'
+
+# Delete a superseded snap (only after soak PASS and you have a newer one READY)
+# gcloud compute snapshots delete <NAME> --project=csyn-ldg-validator-prod --quiet
+```
+
+Approximate cost: multi-regional standard snapshots bill on **stored** bytes
+(~$0.026/GB-mo). A 150 GB data disk often stores ~8–10 GB compressed — a few
+orphaned snaps are dollars, not hundreds, but the habit scales when multi-region
+validators land (CONSVAL2).
 ## Step 2 — Pick a low-impact window (clock-safe)
 
 Single validator → a recreate causes a brief miss window (~2 min on the healthy path,
