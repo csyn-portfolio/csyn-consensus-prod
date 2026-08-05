@@ -418,25 +418,16 @@ evidence below; for current state run the commands, do not read the numbers here
   split above. The earlier entry recorded this as `not observable` because
   `gcloud compute ssh --tunnel-through-iap` returned "Cloud OS Login API has not
   been used in project csyn-platform". **That was a wrong reading of a solvable
-  gate.** `oslogin.googleapis.com` is deliberately left DISABLED on the quota
-  project rather than being unavailable: the sanctioned pattern is to enable it for
-  the session, do the work, and disable it again.
-
-  The sequence, its trap (written as a heredoc **script** run with `bash <file>` — a
-  bare `trap ... EXIT` typed at an interactive prompt fires on shell exit, not when
-  the commands finish, so it does NOT tear down), and the teardown verification live
-  in **Step 0 of
-  [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)** —
-  one home, because the alert body points there too.
-
-  The 2026-08-04 run that produced the inventory above used the bare sequence
-  **without** a trap and verified teardown manually afterwards. It happened to
-  complete; that is luck, not method, which is why the trap is written in here. The IAM side is already standing:
-  `iap.tunnelResourceAccessor` + `compute.osLogin` are bound to
-  `csyn-ledger-validator-ops@cloudsyn.net` in `iam.tf`; only the quota-project API
-  is ephemeral. Root cause of the 403 is the documented quota-project corollary —
-  `billing_project = csyn-platform` routes the call through the platform project, so
-  an API used against a `ledger/` workload must be enabled there too.
+  gate** (quota-project corollary: enable `oslogin.googleapis.com` on
+  `csyn-platform` if off). **Standing practice (Pete 2026-08-05):** the API on the
+  quota project is fine to leave enabled. What is break-glass / one-time is using
+  OS Login against the **validator machine** (IAP + SSH) during troubleshooting —
+  named approval, short session, no standing interactive access. Sequence lives in
+  **Step 0 of
+  [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)**
+  (one home; alert body points there). IAM is already standing:
+  `iap.tunnelResourceAccessor` + `compute.osLogin` on
+  `csyn-ledger-validator-ops@cloudsyn.net` in `iam.tf`.
 
 - [ ] **Low-peers threshold — INTERIM 7.5, still open.** Raised from 2.5 (WARN
   below 8, the canon *target* floor) on 2026-08-04. It is above the
@@ -484,10 +475,6 @@ exactly **1** latest soak-passed `validator-pre-recreate-*` data snap for fast r
 | Cloud Run / Scheduler / Pub/Sub / legacy GCR APIs enabled | $0 idle | Poller retired; no Run jobs/services. Optional hygiene: disable unused APIs later. |
 | Spot / e2 / smaller machine | N/A / high risk | Spot forbidden (dUNL clock). Downsize needs sustained CPU/mem evidence — not chased. |
 
-**Hygiene outside this project (report only):** `oslogin.googleapis.com` is still
-**enabled** on quota project `csyn-platform` — runbook requires disable-after-SSH.
-Not flipped this session (out of repo folder).
-
 **Budget:** live billing budget `csyn-ldg-validator-prod-monthly` = $700 (matches
 `monthly_budget_usd` in `validator.tf`). No spend amount returned by budgets API
 here — check console for MTD.
@@ -503,10 +490,10 @@ here — check console for MTD.
   confirming nothing in sibling modules re-enables them on apply — $0 until used.
 - [ ] Optional later: measure data-disk fill (IAP + `df`) before any size change.
 
-**OS Login clarification (Pete 2026-08-05):** leaving `oslogin.googleapis.com`
-enabled on the quota project is fine. What matters is not enabling OS Login / SSH
-on the **validator VM** except for one-time break-glass troubleshooting (then tear
-down).
+**OS Login practice (Pete 2026-08-05, one home = recreate runbook Step 0):**
+- `oslogin.googleapis.com` on the **quota project** — OK left enabled.
+- Using OS Login on the **validator machine / infra** (IAP + SSH) — **one-time
+  during troubleshooting only** (named approval, short session).
 
 ## Next
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
