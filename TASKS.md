@@ -157,8 +157,8 @@ upstream **3.3.0** published 2026-08-06. Same-digest invariant: practice soak on
 | Step | Owner repo | Action | Gate |
 |------|------------|--------|------|
 | 0 | — | Confirm package `xrpld=3.3.0-1` in ripple-deb | done 2026-08-08 |
-| 1 | `csyn-consensus-infra` | `gh workflow run build-rippled-image.yml -f rippled_version=3.3.0` | **await Pete dispatch OK** (auto-mode blocks workflow_dispatch) |
-| 2 | `csyn-consensus-infra` | Capture digest from run "PIN THIS DIGEST" + smoke `xrpld version 3.3.0` | digest non-empty |
+| 1 | `csyn-consensus-infra` | `gh workflow run build-rippled-image.yml -f rippled_version=3.3.0` | **done** run [31232108548](https://github.com/csyn-portfolio/csyn-consensus-infra/actions/runs/31232108548) |
+| 2 | `csyn-consensus-infra` | Capture digest from run "PIN THIS DIGEST" + smoke `xrpld version 3.3.0` | **done** smoke `xrpld version 3.3.0` (commit `00a178fb…`); **PIN** `sha256:2f984bdbff9c6848b740c79eee972322a0be3f1a1346f7f0745fe94a81cd916b` |
 | 3 | `csyn-consensus-infra` | PR: pin `svc-rippled-dev` `var.image_digest` → new digest; apply | plan clean |
 | 4 | practice | Reset/recreate dev container; size-proof binaries before rely | `bash`/`xrpld` non-trivial ELF |
 | 5 | practice | Dev soak ≥ soak window (proposing N/A on tracking node: `full`/`tracking`, peers, complete_ledgers, no crash loop) | PASS |
@@ -175,7 +175,7 @@ upstream **3.3.0** published 2026-08-06. Same-digest invariant: practice soak on
 - Snapshot retention: 1 latest soak-passed data snap; boot snap only while binary
   upgrade still in soak (≤14d).
 
-**Not started until Step 1 is dispatched.** Build command:
+**Steps 1–2 complete (2026-08-08).** Next is Step 3: pin digest on `svc-rippled-dev` in `csyn-consensus-infra`. Build command (already run):
 
 ```bash
 gh workflow run build-rippled-image.yml \
