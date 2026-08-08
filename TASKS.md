@@ -495,7 +495,33 @@ here — check console for MTD.
 - Using OS Login on the **validator machine / infra** (IAP + SSH) — **one-time
   during troubleshooting only** (named approval, short session).
 
+## xrpld 3.3.0 upgrade (2026-08-08) — LIVE on prod
+
+Upstream 3.3.0 released 2026-08-06 (latest). Build 31232108548, digest
+`sha256:2f984bdb…` — SAME digest as svc-rippled-dev (practice live on it
+2026-08-08T01:22Z). Pin merged as PR #43; cutover per
+[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md);
+Pete confirmed cutover complete 2026-08-08.
+
+- [x] Snapshots at cutover: `validator-pre-330-{boot,data}-20260808-0218` —
+  `OBSERVED: gcloud compute snapshots list → both READY @ 2026-08-08T18:10Z`.
+- [x] Cutover boot: `OBSERVED: gcloud logging read → "Application starting.
+  Version is 3.3.0" @ 2026-08-08T02:20:46Z`.
+- [x] Staged == live: `OBSERVED: instance metadata startup-script carries
+  2f984bdb (xrpld) + 037a5d4d (sidecar), matching origin/main defaults @ 2026-08-08` — reboot-safe.
+- [x] Post-cutover health: `OBSERVED: sidecar gauges @ 2026-08-08T18:02Z →
+  proposing=1, amendment_blocked=0, peer_count=39, amendments_in_majority_window=0,
+  min_gap_to_threshold=14` — no amendment activation in flight.
+- [x] External visibility: `OBSERVED: node tools/network-sees-validator.mjs
+  --seconds 70 → SEEN 3/3 feeds (xrplcluster, s2.ripple, xrpl.ws), ours=18/18
+  closes, unbroken @ 2026-08-08T18:06Z`.
+- Soak window ≤14d from cutover (runbook boot-snapshot retention clock).
+
 ## Next
+- [ ] **After 3.3.0 soak PASS (~2026-08-22):** Pete-gated deletes per keep-latest
+  policy — superseded `validator-pre-recreate-20260804-2105` data snap and the
+  `validator-pre-330-boot-20260808-0218` boot snap (runbook: boot snaps only
+  while a binary upgrade is in soak).
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
   section above for the evidence and what it left open.

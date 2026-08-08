@@ -7,11 +7,12 @@ variable "machine_type" {
 variable "image_digest" {
   type        = string
   description = "Immutable digest of the xrpld (rippled) image in csyn-ldg-images. Pin by digest, not tag. The mainnet validator runs the SAME dev-vetted build as svc-rippled-dev (xrpld 3.3.0) — a consensus node must run a reviewed, reproducible image. Default lets CI apply.yml apply without a -var; re-pin after any rebuild (a new build = a new digest even for the same version tag)."
-  # STAGED PIN (cutover after soak PASS): xrpld 3.3.0 — build 31232108548, digest 2f984bdb…
-  # smoke "xrpld version 3.3.0". SAME digest as svc-rippled-dev. Practice live on 3.3.0
-  # @ 2026-08-08T01:22:14Z. Do not apply until soak PASS then recreate runbook.
+  # PIN: xrpld 3.3.0 — build 31232108548, digest 2f984bdb… (smoke "xrpld version 3.3.0").
+  # SAME digest as svc-rippled-dev. Prod cutover 2026-08-08T02:20Z (boot log "Application
+  # starting. Version is 3.3.0"); soak window ≤14d from cutover. Verify what is RUNNING
+  # via Cloud Logging (Application start line) or the sidecar gauges — never this comment.
   # Rollback: sha256:e664d4c5f6bb0e5538f53cb1ad6c6cd5560b6f550141f651754fe1cf563a98c8 (3.2.1).
-  # Snapshot hygiene: boot+data snaps at cutover; keep 1 latest soak-passed data snap.
+  # Snapshots at cutover: validator-pre-330-{boot,data}-20260808-0218 (keep-latest policy).
   default = "sha256:2f984bdbff9c6848b740c79eee972322a0be3f1a1346f7f0745fe94a81cd916b"
 }
 
