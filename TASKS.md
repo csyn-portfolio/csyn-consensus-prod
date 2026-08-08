@@ -127,7 +127,8 @@ Apply after merge.
 - Dev soak: svc-rippled-dev on 3.2.1 (SAME digest invariant).
 - First prod attempt failed (corrupt overlay2 extract → `exec format error`); emergency 3.2.0 rollback; layerdb orphan purge + clean re-pull with size-proof; container cutover to 3.2.1.
 - [x] Live cutover PASS (~4m): `proposing` + `pubkey_validator=nHUQEd51…` + peers≥9 + complete_ledgers advancing + `xrpld version 3.2.1`.
-- [x] Snapshots retained: `validator-pre-321-{boot,data}-20260801-1917`.
+- [x] Snapshots taken at cutover: `validator-pre-321-{boot,data}-20260801-1917`
+  (deleted 2026-08-05 after soak + keep-latest policy; see cost audit).
 - [x] Metadata re-pin e664d4c5 — PR #31 merged + apply; staged == live; reboot-safe.
 - [x] Final ops check 2026-08-01 ~20:53 UTC: proposing, peers 5–7, sidecar proposing=true, amendment_blocked=false.
 - Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
@@ -417,25 +418,16 @@ evidence below; for current state run the commands, do not read the numbers here
   split above. The earlier entry recorded this as `not observable` because
   `gcloud compute ssh --tunnel-through-iap` returned "Cloud OS Login API has not
   been used in project csyn-platform". **That was a wrong reading of a solvable
-  gate.** `oslogin.googleapis.com` is deliberately left DISABLED on the quota
-  project rather than being unavailable: the sanctioned pattern is to enable it for
-  the session, do the work, and disable it again.
-
-  The sequence, its trap (written as a heredoc **script** run with `bash <file>` — a
-  bare `trap ... EXIT` typed at an interactive prompt fires on shell exit, not when
-  the commands finish, so it does NOT tear down), and the teardown verification live
-  in **Step 0 of
-  [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)** —
-  one home, because the alert body points there too.
-
-  The 2026-08-04 run that produced the inventory above used the bare sequence
-  **without** a trap and verified teardown manually afterwards. It happened to
-  complete; that is luck, not method, which is why the trap is written in here. The IAM side is already standing:
-  `iap.tunnelResourceAccessor` + `compute.osLogin` are bound to
-  `csyn-ledger-validator-ops@cloudsyn.net` in `iam.tf`; only the quota-project API
-  is ephemeral. Root cause of the 403 is the documented quota-project corollary —
-  `billing_project = csyn-platform` routes the call through the platform project, so
-  an API used against a `ledger/` workload must be enabled there too.
+  gate** (quota-project corollary: enable `oslogin.googleapis.com` on
+  `csyn-platform` if off). **Standing practice (Pete 2026-08-05):** the API on the
+  quota project is fine to leave enabled. What is break-glass / one-time is using
+  OS Login against the **validator machine** (IAP + SSH) during troubleshooting —
+  named approval, short session, no standing interactive access. Sequence lives in
+  **Step 0 of
+  [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md)**
+  (one home; alert body points there). IAM is already standing:
+  `iap.tunnelResourceAccessor` + `compute.osLogin` on
+  `csyn-ledger-validator-ops@cloudsyn.net` in `iam.tf`.
 
 - [ ] **Low-peers threshold — INTERIM 7.5, still open.** Raised from 2.5 (WARN
   below 8, the canon *target* floor) on 2026-08-04. It is above the
@@ -452,7 +444,87 @@ evidence below; for current state run the commands, do not read the numbers here
   the uncontrolled discriminator described above. It was NOT the warrant for this
   change and nothing further should be built on it either way.
 
+## Cost / snapshot hygiene audit — 2026-08-05 (Grok, read-only gcloud)
+
+Pete purged older pre-recreate snaps; 2026-08-05 session finished keep-latest-only.
+
+```
+OBSERVED @ 2026-08-05: gcloud compute snapshots list --project=csyn-ldg-validator-prod →
+  BEFORE (after Pete's manual purge): 321-boot + 321-data + recreate-20260804 (~18.6 GB stored)
+  DELETED (unused; no disk sourceSnapshot refs): validator-pre-321-{boot,data}-20260801-1917
+  AFTER keep-latest-only:
+    validator-pre-recreate-20260804-2105  150 GB disk / ~8.1 GB stored  (peer_private=0 recreate)
+  → ~$0.21/mo multi-reg standard (estimate)
+```
+
+No snapshot schedules / resource policies, no custom images, no idle disks, no
+orphan static IPs (P2P EIP IN_USE). Disks: boot 20 + data 150 pd-ssd only.
+
+**Snapshot keep-set (policy in `docs/runbooks/validator-recreate.md`):**
+exactly **1** latest soak-passed `validator-pre-recreate-*` data snap for fast restore.
+
+**Bigger cost levers (ranked, estimates — verify in Billing console):**
+
+| Lever | Order of $ | Notes |
+|-------|------------|--------|
+| **1yr/3yr CUD for n2d (8 vCPU + 64 GB) in us-south1** | **~$100–225/mo** | No commitments found on this project. Validator is 24×7 STANDARD forever — textbook CUD. Code comment already assumes ~$326/mo 1yr CUD shape. |
+| P2P internet egress (Premium tier) | variable, often #2 after VM | Required for overlay; do **not** switch to Standard tier for a few $/mo. Peer cap work already bounds fan-out. |
+| pd-ssd 170 GB | ~$29/mo | Right type (n2d + CMEK + IOPS). Shrink only after measuring NuDB fill — not done this audit. |
+| Snapshots | ~$0.50/mo now | Hygiene > dollars; policy above. |
+| Cloud Logging (info-level xrpld) | ~20 GB/mo est. → inside free 50 GB | Leave `info` — heartbeat alerts need continuous presence. |
+| Cloud Run / Scheduler / Pub/Sub / legacy GCR APIs enabled | $0 idle | Poller retired; no Run jobs/services. Optional hygiene: disable unused APIs later. |
+| Spot / e2 / smaller machine | N/A / high risk | Spot forbidden (dUNL clock). Downsize needs sustained CPU/mem evidence — not chased. |
+
+**Budget:** live billing budget `csyn-ldg-validator-prod-monthly` = $700 (matches
+`monthly_budget_usd` in `validator.tf`). No spend amount returned by budgets API
+here — check console for MTD.
+
+### Follow-ups from this audit
+- [x] ~~Delete `validator-pre-321-{boot,data}-20260801-1917`~~ — DONE 2026-08-05
+  (unused; keep-latest = `validator-pre-recreate-20260804-2105`).
+- [ ] Pete (console): purchase resource-based CUD (n2d family, us-south1, 8 vCPU +
+  64 GB RAM) 1yr or 3yr — largest single saving; see financial report in session /
+  PR body. Grok recommends only; no purchase from harness.
+- [ ] Optional later: disable leftover unused APIs on `csyn-ldg-validator-prod`
+  (`run`, `cloudscheduler`, `pubsub`, `containerregistry`, `cloudtrace`) after
+  confirming nothing in sibling modules re-enables them on apply — $0 until used.
+- [ ] Optional later: measure data-disk fill (IAP + `df`) before any size change.
+
+**OS Login practice (Pete 2026-08-05, one home = recreate runbook Step 0):**
+- `oslogin.googleapis.com` on the **quota project** — OK left enabled.
+- Using OS Login on the **validator machine / infra** (IAP + SSH) — **one-time
+  during troubleshooting only** (named approval, short session).
+
+## xrpld 3.3.0 upgrade (2026-08-08) — LIVE on prod
+
+Upstream 3.3.0 released 2026-08-06 (latest). Build 31232108548, digest
+`sha256:2f984bdb…` — SAME digest as svc-rippled-dev (practice live on it
+2026-08-08T01:22Z). Pin merged as PR #43; cutover per
+[`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md);
+Pete confirmed cutover complete 2026-08-08.
+
+- [x] Snapshots at cutover: `validator-pre-330-{boot,data}-20260808-0218` —
+  `OBSERVED: gcloud compute snapshots list → both READY @ 2026-08-08T18:10Z`.
+- [x] Cutover boot: `OBSERVED: gcloud logging read 'resource.type="gce_instance"
+  AND jsonPayload.message:"Application starting"' --project=csyn-ldg-validator-prod
+  --freshness=2d --format='value(timestamp,jsonPayload.message)' → "Application
+  starting. Version is 3.3.0" @ 2026-08-08T02:20:46Z` (gcplogs driver ⇒
+  `jsonPayload.message`, NOT `textPayload`).
+- [x] Staged == live: `OBSERVED: instance metadata startup-script carries
+  2f984bdb (xrpld) + 037a5d4d (sidecar), matching origin/main defaults @ 2026-08-08` — reboot-safe.
+- [x] Post-cutover health: `OBSERVED: sidecar gauges @ 2026-08-08T18:02Z →
+  proposing=1, amendment_blocked=0, peer_count=39, amendments_in_majority_window=0,
+  min_gap_to_threshold=14` — no amendment activation in flight.
+- [x] External visibility: `OBSERVED: node tools/network-sees-validator.mjs
+  --seconds 70 → SEEN 3/3 feeds (xrplcluster, s2.ripple, xrpl.ws), ours=18/18
+  closes, unbroken @ 2026-08-08T18:06Z`.
+- Soak window ≤14d from cutover (runbook boot-snapshot retention clock).
+
 ## Next
+- [ ] **After 3.3.0 soak PASS (~2026-08-22):** Pete-gated deletes per keep-latest
+  policy — superseded `validator-pre-recreate-20260804-2105` data snap and the
+  `validator-pre-330-boot-20260808-0218` boot snap (runbook: boot snaps only
+  while a binary upgrade is in soak).
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
   section above for the evidence and what it left open.
@@ -469,10 +541,10 @@ evidence below; for current state run the commands, do not read the numbers here
 - [x] ~~Merge PR #14 (gated Slack notification channel scaffold)~~ — MERGED 2026-06-21 (`21f9d6e`). No-op until `slack_auth_token` supplied.
 - [x] ~~Merge PR #19 (not-proposing PAGE + low-peers WARNING alerts)~~ — MERGED 2026-06-30 (`#19`, squash). The response to the 6/30 miss investigation = **page the outcome (`proposing`), warn on peers** (config-only; NOT a node change — validator is healthy). Design via observability-sre consult + high-effort code-review (duration 300s→0s for ~5-7.5m page latency). cs-ledger-feedback captured: "page `peer_count<3`" is alert-debt for a thin-hub validator.
 - [x] ~~Pete-gated: dispatch `apply.yml` for PR #19 alerts~~ — policies live (verified 2026-07-31 list).
-- [x] ~~Apply PR #23 peer curation + clock-safe recreate~~ — DONE 2026-07-31 (incident recovery above). Snapshot `validator-pre-recreate-20260731-2136`.
+- [x] ~~Apply PR #23 peer curation + clock-safe recreate~~ — DONE 2026-07-31 (incident recovery above). Snapshot at the time was `validator-pre-recreate-20260731-2136` (since purged by Pete; current keep-set is the 2026-08-04 snap — see cost audit).
 - **Pete-only: finish Slack alert path** — still the second notification path (email alone buried the 7/31 page under flappy subjects). Monitoring → Alerting → Notification channels → authorize *Google Cloud Monitoring* Slack app → capture bot token → apply with `-var slack_auth_token=…` (or GH secret wired into apply.yml). Channel name default `#consensus-alerts`.
 - WS2-C: re-check UNL expiry advancement after recovery (UNL stayed active through incident; still monitor `unl_max_days_to_expiry`).
-- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions were ~2 in the days after that recreate; zaphod/distributedagreement went into the **loaded** config then. For the count now, read the sidecar stream — the 2026-08-04 discovery change moved it by an order of magnitude. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md). Prior snapshots retained: `validator-pre-recreate-20260630-1258`, `validator-pre-recreate-20260724-0138`, `validator-pre-recreate-20260731-2136`.
+- **Peer-set activation recreate — DONE 2026-07-31** (was deferred 6/30; forced by isolation outage). Live peer sessions were ~2 in the days after that recreate; zaphod/distributedagreement went into the **loaded** config then. For the count now, read the sidecar stream — the 2026-08-04 discovery change moved it by an order of magnitude. Runbook used: [`docs/runbooks/validator-recreate.md`](docs/runbooks/validator-recreate.md).
 - **≥8 peer target → CS-operated peer node (TBD) — still the peer-diversity fix.** Public-hub pinning exhausted. Under the former `peer_private 1` the thin floor would re-isolate if both live hubs dropped, because there was no discovery fallback. Since option A was applied on 2026-08-04 `autoConnect` supplies that fallback, which reduces the failure mode without erasing isolation risk, so the weight of this item has shifted toward peer diversity. Distinct from the declined proxy tier: this is a peer the validator dials **outbound**, compatible with either `peer_private` value.
 - **Process lesson:** merged peer-set / metadata changes require **apply + recreate** before they count as live; track “staged vs loaded” explicitly (do not treat merge as activation).
 - **Gap: `validator-buildout-and-domain-verification.md` runbook is still missing** — 5

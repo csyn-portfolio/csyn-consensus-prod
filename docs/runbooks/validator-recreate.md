@@ -29,26 +29,29 @@ declared done, with the Step-1 snapshot as the rollback point. A node stuck in
 
 ## Step 0 — Pre-checks (read-only + named approval to SSH)
 
-**SSH needs the OS Login API turned on first, and off again after.** It is
-deliberately DISABLED on the quota project, so a bare `gcloud compute ssh` returns
-*"Cloud OS Login API has not been used in project csyn-platform"*. That is the
-quota-project corollary — `billing_project = csyn-platform` routes the call through
-the platform project, so an API used against a `ledger/` workload must be enabled
-there too. The IAM is already standing (`iap.tunnelResourceAccessor` +
-`compute.osLogin` on `csyn-ledger-validator-ops@cloudsyn.net`, see `iam.tf`); only
-the API is ephemeral.
+**OS Login practice (Pete 2026-08-05):** `oslogin.googleapis.com` on the **quota
+project** (`csyn-platform`) is fine to leave enabled — that is not the control we
+care about. What is **one-time / break-glass** is actually using OS Login against
+the **validator machine** (IAP tunnel + SSH). Named approval to SSH; get in, collect
+evidence, get out. Do not leave an interactive session standing for routine ops.
 
-Run it as a **script**, not as pasted lines. A bare `trap ... EXIT` typed at an
-interactive prompt fires when your shell exits, not when the commands finish, so it
-would not tear down. The quoted heredoc also keeps the remote command's own quoting
-intact through `bash` → `gcloud --command` → `docker exec` → `sh -c`.
+Quota-project corollary: `billing_project = csyn-platform` routes the call through
+the platform project, so if the API is off there, `gcloud compute ssh` returns
+*"Cloud OS Login API has not been used in project csyn-platform"*. IAM is already
+standing (`iap.tunnelResourceAccessor` + `compute.osLogin` on
+`csyn-ledger-validator-ops@cloudsyn.net`, see `iam.tf`). Org policy
+`compute.requireOsLogin` is enforced — guest key SSH is not the path.
+
+Run the precheck as a **script** (not pasted interactive lines) so quoting stays
+intact through `bash` → `gcloud --command` → `docker exec` → `sh -c`. Enable the
+API only if a 403 says it is missing; **do not** treat disable-after-SSH as required.
 
 ```bash
 cat > /tmp/validator-precheck.sh <<'EOS'
 #!/usr/bin/env bash
 set -uo pipefail
-trap 'gcloud services disable oslogin.googleapis.com --project=csyn-platform --force -q' EXIT
-gcloud services enable oslogin.googleapis.com --project=csyn-platform
+# Enable only if needed (idempotent). Leaving the API enabled on csyn-platform is OK.
+gcloud services enable oslogin.googleapis.com --project=csyn-platform --quiet 2>/dev/null || true
 gcloud compute ssh csyn-ldg-validator --zone=us-south1-a \
   --project=csyn-ldg-validator-prod --tunnel-through-iap --quiet \
   --command='for c in server_info server_state peers; do echo "=====$c====="; sudo docker exec rippled sh -c "xrpld $c 2>/dev/null || rippled $c 2>/dev/null"; done'
@@ -56,17 +59,8 @@ EOS
 bash /tmp/validator-precheck.sh
 ```
 
-Then **verify the teardown** — empty output is the pass. A non-empty result means the
-API was left enabled, which is the failure this pattern exists to prevent; disable it
-by hand. Do this even on a clean run: a hard-killed terminal skips the trap.
-
-```bash
-gcloud services list --enabled --project=csyn-platform \
-  --filter="config.name=oslogin.googleapis.com" --format="value(config.name)"
-```
-
-If `enable` returns before the API is actually serving, the ssh can still 403. That
-is a normal gcloud enablement race — re-run the script; the trap leaves no residue.
+If `enable` returns before the API is actually serving, the ssh can still 403 —
+normal enablement race; re-run the script.
 
 - **Baseline to compare against:** record current `server_state` (expect `proposing`),
   `pubkey_validator` (= our master key `nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq`),
@@ -93,8 +87,38 @@ gcloud compute disks snapshot <DATA_DISK> --zone=us-south1-a \
 
 Ledger data is on the bind-mounted data disk, so container removal loses nothing; the
 snapshot is the rollback point if the sync-soak gate fails. (For a **binary** change,
-snapshot the boot disk too.)
+snapshot the boot disk too — name it `validator-pre-<reason>-boot-<STAMP>`.)
 
+### Snapshot retention (keep this project clean)
+
+Manual pre-change snapshots accumulate cost and clutter. **Default policy:**
+
+| Keep | Why |
+|------|-----|
+| **1** latest successful `validator-pre-recreate-*` **data** snapshot | rollback for the last config/recreate |
+| **0–1** boot snapshot, **only** while a binary upgrade is still in soak (≤14d) | rollback for image cutovers |
+
+**After the sync-soak gate PASSES** (Step 4 + network-sees gate):
+
+1. Keep the snapshot you just took as the new “latest.”
+2. Delete older `validator-pre-recreate-*` data snaps (and any boot snap older than the
+   current live binary pin).
+3. Do **not** keep a chain of historical recreate snaps “just in case” — NuDB history is
+   on the live data disk; old snaps are only pre-change rollback points.
+
+```bash
+# Inventory (run after every recreate)
+gcloud compute snapshots list --project=csyn-ldg-validator-prod \
+  --format='table(name,diskSizeGb,storageBytes,creationTimestamp,sourceDisk.basename())'
+
+# Delete a superseded snap (only after soak PASS and you have a newer one READY)
+# gcloud compute snapshots delete <NAME> --project=csyn-ldg-validator-prod --quiet
+```
+
+Approximate cost: multi-regional standard snapshots bill on **stored** bytes
+(~$0.026/GB-mo). A 150 GB data disk often stores ~8–10 GB compressed — a few
+orphaned snaps are dollars, not hundreds, but the habit scales when multi-region
+validators land (CONSVAL2).
 ## Step 2 — Pick a low-impact window (clock-safe)
 
 Single validator → a recreate causes a brief miss window (~2 min on the healthy path,
@@ -115,8 +139,7 @@ will reset and resync even though NuDB persists on the bind-mounted disk.
 
 ## Step 4 — SYNC-SOAK GATE (the pass/fail decision)
 
-Poll the node by re-running the Step 0 script — it re-enables OS Login, reads, and tears
-down on each pass, so a multi-minute soak leaves the API off between polls. Healthy path
+Poll the node by re-running the Step 0 script (short SSH, then disconnect). Healthy path
 ~2 min; **hard
 ceiling 10 min**.
 
