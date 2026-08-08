@@ -132,6 +132,63 @@ Apply after merge.
 - [x] Final ops check 2026-08-01 ~20:53 UTC: proposing, peers 5–7, sidecar proposing=true, amendment_blocked=false.
 - Lesson: after any image pull on COS, **assert binary sizes** (`bash`/`xrpld` non-trivial ELF) before cutover; purge orphan `layerdb` entries if pull fails mid-register.
 
+## xrpld 3.3.0 upgrade track — OPEN (2026-08-08)
+
+**Status:** active upgrade track. Live prod is **3.2.1** (digest `e664d4c5…`);
+upstream **3.3.0** published 2026-08-06. Same-digest invariant: practice soak on
+`svc-rippled-dev`, then prod pin + cutover.
+
+**Why now**
+- **3.2.1 already on prod** — security fix for validator manifest propagation
+  (memory/CPU exhaustion). Floor is correct; no emergency.
+- **3.3.0** adds six amendments (`BatchV1_1`, `ConfidentialTransfer`, `DynamicMPT`,
+  `PermissionDelegationV1_1`, `Sponsor`, `fixCleanup3_3_0`). Staying on 3.2.1
+  after any of those activate → **amendment-blocked**. Monitoring already pages
+  majority-window + blocked state.
+
+**Primary sources (re-fetched 2026-08-08)**
+- https://xrpl.org/blog/2026/xrpld-3.2.1
+- https://xrpl.org/blog/2026/xrpld-3.3.0
+- https://github.com/XRPLF/rippled/releases/tag/3.3.0
+- Deb: `xrpld_3.3.0-1_amd64.deb` on `repos.ripple.com` (bookworm stable)
+
+**Procedure** (mirrors 3.2.1 episode + `docs/runbooks/validator-recreate.md`)
+
+| Step | Owner repo | Action | Gate |
+|------|------------|--------|------|
+| 0 | — | Confirm package `xrpld=3.3.0-1` in ripple-deb | done 2026-08-08 |
+| 1 | `csyn-consensus-infra` | `gh workflow run build-rippled-image.yml -f rippled_version=3.3.0` | **await Pete dispatch OK** (auto-mode blocks workflow_dispatch) |
+| 2 | `csyn-consensus-infra` | Capture digest from run "PIN THIS DIGEST" + smoke `xrpld version 3.3.0` | digest non-empty |
+| 3 | `csyn-consensus-infra` | PR: pin `svc-rippled-dev` `var.image_digest` → new digest; apply | plan clean |
+| 4 | practice | Reset/recreate dev container; size-proof binaries before rely | `bash`/`xrpld` non-trivial ELF |
+| 5 | practice | Dev soak ≥ soak window (proposing N/A on tracking node: `full`/`tracking`, peers, complete_ledgers, no crash loop) | PASS |
+| 6 | **this repo** | PR: pin `validator-prod` `var.image_digest` to **same** digest; comment rollback = current `e664d4c5…` | dual-gate + merge |
+| 7 | **this repo** | `apply.yml` + pre-change boot+data snaps | Pete-named apply |
+| 8 | **this repo** | COS pull with size-proof; cutover via recreate runbook | sync-soak + network-sees |
+| 9 | **this repo** | Post: `xrpld version 3.3.0`, `proposing`, peers floor, `amendment_blocked=false` | PASS |
+| 10 | both | Update config comment headers 3.2.1→3.3.0; retain 3.2.1 rollback digest 14d | docs |
+
+**Hard lessons from 3.2.1 (do not skip)**
+- After image pull on COS: **assert binary sizes** before cutover; purge orphan
+  `layerdb` if pull fails mid-register.
+- Same digest on dev + prod. Never tag-float.
+- Snapshot retention: 1 latest soak-passed data snap; boot snap only while binary
+  upgrade still in soak (≤14d).
+
+**Not started until Step 1 is dispatched.** Build command:
+
+```bash
+gh workflow run build-rippled-image.yml \
+  --repo csyn-portfolio/csyn-consensus-infra \
+  -f rippled_version=3.3.0
+# then: gh run watch <id> --repo csyn-portfolio/csyn-consensus-infra
+```
+
+**Related**
+- Plugin radar draft: cs-ledger-plugin PR #33 (DO NOT MERGE record; body still says
+  validator on 3.2.0 — stale; live is 3.2.1 as of 2026-08-04 logs).
+- Plugin canon PR #32: peer_private soft/hard (aligns with live `peer_private 0`).
+
 ## Scanner-invisibility investigation — 2026-08-04 (root cause NOT established)
 
 **Trigger:** "the XRPL scanners are not seeing our validator." **Verdict: the
