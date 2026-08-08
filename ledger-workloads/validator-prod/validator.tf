@@ -38,8 +38,9 @@ module "validator" {
   machine_type       = "n2d-highmem-8" # CONSVAL1 mainnet standard; non-confidential (us-south1 offers no Confidential VM, verified 2026-06-18)
   disk_profile       = "pd-ssd-150"    # CONSVAL1-A2: n2d CANNOT attach hyperdisk-balanced (API 400, verified 2026-06-18); pd-ssd is n2d-native + CMEK + IOPS scales with the vertical-resize lever. Metadata-only (not consumed in a resource).
   provisioning_model = "STANDARD"      # never Spot — dUNL clock continuity (spec §9.1)
-  # n2d-highmem-8 + 150 GB pd-ssd ≈ $326/mo machine (1yr CUD) + ~$25/mo disk + variable P2P egress; 700 = headroom for egress spikes.
-  monthly_budget_usd = 700
+  # n2d-highmem-8 + 150 GB pd-ssd ≈ $326/mo machine (1yr CUD) + ~$25/mo disk + variable P2P egress; 850 = steady-state x1.28 headroom for egress spikes (finops re-audit, 2026-08-08).
+  monthly_budget_usd    = 850
+  notification_channels = local.alert_channels # monitoring.tf — email (+ Slack once token supplied); budget alerts fan out through the same channels as node alerting
 }
 
 # API-propagation gate (cs-terraform-overlay rule #7). modules/service-project
