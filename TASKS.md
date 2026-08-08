@@ -505,8 +505,11 @@ Pete confirmed cutover complete 2026-08-08.
 
 - [x] Snapshots at cutover: `validator-pre-330-{boot,data}-20260808-0218` —
   `OBSERVED: gcloud compute snapshots list → both READY @ 2026-08-08T18:10Z`.
-- [x] Cutover boot: `OBSERVED: gcloud logging read → "Application starting.
-  Version is 3.3.0" @ 2026-08-08T02:20:46Z`.
+- [x] Cutover boot: `OBSERVED: gcloud logging read 'resource.type="gce_instance"
+  AND jsonPayload.message:"Application starting"' --project=csyn-ldg-validator-prod
+  --freshness=2d --format='value(timestamp,jsonPayload.message)' → "Application
+  starting. Version is 3.3.0" @ 2026-08-08T02:20:46Z` (gcplogs driver ⇒
+  `jsonPayload.message`, NOT `textPayload`).
 - [x] Staged == live: `OBSERVED: instance metadata startup-script carries
   2f984bdb (xrpld) + 037a5d4d (sidecar), matching origin/main defaults @ 2026-08-08` — reboot-safe.
 - [x] Post-cutover health: `OBSERVED: sidecar gauges @ 2026-08-08T18:02Z →
