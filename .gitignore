@@ -5,3 +5,6 @@
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+
+# ORACLE1 gate transcripts — evidence artifacts, not source.
+gates/
