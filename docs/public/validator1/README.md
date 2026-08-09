@@ -1,31 +1,35 @@
 # validator1 public landing (Option A1)
 
-**Production artifact** for `https://validator1.cloudsyndicate.io/`.
-
-## Host
+**Canonical ship path is OpenTofu in `cloud-syndicate-platform/shared/www/`** — not
+`gcloud storage cp` from this repo.
 
 | Item | Value |
 |------|--------|
-| Project | `csyn-www-prod` |
-| Bucket | `gs://csyn-www-validator1-toml/` |
-| Object | `index.html` |
-| Also present | `.well-known/xrp-ledger.toml` (do not overwrite) |
+| TF root | `cloud-syndicate-platform/shared/www` (branch `feat/www-validator1-trust-card`) |
+| Content in TF tree | `shared/www/validator1-content/index.html` + `.well-known/xrp-ledger.toml` |
+| Resources | `google_storage_bucket_object.validator1_index` / `validator1_toml` |
+| `/` rewrite | `gclb.tf` path_matcher `validator1` route_rules → `/index.html` |
+| Project / bucket | `csyn-www-prod` · `gs://csyn-www-validator1-toml/` |
 
-## Deploy (after approval)
+This file under `docs/public/validator1/` is the **design source** mirrored into the
+www content dir for that PR. Prefer editing the www `validator1-content/` copy when
+landing the apply, or keep both in sync.
 
-```bash
-gcloud storage cp docs/public/validator1/index.html \
-  gs://csyn-www-validator1-toml/index.html \
-  --content-type=text/html \
-  --cache-control="public, max-age=300"
-```
-
-## Verify
+## Verify (after apply)
 
 ```bash
-curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html   # expect 200
-curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/             # expect 200 after URL rewrite if needed
-curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml  # expect 200
+curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
+curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
+curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
+# all expect 200; toml body must still contain the master key
 ```
 
-If `/` is still 403/404 after `index.html` is 200, pathMatcher `validator1` on `csyn-www-url-map` needs `/` → `/index.html` rewrite (www TF home, not this repo).
+## First apply note
+
+Import the pre-existing toml object before apply if not in state:
+
+```bash
+tofu -chdir=shared/www import \
+  'google_storage_bucket_object.validator1_toml' \
+  'csyn-www-validator1-toml/.well-known/xrp-ledger.toml'
+```

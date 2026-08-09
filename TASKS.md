@@ -11,19 +11,20 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 ## Public surfaces — A1 trust card + D2 health (2026-08-09)
 
-- **Decision:** Ship **A1** then **D2**; defer **C** (directory).
-- **Mocks:** `docs/mocks/validator-surfaces/options-board.html`
-- **Ship artifacts:** `docs/public/validator1/index.html` (A1) · `docs/public/health/index.html` (D2 client-side report)
-- **Plan:** `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
-- **Host (A):** project `csyn-www-prod` · bucket `gs://csyn-www-validator1-toml/` · LB host `validator1.cloudsyndicate.io` (not validator-prod VPC)
-- **Verify A (re-run; do not freeze):**
+- **Decision:** Ship **A1** then **D2**; defer **C** (directory). **A is OpenTofu**, not `gcloud cp`.
+- **A TF home (one home):** `cloud-syndicate-platform/shared/www` branch `feat/www-validator1-trust-card`
+  - worktree: `/Users/petermorse/pete-ai/claude/cs/cloud-syndicate-platform-wt-validator1-trust`
+  - objects: `validator1_index` + `validator1_toml` under `validator1-content/`
+  - `/` → `/index.html` rewrite in `gclb.tf` path_matcher `validator1`
+  - first apply: **import** existing toml object (see `docs/public/validator1/README.md`)
+- **Mocks / design source:** `docs/mocks/…` · `docs/public/validator1/index.html` · plan `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
+- **Verify A after apply (re-run; do not freeze):**
   ```bash
-  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
   ```
-- **Open:** if `/` ≠ 200 after `index.html` upload → URL map rewrite `/`→`/index.html` in www TF (pathMatcher `validator1`)
-- **D2:** static report with browser probes; optional later host under www/Cloud Run
+- **D2:** `docs/public/health/index.html` — next PR (www or Cloud Run); not blocking A
 - **C:** deferred
 
 ## State (post-CONSPLIT2)
