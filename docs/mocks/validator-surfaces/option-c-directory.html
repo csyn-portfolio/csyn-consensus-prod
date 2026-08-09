@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledger Ops Directory · EverForge Consensus · Cloud Syndicate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05090f;
+      --panel: #0d1522;
+      --panel2: #122036;
+      --line: #1c3a66;
+      --ink: #F3FAFC;
+      --muted: #828da3;
+      --muted2: #b0bacd;
+      --gold: #c9a86a;
+      --gold2: #b08d57;
+      --blue: #5da8ff;
+      --ok: #3dd68c;
+      --warn: #f0b429;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      background:
+        radial-gradient(1000px 520px at 90% -15%, rgba(31,66,134,0.4), transparent 58%),
+        radial-gradient(700px 380px at -5% 30%, rgba(201,168,106,0.06), transparent 50%),
+        var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .top {
+      border-bottom: 1px solid rgba(28,58,102,0.7);
+      background: rgba(5,9,15,0.88);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 20;
+    }
+    .top-inner {
+      max-width: 1120px; margin: 0 auto;
+      padding: 14px 22px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .mark {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(145deg, #1f4286, #0d2147);
+      border: 1px solid var(--gold2);
+      display: grid; place-items: center;
+      font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 0.05em;
+    }
+    .brand-name { font-weight: 600; font-size: 0.95rem; }
+    .brand-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+    .nav { display: flex; gap: 18px; font-size: 0.88rem; color: var(--muted); flex-wrap: wrap; }
+    .nav a { color: var(--muted2); }
+    .nav .on { color: var(--ink); font-weight: 550; }
+
+    .hero {
+      max-width: 1120px; margin: 0 auto;
+      padding: 40px 22px 8px;
+      display: grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap: 28px;
+      align-items: end;
+    }
+    @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } }
+    .eyebrow {
+      color: var(--gold);
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(1.65rem, 3vw, 2.2rem);
+      letter-spacing: -0.03em;
+      font-weight: 650;
+      line-height: 1.12;
+      max-width: 16ch;
+    }
+    .lede {
+      margin: 0;
+      color: var(--muted2);
+      font-size: 1.02rem;
+      max-width: 48ch;
+      line-height: 1.5;
+    }
+    .hero-card {
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid rgba(28,58,102,0.9);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+    .hero-card h2 {
+      margin: 0 0 10px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    .stat-line {
+      display: flex; justify-content: space-between;
+      font-size: 0.88rem; padding: 7px 0;
+      border-bottom: 1px solid rgba(28,58,102,0.4);
+    }
+    .stat-line:last-of-type { border-bottom: 0; }
+    .stat-line .n { color: var(--gold); font-variant-numeric: tabular-nums; font-weight: 600; }
+    .asof {
+      margin-top: 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .toolbar {
+      max-width: 1120px; margin: 0 auto;
+      padding: 22px 22px 0;
+    }
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      max-width: 640px;
+    }
+    .search-row input {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--ink);
+      padding: 12px 14px;
+      font: inherit;
+    }
+    .search-row button {
+      background: linear-gradient(180deg, #2a4f96, #1f4286);
+      border: 1px solid #3a65b0;
+      color: #fff;
+      border-radius: 10px;
+      padding: 0 18px;
+      font-weight: 600;
+      font: inherit;
+      cursor: default;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+    }
+    .chip.on {
+      border-color: rgba(201,168,106,0.5);
+      color: var(--gold);
+      background: rgba(201,168,106,0.08);
+    }
+
+    .main {
+      max-width: 1120px; margin: 0 auto;
+      padding: 28px 22px 64px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 600;
+      margin: 8px 0 10px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid rgba(28,58,102,0.85);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+    .card.method {
+      border-color: rgba(201,168,106,0.28);
+    }
+    .card-top {
+      display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .op-name { font-weight: 650; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .op-domain { color: var(--muted); font-size: 0.85rem; margin-top: 3px; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill {
+      font-size: 0.7rem;
+      border-radius: 999px;
+      padding: 3px 9px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill.ok { color: var(--ok); border-color: rgba(61,214,140,0.35); background: rgba(61,214,140,0.08); }
+    .pill.gold { color: var(--gold); border-color: rgba(201,168,106,0.4); background: rgba(201,168,106,0.08); }
+    .desc {
+      margin: 12px 0 0;
+      color: var(--muted2);
+      font-size: 0.92rem;
+      max-width: 72ch;
+      line-height: 1.5;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    @media (max-width: 720px) { .meta { grid-template-columns: 1fr 1fr; } }
+    .meta .cell {
+      background: rgba(5,9,15,0.55);
+      border: 1px solid rgba(28,58,102,0.5);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .meta .k { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .meta .v { margin-top: 3px; font-size: 0.86rem; }
+    .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.86rem; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .note {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px dashed rgba(201,168,106,0.32);
+      background: rgba(201,168,106,0.05);
+      color: #cdc4ad;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    footer {
+      max-width: 1120px; margin: 0 auto;
+      padding: 0 22px 40px;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <div class="mark">CS</div>
+        <div>
+          <div class="brand-name">Ledger Ops Directory</div>
+          <div class="brand-sub">EverForge Consensus · research surface</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="on" href="option-c-directory.html">Directory</a>
+        <a href="option-a-trust-card.html">Our validator</a>
+        <a href="option-d-ai-ops.html">Public health check</a>
+        <a href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Institutional XRPL operations · curated</div>
+      <h1>Who runs like an institution.</h1>
+      <p class="lede">
+        A small editorial directory for operators and buyers who care about domain verification,
+        disclosure quality, and operational posture — not memes, not a full-network explorer.
+      </p>
+    </div>
+    <aside class="hero-card">
+      <h2>Network context (research pull)</h2>
+      <div class="stat-line"><span>Mainnet validators</span><span class="n">259</span></div>
+      <div class="stat-line"><span>With domain</span><span class="n">99</span></div>
+      <div class="stat-line"><span>TOML reachable</span><span class="n">~78</span></div>
+      <div class="stat-line"><span>UNL (this pull)</span><span class="n">35</span></div>
+      <p class="asof">
+        Source: XRPScan validator registry API · pull 2026-08-09 · labels are
+        <strong style="color:var(--muted2)">not live status</strong> — re-query before any decision.
+      </p>
+    </aside>
+  </section>
+
+  <div class="toolbar">
+    <div class="search-row">
+      <input type="search" value="domain verified · policy page · multi-region" readonly />
+      <button type="button">Search</button>
+    </div>
+    <div class="filters">
+      <span class="chip on">Domain verified</span>
+      <span class="chip on">Public policy page</span>
+      <span class="chip">UNL</span>
+      <span class="chip">Multi-region</span>
+      <span class="chip">HSM / custody disclosed</span>
+      <span class="chip">Academic</span>
+      <span class="chip">Product company</span>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="section-label">How we curate</div>
+    <article class="card method">
+      <div class="card-top">
+        <div class="op-name">Methodology</div>
+        <div class="pills">
+          <span class="pill gold">Editorial · not a ranking</span>
+          <span class="pill">Inclusion ≠ endorsement</span>
+        </div>
+      </div>
+      <p class="desc">
+        Entries need a verifiable domain, a human-readable operator page (or explicit TOML-only disclosure),
+        and claims that do not contradict public data. Cloud Syndicate is the operator of this directory
+        and is listed in a separate “Operator we run” section — never as an unlabeled #1 peer.
+        Weekly digests may use AI for first drafts of release/registry notes; <strong style="color:var(--ink)">humans edit before publish</strong>.
+      </p>
+    </article>
+
+    <div class="section-label">Operator we run</div>
+    <article class="card" style="border-color: rgba(201,168,106,0.4);">
+      <div class="card-top">
+        <div>
+          <div class="op-name">Cloud Syndicate · EverForge Consensus</div>
+          <div class="op-domain">validator1.cloudsyndicate.io</div>
+        </div>
+        <div class="pills">
+          <span class="pill gold">Our node</span>
+          <span class="pill ok">Domain verified</span>
+          <span class="pill">Non-UNL</span>
+          <span class="pill">GCP · HSM</span>
+        </div>
+      </div>
+      <p class="desc">
+        Institutional ledger hosting on Google Cloud. Mainnet validator with HSM-backed identity,
+        CMEK disks, Shielded VM, private admin surface. Public TOML is live; this suite’s trust card
+        is the intended root landing (closes the current 403 on human visits).
+      </p>
+      <div class="meta">
+        <div class="cell"><div class="k">Master key</div><div class="v" style="font-family:IBM Plex Mono,monospace;font-size:0.72rem;word-break:break-all">nHUQEd51…ZUGq</div></div>
+        <div class="cell"><div class="k">TOML</div><div class="v" style="color:var(--ok)">Published</div></div>
+        <div class="cell"><div class="k">Landing (intended)</div><div class="v">Trust card</div></div>
+        <div class="cell"><div class="k">Product</div><div class="v">EverForge Consensus</div></div>
+      </div>
+      <div class="actions">
+        <a href="option-a-trust-card.html">Trust card →</a>
+        <a href="https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml">TOML</a>
+        <a href="option-d-ai-ops.html">Public health check →</a>
+        <a href="https://www.cloudsyndicate.io/services/msp/consensus/">Product page</a>
+      </div>
+    </article>
+
+    <div class="section-label">Field patterns (references)</div>
+    <div class="grid-2">
+      <article class="card">
+        <div class="card-top">
+          <div>
+            <div class="op-name">Minimal trust card</div>
+            <div class="op-domain">CarbonVibe-style pattern</div>
+          </div>
+          <div class="pills">
+            <span class="pill ok">Policy page</span>
+            <span class="pill">Static</span>
+          </div>
+        </div>
+        <p class="desc">
+          Gold standard for institutional identity: key, policy, security contact, no trackers.
+          Lowest attack surface. Best match for validator-domain landings.
+        </p>
+        <div class="actions"><a href="ref-carbonvibe-style.html">Pattern mock →</a></div>
+      </article>
+      <article class="card">
+        <div class="card-top">
+          <div>
+            <div class="op-name">Public telemetry board</div>
+            <div class="op-domain">Tachyon-style pattern</div>
+          </div>
+          <div class="pills">
+            <span class="pill">Live widgets</span>
+            <span class="pill">Higher ops cost</span>
+          </div>
+        </div>
+        <p class="desc">
+          Agreement windows and software pins from public feeds. Engaging; requires reliable plumbing.
+          Prefer a separate status host — not the validator domain itself.
+        </p>
+        <div class="actions"><a href="ref-tachyon-style.html">Pattern mock →</a></div>
+      </article>
+    </div>
+
+    <div class="section-label">Cohorts (catalog stubs)</div>
+    <div class="grid-2">
+      <article class="card">
+        <div class="op-name">University &amp; research</div>
+        <p class="desc">KU, Luxembourg SnT, Toronto MU, Bern, and peers — strong decentralization narrative; disclosure quality varies from institute sites to TOML-only.</p>
+      </article>
+      <article class="card">
+        <div class="op-name">Product companies</div>
+        <p class="desc">Ripple, Bithomp, GateHub, XPMarket, Squid, and peers — domain often points at the product homepage; catalog notes whether a validator-specific disclosure exists.</p>
+      </article>
+    </div>
+
+    <div class="note">
+      <strong style="color:var(--gold)">Product thesis.</strong>
+      Explorers show everyone. This directory answers: who operates with institutional disclosure,
+      and what did they publish? SEO and inbound for EverForge; CS is an explicit operator entry,
+      not a hidden ranking oracle.
+    </div>
+  </main>
+
+  <footer>
+    Design mock · Cloud Syndicate, LLC · 2026-08-09 ·
+    Not a live production catalog — structure and voice for stakeholder review.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D3 · Embeddable health card · Cloud Syndicate</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0e14; --card:#0d1522; --line:#1c3a66; --ink:#F3FAFC; --muted:#828da3;
+      --gold:#c9a86a; --blue:#5da8ff; --ok:#3dd68c; --bad:#f07178;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family:"IBM Plex Sans",system-ui,sans-serif; background:var(--bg); color:var(--ink);
+      padding:24px;
+    }
+    .banner { position:fixed; top:0; left:0; right:0; background:#1a2430; border-bottom:1px solid #2a4058; color:#b8c9dc; font-size:12px; padding:8px 16px; text-align:center; }
+    .card {
+      width:min(420px,100%);
+      background:linear-gradient(165deg,#122036,var(--card));
+      border:1px solid rgba(28,58,102,.95);
+      border-radius:16px;
+      padding:18px 18px 16px;
+      box-shadow:0 20px 50px rgba(0,0,0,.35);
+      margin-top:28px;
+    }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .mark {
+      width:32px; height:32px; border-radius:8px;
+      background:linear-gradient(145deg,#1f4286,#0d2147); border:1px solid #b08d57;
+      display:grid; place-items:center; font-size:10px; font-weight:700; color:var(--gold);
+    }
+    .name { font-weight:650; font-size:.95rem; }
+    .sub { font-size:.68rem; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+    .pill { font-size:.7rem; border-radius:999px; padding:3px 9px; border:1px solid rgba(61,214,140,.35); color:var(--ok); background:rgba(61,214,140,.08); }
+    .domain { font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:#9ec5ff; word-break:break-all; margin:10px 0; }
+    .rows { display:grid; gap:8px; }
+    .row { display:flex; justify-content:space-between; gap:10px; font-size:.86rem; padding:8px 0; border-bottom:1px solid rgba(28,58,102,.45); }
+    .row:last-child { border-bottom:0; }
+    .k { color:var(--muted); }
+    .ok { color:var(--ok); font-weight:600; }
+    .bad { color:var(--bad); font-weight:600; }
+    .actions { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+    .btn {
+      flex:1; text-align:center; text-decoration:none; font-size:.82rem; font-weight:600;
+      border-radius:9px; padding:9px 10px; border:1px solid #3a65b0;
+      background:linear-gradient(180deg,#2a4f96,#1f4286); color:#fff;
+    }
+    .btn.ghost { background:transparent; border-color:var(--line); color:#b0bacd; }
+    .foot { margin-top:12px; font-size:.72rem; color:var(--muted); line-height:1.4; }
+  </style>
+</head>
+<body>
+  <div class="banner">OPTION D3 · Compact card for sales decks / site embed · mock snapshot</div>
+  <div class="card">
+    <div class="top">
+      <div class="brand">
+        <div class="mark">CS</div>
+        <div>
+          <div class="name">Public health</div>
+          <div class="sub">EverForge Consensus</div>
+        </div>
+      </div>
+      <span class="pill">Public only</span>
+    </div>
+    <div class="domain">validator1.cloudsyndicate.io</div>
+    <div class="rows">
+      <div class="row"><span class="k">TOML</span><span class="ok">Verified</span></div>
+      <div class="row"><span class="k">Landing /</span><span class="bad">403 gap</span></div>
+      <div class="row"><span class="k">UNL</span><span class="k">Not listed*</span></div>
+      <div class="row"><span class="k">Private plane</span><span class="ok">Not queried</span></div>
+    </div>
+    <div class="actions">
+      <a class="btn" href="option-a-trust-card.html">Trust card</a>
+      <a class="btn ghost" href="option-d-ai-ops.html">Full demo</a>
+    </div>
+    <div class="foot">* Research pull — re-query before decisions. Hard walls: no private GCP or admin RPC.</div>
+  </div>
+</body>
+</html>

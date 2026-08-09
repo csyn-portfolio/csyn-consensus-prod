@@ -9,6 +9,23 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 - [decision-pointer] CONSVAL1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/ (CONSVAL1)
 - [decision-pointer] CONSVAL2 (multi-region validator expansion — EverForge managed-validator product, CS anchor customer; SG asia-southeast1 first, EU deferred; firm geo-nodes in ledger/prod/validators; public-data-only ⇒ outside FedRAMP boundary; extends CONSVAL1+TOPO2) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-21-multi-region-validator-expansion.md · index: ~/.ai-decisions.md
 
+## Public surfaces — A1 trust card + D2 health (2026-08-09)
+
+- **Decision:** Ship **A1** then **D2**; defer **C** (directory).
+- **Mocks:** `docs/mocks/validator-surfaces/options-board.html`
+- **Ship artifacts:** `docs/public/validator1/index.html` (A1) · `docs/public/health/index.html` (D2 client-side report)
+- **Plan:** `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
+- **Host (A):** project `csyn-www-prod` · bucket `gs://csyn-www-validator1-toml/` · LB host `validator1.cloudsyndicate.io` (not validator-prod VPC)
+- **Verify A (re-run; do not freeze):**
+  ```bash
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
+  ```
+- **Open:** if `/` ≠ 200 after `index.html` upload → URL map rewrite `/`→`/index.html` in www TF (pathMatcher `validator1`)
+- **D2:** static report with browser probes; optional later host under www/Cloud Run
+- **C:** deferred
+
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
 - Practice/testnet in sibling `csyn-consensus-infra`.

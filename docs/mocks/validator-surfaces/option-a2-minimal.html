@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A2 · Minimal trust card · Cloud Syndicate</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#f6f7f9; --ink:#0c1220; --muted:#5a6578; --line:#d8dee8; --navy:#1f4286; --gold:#b08d57; --ok:#1b6b3a; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"IBM Plex Sans",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.5; }
+    .banner { background:#eef2f8; border-bottom:1px solid var(--line); color:var(--muted); font-size:12px; padding:8px 16px; text-align:center; }
+    .wrap { max-width:680px; margin:0 auto; padding:40px 20px 56px; }
+    h1 { font-size:1.45rem; font-weight:600; letter-spacing:-0.02em; margin:0 0 6px; }
+    .sub { color:var(--muted); margin-bottom:24px; font-size:0.95rem; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:12px; }
+    .card h2 { margin:0 0 12px; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); font-weight:600; }
+    .row { display:grid; grid-template-columns:120px 1fr; gap:8px; font-size:0.92rem; margin:8px 0; }
+    .k { color:var(--muted); }
+    .v { word-break:break-all; font-family:"IBM Plex Mono",monospace; font-size:0.8rem; }
+    .v.plain { font-family:inherit; font-size:0.92rem; word-break:normal; }
+    .badge { display:inline-block; background:#e8f5ec; color:var(--ok); border:1px solid #b9dfc5; border-radius:999px; font-size:12px; font-weight:600; padding:2px 10px; }
+    ul { margin:0; padding-left:1.1rem; color:#2a3346; }
+    li { margin:6px 0; }
+    a { color:var(--navy); }
+    footer { margin-top:24px; font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:14px; }
+    .cta { font-size:0.9rem; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="banner">OPTION A2 · Minimal institutional (CarbonVibe-shaped) · least marketing</div>
+  <div class="wrap">
+    <h1>Cloud Syndicate · XRPL Validator</h1>
+    <p class="sub">Domain: <strong>validator1.cloudsyndicate.io</strong> · <a href="https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml">xrp-ledger.toml</a></p>
+
+    <div class="card">
+      <h2>Identity</h2>
+      <div class="row"><div class="k">Verification</div><div class="v plain"><span class="badge">Domain verified</span></div></div>
+      <div class="row"><div class="k">Public key</div><div class="v">nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq</div></div>
+      <div class="row"><div class="k">Network</div><div class="v plain">XRPL mainnet</div></div>
+      <div class="row"><div class="k">Operator</div><div class="v plain">Cloud Syndicate, LLC · EverForge Consensus</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Operational policy</h2>
+      <ul>
+        <li>HSM-backed validator token (not stored on disk).</li>
+        <li>Admin RPC localhost-only; public edge is peer protocol only.</li>
+        <li>Stable XRPL releases after internal validation.</li>
+        <li>This page is public identity only — no private metrics.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Contact</h2>
+      <div class="row"><div class="k">Email</div><div class="v plain"><a href="mailto:hello@cloudsyn.net">hello@cloudsyn.net</a></div></div>
+      <div class="row"><div class="k">Security</div><div class="v plain">Subject: <em>XRPL Validator Security</em></div></div>
+      <p class="cta">Managed offering: <a href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge Consensus</a></p>
+    </div>
+
+    <footer>Static · no cookies · no trackers · A2 mock</footer>
+  </div>
+</body>
+</html>

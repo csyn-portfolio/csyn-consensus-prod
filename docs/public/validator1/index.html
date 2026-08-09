@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EverForge Consensus · XRPL validator · Cloud Syndicate</title>
+  <meta name="description" content="Public identity for the Cloud Syndicate XRPL mainnet validator under EverForge Consensus." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05090f;
+      --panel: #0d1522;
+      --line: #1c3a66;
+      --ink: #F3FAFC;
+      --muted: #828da3;
+      --muted2: #b0bacd;
+      --navy: #1f4286;
+      --gold: #c9a86a;
+      --gold2: #b08d57;
+      --blue: #5da8ff;
+      --ok: #3dd68c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      background:
+        radial-gradient(900px 420px at 80% -20%, rgba(31,66,134,0.35), transparent 55%),
+        radial-gradient(600px 300px at 0% 100%, rgba(201,168,106,0.06), transparent 45%),
+        var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .top {
+      border-bottom: 1px solid rgba(28,58,102,0.65);
+      background: rgba(5,9,15,0.9);
+      backdrop-filter: blur(12px);
+    }
+    .top-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .mark {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(145deg, #1f4286, #0d2147);
+      border: 1px solid var(--gold2);
+      display: grid; place-items: center;
+      font-size: 10px; font-weight: 700; color: var(--gold);
+      letter-spacing: 0.06em;
+    }
+    .brand-name { font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em; }
+    .brand-sub { font-size: 0.72rem; color: var(--muted); margin-top: 1px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .top-links { display: flex; gap: 16px; font-size: 0.85rem; flex-wrap: wrap; }
+    .top-links a { color: var(--muted2); }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 36px 22px 56px; }
+    .eyebrow {
+      color: var(--gold);
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.55rem, 3.2vw, 2rem);
+      font-weight: 650;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .lede {
+      margin: 0 0 22px;
+      color: var(--muted2);
+      font-size: 1.02rem;
+      max-width: 48ch;
+    }
+    .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .pill {
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 999px;
+      padding: 5px 12px;
+      border: 1px solid var(--line);
+      color: var(--muted2);
+      background: rgba(13,21,34,0.8);
+    }
+    .pill.ok {
+      color: var(--ok);
+      border-color: rgba(61,214,140,0.35);
+      background: rgba(61,214,140,0.08);
+    }
+    .pill.gold {
+      color: var(--gold);
+      border-color: rgba(201,168,106,0.4);
+      background: rgba(201,168,106,0.08);
+    }
+    .card {
+      background: linear-gradient(180deg, #122036, var(--panel));
+      border: 1px solid rgba(28,58,102,0.9);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 128px 1fr;
+      gap: 6px 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(28,58,102,0.4);
+      font-size: 0.92rem;
+    }
+    .row:last-child { border-bottom: 0; }
+    .k { color: var(--muted); }
+    .v { word-break: break-all; }
+    .v.mono {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.8rem;
+      color: #dce8f8;
+    }
+    .keybox {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.78rem;
+      background: #05090f;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #9ec5ff;
+      word-break: break-all;
+      line-height: 1.45;
+    }
+    ul.policy {
+      margin: 0;
+      padding-left: 1.15rem;
+      color: var(--muted2);
+      font-size: 0.93rem;
+    }
+    ul.policy li { margin: 8px 0; }
+    ul.policy strong { color: var(--ink); font-weight: 600; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+    .btn {
+      display: inline-block;
+      border-radius: 9px;
+      padding: 9px 14px;
+      font-size: 0.86rem;
+      font-weight: 550;
+      border: 1px solid #3a65b0;
+      background: linear-gradient(180deg, #2a4f96, var(--navy));
+      color: #fff !important;
+      text-decoration: none !important;
+    }
+    .btn.ghost {
+      background: transparent;
+      border-color: var(--line);
+      color: var(--muted2) !important;
+    }
+    .marketing {
+      margin-top: 6px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(201,168,106,0.28);
+      background: linear-gradient(135deg, rgba(201,168,106,0.07), rgba(31,66,134,0.12));
+    }
+    .marketing p {
+      margin: 0 0 10px;
+      color: var(--muted2);
+      font-size: 0.92rem;
+      max-width: 54ch;
+    }
+    .marketing .title {
+      color: var(--gold);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    footer {
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(28,58,102,0.5);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    footer p { margin: 0 0 6px; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <div class="mark">CS</div>
+        <div>
+          <div class="brand-name">Cloud Syndicate</div>
+          <div class="brand-sub">EverForge Consensus</div>
+        </div>
+      </div>
+      <nav class="top-links">
+        <a href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge Consensus</a>
+        <a href="https://www.cloudsyndicate.io/">cloudsyndicate.io</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="eyebrow">XRPL mainnet · domain verified</div>
+    <h1>Institutional validator identity</h1>
+    <p class="lede">
+      Public attestation for the Cloud Syndicate mainnet validator —
+      operated under EverForge Consensus on Google Cloud.
+    </p>
+
+    <div class="status-row">
+      <span class="pill ok">Domain verified</span>
+      <span class="pill gold">EverForge Consensus</span>
+      <span class="pill">Mainnet</span>
+      <span class="pill">Public data only</span>
+    </div>
+
+    <section class="card">
+      <h2>Validator</h2>
+      <div class="row">
+        <div class="k">Domain</div>
+        <div class="v mono">validator1.cloudsyndicate.io</div>
+      </div>
+      <div class="row">
+        <div class="k">Network</div>
+        <div class="v">XRP Ledger · mainnet</div>
+      </div>
+      <div class="row">
+        <div class="k">Operator</div>
+        <div class="v">Cloud Syndicate, LLC · Texas · global practice</div>
+      </div>
+      <div class="row">
+        <div class="k">Software</div>
+        <div class="v">rippled (production-managed release — see explorer for live build)</div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="k" style="margin-bottom:6px;font-size:0.85rem">Master public key</div>
+        <div class="keybox">nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq</div>
+      </div>
+      <div class="links" style="margin-top:14px">
+        <a class="btn" href="https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml">xrp-ledger.toml</a>
+        <a class="btn ghost" href="https://livenet.xrpl.org/validators/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq">XRPL Explorer</a>
+        <a class="btn ghost" href="https://xrpscan.com/validators">XRPScan registry</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Operational posture</h2>
+      <ul class="policy">
+        <li><strong>Identity:</strong> validator token is not stored on disk; injected at boot from Secret Manager with HSM-backed CMEK.</li>
+        <li><strong>Compute:</strong> dedicated GCE posture (Shielded VM; production-class machine; no Spot for the validating role).</li>
+        <li><strong>Network:</strong> peer protocol only on the public edge; admin RPC bound to localhost — no public admin or WebSocket surface.</li>
+        <li><strong>Data:</strong> this page discloses public identity only. Private metrics and customer workloads stay inside the EverForge perimeter.</li>
+        <li><strong>Releases:</strong> stable XRPL releases after internal validation; UNL and amendment posture monitored with alerting.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Contact &amp; security</h2>
+      <div class="row">
+        <div class="k">Operations</div>
+        <div class="v"><a href="mailto:hello@cloudsyn.net">hello@cloudsyn.net</a></div>
+      </div>
+      <div class="row">
+        <div class="k">Security</div>
+        <div class="v">Subject line: <span style="font-family:IBM Plex Mono,monospace;font-size:0.85rem">XRPL Validator Security</span></div>
+      </div>
+      <div class="row">
+        <div class="k">Practice site</div>
+        <div class="v"><a href="https://www.cloudsyndicate.io/">cloudsyndicate.io</a></div>
+      </div>
+    </section>
+
+    <aside class="marketing">
+      <div class="title">Managed ledger infrastructure</div>
+      <p>
+        EverForge Consensus is specialized digital-ledger hosting under SLOs —
+        institutional chain operations on Google Cloud, with compliance engineered
+        as evidence, not theatre. HIPAA / SOC / PCI aligned; FedRAMP Moderate is a
+        <em>design baseline</em>, not an authorization we hold.
+      </p>
+      <a class="btn" href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge Consensus →</a>
+    </aside>
+
+    <footer>
+      <p>Static public page · no cookies · no trackers · no admin endpoints.</p>
+      <p>Cloud Syndicate, LLC · © 2026</p>
+    </footer>
+  </main>
+</body>
+</html>
