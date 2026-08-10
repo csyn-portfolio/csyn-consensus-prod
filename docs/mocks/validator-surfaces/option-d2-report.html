@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D2 · Public health report · Cloud Syndicate</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#05090f; --panel:#0d1522; --line:#1c3a66; --ink:#F3FAFC; --muted:#828da3;
+      --muted2:#b0bacd; --gold:#c9a86a; --blue:#5da8ff; --ok:#3dd68c; --warn:#f0b429; --bad:#f07178;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"IBM Plex Sans",system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+    a { color:var(--blue); }
+    .banner { background:#1a2430; border-bottom:1px solid #2a4058; color:#b8c9dc; font-size:12px; padding:8px 16px; text-align:center; }
+    .wrap { max-width:820px; margin:0 auto; padding:28px 20px 56px; }
+    .eyebrow { color:var(--gold); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600; }
+    h1 { margin:8px 0; font-size:1.55rem; letter-spacing:-.02em; }
+    .lede { color:var(--muted2); max-width:56ch; }
+    .compose { display:grid; grid-template-columns:1fr auto; gap:10px; margin:18px 0; }
+    input { background:#0a1220; border:1px solid var(--line); border-radius:10px; color:var(--ink); padding:12px 14px; font:inherit; }
+    button { background:linear-gradient(180deg,#2a4f96,#1f4286); border:1px solid #3a65b0; color:#fff; border-radius:10px; padding:0 18px; font-weight:600; cursor:default; }
+    .report {
+      background:linear-gradient(180deg,#122036,var(--panel));
+      border:1px solid rgba(28,58,102,.9); border-radius:14px; padding:18px 20px;
+    }
+    .report h2 { margin:0 0 6px; font-size:1.05rem; }
+    .stamp { font-size:.78rem; color:var(--muted); margin-bottom:14px; }
+    table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    th, td { text-align:left; padding:8px 6px; border-bottom:1px solid rgba(28,58,102,.5); vertical-align:top; }
+    th { color:var(--muted); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+    .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+    .mono { font-family:"IBM Plex Mono",monospace; font-size:.75rem; word-break:break-all; }
+    .section { margin-top:18px; }
+    .section h3 { margin:0 0 8px; font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+    ol { margin:0; padding-left:1.2rem; color:var(--muted2); }
+    li { margin:5px 0; }
+    .walls { margin-top:14px; font-size:.82rem; color:var(--muted); border-top:1px solid rgba(28,58,102,.5); padding-top:12px; }
+    footer { margin-top:18px; font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="banner">OPTION D2 · <strong>Audit-style report</strong> (not chat) · better for procurement print/PDF · mock data</div>
+  <div class="wrap">
+    <div class="eyebrow">EverForge Consensus · public sources only</div>
+    <h1>Validator health report</h1>
+    <p class="lede">Single-page report an operator or buyer can archive. Same hard walls as the chat demo; less conversational chrome.</p>
+
+    <div class="compose">
+      <input readonly value="validator1.cloudsyndicate.io" />
+      <button type="button">Generate</button>
+    </div>
+
+    <article class="report">
+      <h2>Cloud Syndicate · validator1</h2>
+      <div class="stamp">Illustrative report · sources: XRPScan registry · domain TOML · root HTTP · not live model output</div>
+
+      <table>
+        <thead><tr><th>Check</th><th>Result</th><th>Source</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Domain verification (TOML)</td>
+            <td class="ok">PASS · HTTP 200 · attestation present</td>
+            <td class="mono">GET /.well-known/xrp-ledger.toml</td>
+          </tr>
+          <tr>
+            <td>Human landing (/)</td>
+            <td class="bad">FAIL · HTTP 403 AccessDenied</td>
+            <td class="mono">GET / · GCS backend</td>
+          </tr>
+          <tr>
+            <td>Master key published</td>
+            <td class="ok">PASS</td>
+            <td class="mono">nHUQEd51…ZUGq</td>
+          </tr>
+          <tr>
+            <td>UNL membership</td>
+            <td class="warn">NOT LISTED (research pull — re-query)</td>
+            <td class="mono">XRPScan registry</td>
+          </tr>
+          <tr>
+            <td>Private GCP / admin RPC</td>
+            <td class="ok">NOT QUERIED (hard wall)</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="section">
+        <h3>Findings</h3>
+        <ol>
+          <li>Domain verify works; human path is broken — ship static trust card as <code>index.html</code> on the same bucket.</li>
+          <li>Operator branding in TOML matches EverForge Consensus.</li>
+          <li>Do not claim agreement or proposing without a fresh public probe.</li>
+        </ol>
+      </div>
+
+      <div class="section">
+        <h3>Recommended next steps</h3>
+        <ol>
+          <li>Deploy Option A trust card to <code>gs://csyn-www-validator1-toml/index.html</code>.</li>
+          <li>Confirm URL map serves <code>/</code> → <code>index.html</code> (or rewrite).</li>
+          <li>Keep private ops inside EverForge; use this report for transparent public layer only.</li>
+        </ol>
+      </div>
+
+      <div class="walls">
+        Hard walls: no Cloud Logging · no Secret Manager · no admin ports · no “FedRAMP authorized” claims.
+      </div>
+    </article>
+
+    <footer>D2 mock · print-friendly · pairs well with A1/A2 landing</footer>
+  </div>
+</body>
+</html>

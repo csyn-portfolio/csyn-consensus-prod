@@ -33,6 +33,8 @@ module "validator" {
     "iam.googleapis.com",
     "iap.googleapis.com",              # IAP tunnel IAM (iam.tf validator_ops_ssh) reads/writes the tunnelinstance IAM policy — 403 "IAP API not used" at apply without it (CONSVAL1-A7)
     "artifactregistry.googleapis.com", # image pull from csyn-ldg-images (xrpld + sidecar)
+    "run.googleapis.com",              # public-status-publisher Cloud Run Job
+    "cloudscheduler.googleapis.com",   # 5m public-status cron (job itself runs us-central1)
   ]
 
   machine_type       = "n2d-highmem-8" # CONSVAL1 mainnet standard; non-confidential (us-south1 offers no Confidential VM, verified 2026-06-18)

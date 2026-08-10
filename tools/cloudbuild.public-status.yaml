@@ -1,0 +1,25 @@
+# Build+push validator1 public-status publisher image.
+# From repo root:
+#   gcloud builds submit --project=csyn-ldg-host-dev \
+#     --config=tools/cloudbuild.public-status.yaml \
+#     tools/
+substitutions:
+  _IMAGE: us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/validator1-status-publisher
+  _TAG: "1.0.0"
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.public-status
+      - -t
+      - ${_IMAGE}:${_TAG}
+      - -t
+      - ${_IMAGE}:latest
+      - .
+images:
+  - ${_IMAGE}:${_TAG}
+  - ${_IMAGE}:latest
+options:
+  logging: CLOUD_LOGGING_ONLY

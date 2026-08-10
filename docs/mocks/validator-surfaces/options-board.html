@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A + D mock options · choose variants</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#071018; --panel:#0e1724; --line:#243449; --ink:#eef4fb; --muted:#8fa0b5; --gold:#c9a86a; --blue:#5da8ff; --green:#3dd68c; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"IBM Plex Sans",system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+    a { color:var(--blue); }
+    header { max-width:1400px; margin:0 auto; padding:28px 20px 12px; }
+    .eyebrow { color:var(--gold); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; font-weight:650; }
+    h1 { margin:8px 0; font-size:clamp(1.35rem,2.4vw,1.85rem); letter-spacing:-.02em; }
+    .lede { color:var(--muted); max-width:78ch; line-height:1.5; }
+    .rec {
+      margin:14px 0 8px; padding:12px 14px; border-radius:10px;
+      border:1px solid rgba(61,214,140,.35); background:rgba(61,214,140,.07);
+      color:#c8f0d8; font-size:.9rem; max-width:90ch;
+    }
+    .rec strong { color:var(--green); }
+    .host {
+      margin:10px 0 18px; padding:12px 14px; border-radius:10px;
+      border:1px solid var(--line); background:var(--panel); font-size:.86rem; color:var(--muted); max-width:90ch;
+    }
+    .host code { color:var(--gold); font-size:.8rem; }
+    h2 { max-width:1400px; margin:18px auto 8px; padding:0 20px; font-size:1rem; }
+    .board {
+      max-width:1400px; margin:0 auto; padding:8px 16px 40px;
+      display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+    }
+    @media (max-width:1100px){ .board { grid-template-columns:1fr; } }
+    .frame {
+      background:var(--panel); border:1px solid var(--line); border-radius:14px;
+      overflow:hidden; display:flex; flex-direction:column; min-height:520px;
+    }
+    .meta { padding:12px 12px; border-bottom:1px solid var(--line); }
+    .meta h3 { margin:0; font-size:.95rem; }
+    .meta p { margin:4px 0 8px; color:var(--muted); font-size:.8rem; line-height:1.4; }
+    .meta .tag {
+      display:inline-block; font-size:.68rem; border-radius:999px; padding:2px 8px;
+      border:1px solid var(--line); color:var(--muted); margin-right:4px;
+    }
+    .meta .tag.rec { color:var(--green); border-color:rgba(61,214,140,.4); }
+    .meta a.btn {
+      display:inline-block; margin-top:6px; text-decoration:none; background:#1a2a42;
+      border:1px solid #2f4a6e; color:var(--ink); border-radius:8px; padding:6px 10px; font-size:.78rem;
+    }
+    iframe { width:100%; flex:1; min-height:420px; border:0; background:#000; }
+    footer { max-width:1400px; margin:0 auto; padding:0 20px 36px; color:var(--muted); font-size:12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Cloud Syndicate · choose before ship</div>
+    <h1>Mock options — A (trust card) and D (public AI / health)</h1>
+    <p class="lede">
+      Pick one A and one D. C stays deferred. Hosting for A is already known (GCS + global LB in
+      <code>csyn-www-prod</code>) — upload is the main work after you choose the A look.
+    </p>
+    <div class="rec">
+      <strong>Recommendation:</strong> <strong>A1</strong> (institutional + light marketing) for
+      <code>validator1</code> root · <strong>D2</strong> (report) as the durable public surface,
+      with <strong>D1</strong> as the interactive sales demo later if needed.
+      A2 if you want quieter CarbonVibe energy. A3 only if you will wire public widgets soon.
+    </div>
+    <div class="host">
+      <strong style="color:var(--ink)">Hosting (verified live):</strong>
+      project <code>csyn-www-prod</code> · bucket <code>gs://csyn-www-validator1-toml/</code>
+      · backend bucket <code>csyn-www-validator1-backend</code> · host rule on
+      <code>csyn-www-url-map</code> · IP <code>8.232.218.28</code>.
+      Objects today: only <code>.well-known/xrp-ledger.toml</code>.
+      <code>/</code> → 403 AccessDenied · <code>/index.html</code> → 404 (missing object).
+      Ship path: upload <code>index.html</code> + ensure <code>/</code> maps to it (rewrite or path rule).
+    </div>
+  </header>
+
+  <h2>Option A — validator landing (pick one)</h2>
+  <div class="board">
+    <section class="frame">
+      <div class="meta">
+        <h3>A1 · Institutional + light marketing</h3>
+        <p>Full CS navy/gold, posture cards, security contact, EverForge CTA. Best “we’re on top of it” signal.</p>
+        <span class="tag rec">Recommended</span><span class="tag">Ship first</span>
+        <div><a class="btn" href="option-a-trust-card.html" target="_blank">Open full</a></div>
+      </div>
+      <iframe title="A1" src="option-a-trust-card.html" loading="lazy"></iframe>
+    </section>
+    <section class="frame">
+      <div class="meta">
+        <h3>A2 · Minimal (CarbonVibe-shaped)</h3>
+        <p>Light background, short policy, one product link. Lowest marketing; maximum trust-card purity.</p>
+        <span class="tag">Quiet</span><span class="tag">Fast ship</span>
+        <div><a class="btn" href="option-a2-minimal.html" target="_blank">Open full</a></div>
+      </div>
+      <iframe title="A2" src="option-a2-minimal.html" loading="lazy"></iframe>
+    </section>
+    <section class="frame">
+      <div class="meta">
+        <h3>A3 · Trust + status-lite</h3>
+        <p>Adds public health tiles. Only choose if you’ll feed them from public APIs soon — empty tiles rot trust.</p>
+        <span class="tag">Later</span>
+        <div><a class="btn" href="option-a3-status-lite.html" target="_blank">Open full</a></div>
+      </div>
+      <iframe title="A3" src="option-a3-status-lite.html" loading="lazy"></iframe>
+    </section>
+  </div>
+
+  <h2>Option D — public AI / health surface (pick one primary)</h2>
+  <div class="board">
+    <section class="frame">
+      <div class="meta">
+        <h3>D1 · Interactive agent demo</h3>
+        <p>Chat + hard walls. Best for live sales walkthrough of “AI-first ops.” Needs model + APIs later.</p>
+        <span class="tag">Sales demo</span>
+        <div><a class="btn" href="option-d-ai-ops.html" target="_blank">Open full</a></div>
+      </div>
+      <iframe title="D1" src="option-d-ai-ops.html" loading="lazy"></iframe>
+    </section>
+    <section class="frame">
+      <div class="meta">
+        <h3>D2 · Audit-style report</h3>
+        <p>Table of checks with sources. Procurement-friendly; easier to automate than chat; less “AI theater.”</p>
+        <span class="tag rec">Recommended primary</span>
+        <div><a class="btn" href="option-d2-report.html" target="_blank">Open full</a></div>
+      </div>
+      <iframe title="D2" src="option-d2-report.html" loading="lazy"></iframe>
+    </section>
+    <section class="frame">
+      <div class="meta">
+        <h3>D3 · Embed card</h3>
+        <p>Compact snapshot for decks or www sidebar. Not a full product — companion to D1/D2.</p>
+        <span class="tag">Companion</span>
+        <div><a class="btn" href="option-d3-embed.html" target="_blank">Open full</a></div>
+      </div>
+      <iframe title="D3" src="option-d3-embed.html" loading="lazy"></iframe>
+    </section>
+  </div>
+
+  <footer>
+    Local board: <a href="http://127.0.0.1:8765/options-board.html">http://127.0.0.1:8765/options-board.html</a>
+    · Full suite index: <a href="index.html">index.html</a>
+    · Plan: <code>docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md</code>
+  </footer>
+</body>
+</html>

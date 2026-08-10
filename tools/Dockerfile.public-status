@@ -1,0 +1,15 @@
+# Public validator status publisher — Cloud Run Job (5m Scheduler).
+# Build: from repo root
+#   gcloud builds submit --config=tools/cloudbuild.public-status.yaml
+FROM python:3.12-slim
+
+WORKDIR /app
+COPY requirements-public-status.txt .
+RUN pip install --no-cache-dir -r requirements-public-status.txt
+COPY publish_public_status.py .
+
+# Non-root
+RUN useradd -r -u 10001 publisher && chown -R publisher:publisher /app
+USER publisher
+
+ENTRYPOINT ["python3", "publish_public_status.py", "--upload"]

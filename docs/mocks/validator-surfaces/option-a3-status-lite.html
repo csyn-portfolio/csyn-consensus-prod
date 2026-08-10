@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A3 · Trust card + status lite · Cloud Syndicate</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#05090f; --panel:#0d1522; --panel2:#122036; --line:#1c3a66; --ink:#F3FAFC;
+      --muted:#828da3; --muted2:#b0bacd; --gold:#c9a86a; --blue:#5da8ff; --ok:#3dd68c; --warn:#f0b429;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family:"IBM Plex Sans",system-ui,sans-serif; color:var(--ink);
+      background: radial-gradient(800px 400px at 70% -10%, rgba(31,66,134,.4), transparent 55%), var(--bg);
+      min-height:100vh;
+    }
+    a { color:var(--blue); text-decoration:none; }
+    .banner { background:#1a2430; border-bottom:1px solid #2a4058; color:#b8c9dc; font-size:12px; padding:8px 16px; text-align:center; }
+    .wrap { max-width:800px; margin:0 auto; padding:32px 20px 56px; }
+    .eyebrow { color:var(--gold); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; font-weight:600; }
+    h1 { margin:8px 0; font-size:1.7rem; letter-spacing:-.03em; font-weight:650; }
+    .lede { color:var(--muted2); max-width:48ch; margin:0 0 20px; }
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+    @media (max-width:700px){ .grid{ grid-template-columns:1fr; } }
+    .metric {
+      background:linear-gradient(180deg,var(--panel2),var(--panel));
+      border:1px solid rgba(28,58,102,.9); border-radius:12px; padding:12px 14px;
+    }
+    .metric .l { font-size:.68rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .metric .v { margin-top:6px; font-size:1.15rem; font-weight:650; }
+    .metric .v.ok { color:var(--ok); }
+    .metric .h { margin-top:4px; font-size:.75rem; color:var(--muted); }
+    .card {
+      background:linear-gradient(180deg,var(--panel2),var(--panel));
+      border:1px solid rgba(28,58,102,.9); border-radius:14px; padding:16px 18px; margin-bottom:12px;
+    }
+    .card h2 { margin:0 0 10px; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+    .key { font-family:"IBM Plex Mono",monospace; font-size:.78rem; word-break:break-all; background:#05090f; border:1px solid var(--line); border-radius:8px; padding:10px 12px; color:#9ec5ff; }
+    .links { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+    .btn { border:1px solid #3a65b0; background:linear-gradient(180deg,#2a4f96,#1f4286); color:#fff!important; border-radius:8px; padding:8px 12px; font-size:.85rem; font-weight:600; text-decoration:none!important; }
+    .btn.ghost { background:transparent; border-color:var(--line); color:var(--muted2)!important; }
+    .note { font-size:.8rem; color:var(--warn); margin-top:8px; }
+    footer { margin-top:20px; font-size:12px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="banner">OPTION A3 · Trust card + <strong>status-lite</strong> (public sources only — widgets are placeholder in this mock)</div>
+  <div class="wrap">
+    <div class="eyebrow">EverForge Consensus · mainnet</div>
+    <h1>validator1.cloudsyndicate.io</h1>
+    <p class="lede">Identity + a thin public health strip. No private GCP metrics. Widgets would be fed by explorer/registry APIs only.</p>
+
+    <div class="grid">
+      <div class="metric"><div class="l">Domain</div><div class="v ok">Verified</div><div class="h">TOML + attestation</div></div>
+      <div class="metric"><div class="l">UNL</div><div class="v" style="color:var(--warn);font-size:1rem">Not listed</div><div class="h">Research pull · re-check live</div></div>
+      <div class="metric"><div class="l">Public health</div><div class="v" style="font-size:1rem;color:var(--muted2)">Wire later</div><div class="h">Registry / explorer only</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Master public key</h2>
+      <div class="key">nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq</div>
+      <div class="links">
+        <a class="btn" href="https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml">TOML</a>
+        <a class="btn ghost" href="https://livenet.xrpl.org/validators/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq">Explorer</a>
+        <a class="btn ghost" href="option-d-ai-ops.html">Public health check</a>
+      </div>
+      <p class="note">Mock: do not treat the middle/right tiles as live agreement.</p>
+    </div>
+
+    <div class="card">
+      <h2>Posture (one screen)</h2>
+      <p style="margin:0;color:var(--muted2);font-size:.92rem;line-height:1.5">
+        HSM-backed token · CMEK disks · Shielded VM · peer-only public edge · admin localhost.
+        Operated by Cloud Syndicate under EverForge Consensus on Google Cloud.
+      </p>
+      <div class="links">
+        <a class="btn ghost" href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge Consensus →</a>
+        <a class="btn ghost" href="mailto:hello@cloudsyn.net">hello@cloudsyn.net</a>
+      </div>
+    </div>
+
+    <footer>A3 mock · more engagement than A2 · still no private plane</footer>
+  </div>
+</body>
+</html>

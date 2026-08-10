@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Public validator health report · EverForge Consensus</title>
+  <meta name="description" content="Public-source-only health report for XRPL validators. No private GCP or admin access." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #05090f;
+      --panel: #0d1522;
+      --line: #1c3a66;
+      --ink: #F3FAFC;
+      --muted: #828da3;
+      --muted2: #b0bacd;
+      --gold: #c9a86a;
+      --blue: #5da8ff;
+      --ok: #3dd68c;
+      --warn: #f0b429;
+      --bad: #f07178;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .top {
+      border-bottom: 1px solid rgba(28,58,102,0.7);
+      background: rgba(5,9,15,0.92);
+    }
+    .top-inner {
+      max-width: 820px; margin: 0 auto; padding: 14px 20px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(145deg, #1f4286, #0d2147);
+      border: 1px solid #b08d57;
+      display: grid; place-items: center;
+      font-size: 10px; font-weight: 700; color: var(--gold);
+    }
+    .name { font-weight: 600; font-size: 0.92rem; }
+    .sub { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 28px 20px 56px; }
+    .eyebrow { color: var(--gold); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; }
+    h1 { margin: 8px 0; font-size: 1.5rem; letter-spacing: -0.02em; }
+    .lede { color: var(--muted2); max-width: 56ch; margin: 0 0 18px; }
+    .compose { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 16px; }
+    input {
+      background: #0a1220; border: 1px solid var(--line); border-radius: 10px;
+      color: var(--ink); padding: 12px 14px; font: inherit;
+    }
+    button {
+      background: linear-gradient(180deg, #2a4f96, #1f4286);
+      border: 1px solid #3a65b0; color: #fff; border-radius: 10px;
+      padding: 0 18px; font-weight: 600; font: inherit; cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    .report {
+      background: linear-gradient(180deg, #122036, var(--panel));
+      border: 1px solid rgba(28,58,102,0.9);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: none;
+    }
+    .report.show { display: block; }
+    .report h2 { margin: 0 0 6px; font-size: 1.05rem; }
+    .stamp { font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid rgba(28,58,102,0.5); vertical-align: top; }
+    th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .ok { color: var(--ok); }
+    .bad { color: var(--bad); }
+    .warn { color: var(--warn); }
+    .mono { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; word-break: break-all; }
+    .section { margin-top: 18px; }
+    .section h3 {
+      margin: 0 0 8px; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted);
+    }
+    ol { margin: 0; padding-left: 1.2rem; color: var(--muted2); }
+    li { margin: 5px 0; }
+    .walls {
+      margin-top: 14px; font-size: 0.82rem; color: var(--muted);
+      border-top: 1px solid rgba(28,58,102,0.5); padding-top: 12px;
+    }
+    .err {
+      display: none; margin-bottom: 12px; padding: 10px 12px;
+      border-radius: 10px; border: 1px solid rgba(240,113,120,0.4);
+      background: rgba(240,113,120,0.08); color: #f5c0c4; font-size: 0.88rem;
+    }
+    .err.show { display: block; }
+    footer { margin-top: 20px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <div class="mark">CS</div>
+        <div>
+          <div class="name">Public health report</div>
+          <div class="sub">EverForge Consensus · public sources only</div>
+        </div>
+      </div>
+      <a href="https://validator1.cloudsyndicate.io/">validator1</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="eyebrow">Bounded public checks</div>
+    <h1>Validator health report</h1>
+    <p class="lede">
+      Checks only what is on the public internet: domain TOML, root HTTP status, and (when available) registry pages.
+      No private GCP APIs. No admin RPC.
+    </p>
+
+    <div class="compose">
+      <input id="target" type="text" value="validator1.cloudsyndicate.io" autocomplete="off" spellcheck="false" />
+      <button id="run" type="button">Generate</button>
+    </div>
+    <div id="err" class="err"></div>
+
+    <article id="report" class="report" aria-live="polite">
+      <h2 id="title">Report</h2>
+      <div id="stamp" class="stamp"></div>
+      <table>
+        <thead>
+          <tr><th>Check</th><th>Result</th><th>Source</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="section">
+        <h3>Findings</h3>
+        <ol id="findings"></ol>
+      </div>
+      <div class="section">
+        <h3>Next steps</h3>
+        <ol id="next"></ol>
+      </div>
+      <div class="walls">
+        Hard walls: no Cloud Logging · no Secret Manager · no admin ports · no “FedRAMP authorized” claims.
+      </div>
+    </article>
+
+    <footer>
+      Cloud Syndicate, LLC · public data only · D2 report surface (client-side probes)
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      const rows = $("rows");
+      const findings = $("findings");
+      const next = $("next");
+      const err = $("err");
+      const report = $("report");
+      const runBtn = $("run");
+
+      function row(check, resultHtml, source, cls) {
+        const tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + check + "</td>" +
+          "<td class=\"" + (cls || "") + "\">" + resultHtml + "</td>" +
+          "<td class=\"mono\">" + source + "</td>";
+        return tr;
+      }
+
+      function li(parent, text) {
+        const el = document.createElement("li");
+        el.textContent = text;
+        parent.appendChild(el);
+      }
+
+      function normalizeDomain(raw) {
+        let s = (raw || "").trim();
+        s = s.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+        return s;
+      }
+
+      async function probe(url, opts) {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 12000);
+        try {
+          const res = await fetch(url, Object.assign({ signal: ctrl.signal, mode: "cors" }, opts || {}));
+          const text = await res.text().catch(() => "");
+          return { ok: res.ok, status: res.status, text: text.slice(0, 4000) };
+        } catch (e) {
+          return { ok: false, status: 0, error: String(e && e.name ? e.name : e), text: "" };
+        } finally {
+          clearTimeout(t);
+        }
+      }
+
+      async function run() {
+        err.classList.remove("show");
+        err.textContent = "";
+        rows.innerHTML = "";
+        findings.innerHTML = "";
+        next.innerHTML = "";
+        report.classList.remove("show");
+        runBtn.disabled = true;
+
+        const domain = normalizeDomain($("target").value);
+        if (!domain || domain.indexOf(".") < 0) {
+          err.textContent = "Enter a domain (e.g. validator1.cloudsyndicate.io).";
+          err.classList.add("show");
+          runBtn.disabled = false;
+          return;
+        }
+
+        const ts = new Date().toISOString();
+        $("title").textContent = domain;
+        $("stamp").textContent =
+          "Generated " + ts + " · browser probes · CORS may block some third-party APIs";
+
+        const tomlUrl = "https://" + domain + "/.well-known/xrp-ledger.toml";
+        const rootUrl = "https://" + domain + "/";
+
+        const [toml, root] = await Promise.all([
+          probe(tomlUrl),
+          probe(rootUrl)
+        ]);
+
+        // TOML
+        let tomlCls = "bad";
+        let tomlResult = "FAIL";
+        if (toml.status === 200 && /validators|VALIDATORS|public_key/i.test(toml.text)) {
+          tomlCls = "ok";
+          tomlResult = "PASS · HTTP 200 · validator keys present";
+        } else if (toml.status === 200) {
+          tomlCls = "warn";
+          tomlResult = "HTTP 200 · body missing expected validator fields";
+        } else if (toml.status === 0) {
+          tomlCls = "warn";
+          tomlResult = "Not observable from browser (" + (toml.error || "network") + ")";
+        } else {
+          tomlResult = "FAIL · HTTP " + toml.status;
+        }
+        rows.appendChild(row("Domain TOML", tomlResult, "GET " + tomlUrl, tomlCls));
+
+        // Root
+        let rootCls = "bad";
+        let rootResult = "FAIL";
+        if (root.status === 200 && /html|HTML|<!doctype/i.test(root.text)) {
+          rootCls = "ok";
+          rootResult = "PASS · HTTP 200 · HTML landing";
+        } else if (root.status === 200) {
+          rootCls = "warn";
+          rootResult = "HTTP 200 · non-HTML body";
+        } else if (root.status === 403) {
+          rootResult = "FAIL · HTTP 403 (no public landing)";
+        } else if (root.status === 0) {
+          rootCls = "warn";
+          rootResult = "Not observable from browser (" + (root.error || "network") + ")";
+        } else {
+          rootResult = "FAIL · HTTP " + root.status;
+        }
+        rows.appendChild(row("Human landing (/)", rootResult, "GET " + rootUrl, rootCls));
+
+        rows.appendChild(row(
+          "Private GCP / admin RPC",
+          "NOT QUERIED (hard wall)",
+          "—",
+          "ok"
+        ));
+
+        if (tomlCls === "ok" && rootCls === "ok") {
+          li(findings, "Domain verification and human landing both present.");
+        } else if (tomlCls === "ok" && rootCls !== "ok") {
+          li(findings, "TOML verifies the domain, but the human root is missing or blocked — ship a static trust card as index.html.");
+        } else if (tomlCls !== "ok") {
+          li(findings, "Domain TOML missing or incomplete — XRPL domain verification will fail explorers/registries.");
+        }
+        if (root.status === 0 || toml.status === 0) {
+          li(findings, "Some probes failed from the browser (CORS or network). Re-check with curl on a trusted workstation.");
+        }
+
+        if (rootCls !== "ok") {
+          li(next, "Publish a static institutional landing at the domain root (same host as TOML).");
+        }
+        li(next, "Keep admin RPC and private metrics off this domain.");
+        li(next, "Re-query UNL/agreement from explorers before any procurement claim — this report does not assert them.");
+
+        report.classList.add("show");
+        runBtn.disabled = false;
+      }
+
+      runBtn.addEventListener("click", run);
+      // Auto-run default CS domain once
+      run();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reference mock · CarbonVibe-style trust card</title>
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --ink: #1a1a1a;
+      --muted: #5c5c5c;
+      --line: #d9d9d4;
+      --card: #ffffff;
+      --accent: #0f4c5c;
+      --ok: #1b6b3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .banner {
+      background: #fff8e6;
+      border-bottom: 1px solid #f0d98a;
+      color: #6b5300;
+      font-size: 12px;
+      padding: 8px 16px;
+      text-align: center;
+    }
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px 64px;
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      margin: 0 0 4px;
+    }
+    .domain {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+    }
+    .domain a { color: var(--accent); }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px 12px;
+      font-size: 0.95rem;
+      margin: 8px 0;
+    }
+    .k { color: var(--muted); }
+    .v { word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86rem; }
+    .v.plain { font-family: inherit; font-size: 0.95rem; word-break: normal; }
+    .badge {
+      display: inline-block;
+      background: #e8f5ec;
+      color: var(--ok);
+      border: 1px solid #b9dfc5;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 10px;
+    }
+    ul { margin: 0; padding-left: 1.15rem; color: #2a2a2a; }
+    li { margin: 6px 0; }
+    footer {
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="banner">REFERENCE MOCK · Recreates the CarbonVibe pattern (minimal static trust card). Not CarbonVibe’s live site.</div>
+  <div class="wrap">
+    <h1>CarbonVibe XRPL Validator</h1>
+    <p class="domain">Domain: <strong>xrplvl.carbonvibe.com</strong> · <a href="#">View xrp-ledger.toml</a></p>
+
+    <div class="card">
+      <h2>About</h2>
+      <div class="row"><div class="k">Verification</div><div class="v plain"><span class="badge">Verified</span></div></div>
+      <div class="row"><div class="k">Public key</div><div class="v">nHUFAga9YZ9uQM7AQ3KVu6RgvoF8JWf77S5gscGQeCVxMN6tXyKQ</div></div>
+      <div class="row"><div class="k">Network</div><div class="v plain">mainnet</div></div>
+      <div class="row"><div class="k">Identity account</div><div class="v">rMVRPENEPfhwht1RkQp6Emw13DeAp2PtLv</div></div>
+      <div class="row"><div class="k">Operator</div><div class="v plain">CarbonVibe Automation / Justin Nevins</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Operational policy</h2>
+      <ul>
+        <li>Rapid adoption of stable XRPL releases after validation.</li>
+        <li>Diverse, high-quality peer connectivity (hybrid fixed + discovery).</li>
+        <li>Validator identity and donation account published via TOML &amp; DNS verification.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Contact</h2>
+      <div class="row"><div class="k">Email</div><div class="v plain">xrplops@carbonvibe.com</div></div>
+      <div class="row"><div class="k">X / Twitter</div><div class="v plain">@justinnevins</div></div>
+      <div class="row"><div class="k">Website</div><div class="v plain">carbonvibe.com</div></div>
+      <p style="margin:14px 0 0;font-size:0.9rem;color:var(--muted)">For security disclosures, use subject line <em>XRPL Validator Security</em>.</p>
+    </div>
+
+    <footer>
+      © CarbonVibe Automation (pattern mock). Static page. No cookies. No trackers.<br />
+      <strong>What this pattern optimizes for:</strong> trust, identity, policy — zero live attack surface, seconds to read.
+    </footer>
+  </div>
+</body>
+</html>

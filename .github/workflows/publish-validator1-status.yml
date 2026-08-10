@@ -1,0 +1,49 @@
+# Publish validator1 public status.json + history.json every 5 minutes.
+# Identity: v1-public-status@csyn-ldg-validator-prod (WIF principalSet = this repo).
+# Reads Cloud Monitoring in validator-prod; writes gs://csyn-www-validator1-toml.
+#
+# Schedule only fires on the default branch after merge. Use workflow_dispatch to
+# test from a PR branch (requires the SA WIF binding already live).
+
+name: publish-validator1-status
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-validator1-status
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    # Schedule only fires on default branch; block PR-branch workflow_dispatch
+    # so a non-main ref cannot mint the publisher SA token (I1 gate finding).
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          # Same pool as plan/apply; SA is dedicated publisher (not ledger-apply).
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_PLAN }}
+          service_account: v1-public-status@csyn-ldg-validator-prod.iam.gserviceaccount.com
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install --quiet -r tools/requirements-public-status.txt
+
+      - name: Publish status + history
+        env:
+          GOOGLE_CLOUD_PROJECT: csyn-ldg-validator-prod
+        run: python3 tools/publish_public_status.py --upload

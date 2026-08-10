@@ -9,6 +9,24 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 - [decision-pointer] CONSVAL1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/ (CONSVAL1)
 - [decision-pointer] CONSVAL2 (multi-region validator expansion — EverForge managed-validator product, CS anchor customer; SG asia-southeast1 first, EU deferred; firm geo-nodes in ledger/prod/validators; public-data-only ⇒ outside FedRAMP boundary; extends CONSVAL1+TOPO2) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-21-multi-region-validator-expansion.md · index: ~/.ai-decisions.md
 
+## Public surfaces — A1 trust card + D2 health (2026-08-09)
+
+- **Decision:** Ship **A1** then **D2**; defer **C** (directory). **A is OpenTofu**, not `gcloud cp`.
+- **A TF home (one home):** `cloud-syndicate-platform/shared/www` branch `feat/www-validator1-trust-card`
+  - worktree: `/Users/petermorse/pete-ai/claude/cs/cloud-syndicate-platform-wt-validator1-trust`
+  - objects: `validator1_index` + `validator1_toml` under `validator1-content/`
+  - `/` → `/index.html` rewrite in `gclb.tf` path_matcher `validator1`
+  - first apply: **import** existing toml object (see `docs/public/validator1/README.md`)
+- **Mocks / design source:** `docs/mocks/…` · `docs/public/validator1/index.html` · plan `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
+- **Verify A after apply (re-run; do not freeze):**
+  ```bash
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
+  ```
+- **D2:** `docs/public/health/index.html` — next PR (www or Cloud Run); not blocking A
+- **C:** deferred
+
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
 - Practice/testnet in sibling `csyn-consensus-infra`.

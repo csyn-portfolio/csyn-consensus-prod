@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EverForge public surfaces · A + C + D design board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #071018;
+      --panel: #0e1724;
+      --line: #243449;
+      --ink: #eef4fb;
+      --muted: #8fa0b5;
+      --gold: #c9a86a;
+      --blue: #5da8ff;
+      --green: #3dd68c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    a { color: var(--blue); }
+    header {
+      padding: 28px 22px 10px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      color: var(--gold);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 650;
+    }
+    h1 {
+      margin: 8px 0 8px;
+      font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      max-width: 78ch;
+      color: var(--muted);
+      margin: 0 0 12px;
+      line-height: 1.5;
+    }
+    .gate {
+      display: inline-block;
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(240,180,41,0.4);
+      background: rgba(240,180,41,0.08);
+      color: #e8d29a;
+      margin-bottom: 16px;
+    }
+    .matrix {
+      max-width: 1400px;
+      margin: 0 auto 18px;
+      padding: 0 22px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      min-width: 900px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #121c2b;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      margin-right: 4px;
+    }
+    .tag.rec { color: var(--green); border-color: rgba(61,214,140,0.4); }
+    .tag.ship { color: var(--gold); border-color: rgba(201,168,106,0.45); }
+
+    .path {
+      max-width: 1400px;
+      margin: 0 auto 18px;
+      padding: 0 22px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .path strong { color: var(--ink); }
+
+    .board {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 8px 16px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 1100px) { .board { grid-template-columns: 1fr; } }
+    .frame-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 540px;
+    }
+    .frame-card.wide {
+      grid-column: 1 / -1;
+      min-height: 640px;
+    }
+    .frame-meta {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .frame-meta h2 { margin: 0; font-size: 0.98rem; }
+    .frame-meta p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      max-width: 64ch;
+    }
+    .frame-meta a.btn {
+      flex-shrink: 0;
+      text-decoration: none;
+      background: #1a2a42;
+      border: 1px solid #2f4a6e;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 0.8rem;
+    }
+    iframe {
+      width: 100%;
+      flex: 1;
+      min-height: 480px;
+      border: 0;
+      background: #000;
+    }
+    .frame-card.wide iframe { min-height: 580px; }
+    footer {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 22px 36px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Cloud Syndicate · EverForge Consensus · design board</div>
+    <h1>Institutional suite — Option A + C + D</h1>
+    <p class="lede">
+      Clean institutional feel with restrained marketing. Shared navy/gold language across the suite.
+      Reference patterns (CarbonVibe / Tachyon) stay available for comparison; CS product surfaces are A, C, and D.
+    </p>
+    <div class="gate">
+      Gate: Fable5 r1 NOT-REVIEWED (headless hung) · interim Grok rubric → MERGE-WITH-FIXES applied in this suite · see gates/gate-fable5-r1.txt
+    </div>
+  </header>
+
+  <p class="path">
+    <strong>Recommended path:</strong> A (validator trust) → C (directory authority) → D (AI ops proof) ·
+    Tachyon-style metrics only on a future status host, not on validator1.
+  </p>
+
+  <div class="matrix">
+    <table>
+      <thead>
+        <tr>
+          <th>Surface</th>
+          <th>Job</th>
+          <th>Feel</th>
+          <th>Ship note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A · Trust card</strong><br /><span class="tag ship">CS product</span></td>
+          <td>Close 403; prove identity + posture in &lt;30s</td>
+          <td>Institutional static · light EverForge CTA</td>
+          <td><span class="tag rec">First deploy</span> same host as TOML</td>
+        </tr>
+        <tr>
+          <td><strong>C · Directory</strong><br /><span class="tag ship">CS product</span></td>
+          <td>Curated institutional catalog + methodology</td>
+          <td>Editorial, not explorer; CS labeled “operator we run”</td>
+          <td>Passive/GCS-friendly · SEO</td>
+        </tr>
+        <tr>
+          <td><strong>D · Public AI check</strong><br /><span class="tag ship">CS product</span></td>
+          <td>Prove AI-first ops with hard walls</td>
+          <td>Demo-framed · procurement-safe</td>
+          <td>Cloud Run later · public APIs only</td>
+        </tr>
+        <tr>
+          <td><strong>CarbonVibe pattern</strong><br /><span class="tag">Reference</span></td>
+          <td>Minimal trust card archetype</td>
+          <td>Neutral static</td>
+          <td>Informs A</td>
+        </tr>
+        <tr>
+          <td><strong>Tachyon pattern</strong><br /><span class="tag">Reference</span></td>
+          <td>Live public telemetry</td>
+          <td>Dashboard</td>
+          <td>Optional status.* later</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="board">
+    <section class="frame-card">
+      <div class="frame-meta">
+        <div>
+          <h2>A · CS institutional trust card</h2>
+          <p>Intended validator1.cloudsyndicate.io root — domain verify + posture + security + light marketing.</p>
+        </div>
+        <a class="btn" href="option-a-trust-card.html" target="_blank" rel="noopener">Open full</a>
+      </div>
+      <iframe title="Option A trust card" src="option-a-trust-card.html" loading="lazy"></iframe>
+    </section>
+
+    <section class="frame-card">
+      <div class="frame-meta">
+        <div>
+          <h2>Reference · CarbonVibe-style</h2>
+          <p>Field pattern A is built against — minimal policy page.</p>
+        </div>
+        <a class="btn" href="ref-carbonvibe-style.html" target="_blank" rel="noopener">Open full</a>
+      </div>
+      <iframe title="CarbonVibe-style reference" src="ref-carbonvibe-style.html" loading="lazy"></iframe>
+    </section>
+
+    <section class="frame-card wide">
+      <div class="frame-meta">
+        <div>
+          <h2>C · Ledger Ops Directory</h2>
+          <p>Methodology first · CS as “operator we run” · field patterns · timestamped research pull (not live status).</p>
+        </div>
+        <a class="btn" href="option-c-directory.html" target="_blank" rel="noopener">Open full</a>
+      </div>
+      <iframe title="Option C directory" src="option-c-directory.html" loading="lazy"></iframe>
+    </section>
+
+    <section class="frame-card wide">
+      <div class="frame-meta">
+        <div>
+          <h2>D · Public AI health check</h2>
+          <p>Bounded agent demo · hard walls · illustrative transcript · EverForge CTA.</p>
+        </div>
+        <a class="btn" href="option-d-ai-ops.html" target="_blank" rel="noopener">Open full</a>
+      </div>
+      <iframe title="Option D AI ops" src="option-d-ai-ops.html" loading="lazy"></iframe>
+    </section>
+
+    <section class="frame-card">
+      <div class="frame-meta">
+        <div>
+          <h2>Reference · Tachyon-style</h2>
+          <p>Live metrics dashboard — optional later, not on validator domain.</p>
+        </div>
+        <a class="btn" href="ref-tachyon-style.html" target="_blank" rel="noopener">Open full</a>
+      </div>
+      <iframe title="Tachyon-style reference" src="ref-tachyon-style.html" loading="lazy"></iframe>
+    </section>
+  </div>
+
+  <footer>
+    Serve: <code>cd docs/mocks/validator-surfaces && python3 -m http.server 8765</code> ·
+    http://127.0.0.1:8765/ ·
+    Gate notes: <code>gates/gate-fable5-r1.txt</code> · re-run brief: <code>gates/fable5-brief.md</code>
+  </footer>
+</body>
+</html>
