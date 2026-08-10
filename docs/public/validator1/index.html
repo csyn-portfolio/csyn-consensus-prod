@@ -547,18 +547,31 @@
       var ms = Date.parse(t);
       return isNaN(ms) ? null : ms;
     }
-    function dayKey(ms) {
+    // Date inputs are local calendar days — never mix UTC day keys with local pickers.
+    function dayKeyLocal(ms) {
       var d = new Date(ms);
-      return d.getUTCFullYear() + "-" +
-        String(d.getUTCMonth() + 1).padStart(2, "0") + "-" +
-        String(d.getUTCDate()).padStart(2, "0");
+      return d.getFullYear() + "-" +
+        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
+    }
+    function parseLocalDayStart(ymd) {
+      if (!ymd) return null;
+      var p = ymd.split("-");
+      if (p.length !== 3) return null;
+      return new Date(+p[0], +p[1] - 1, +p[2], 0, 0, 0, 0).getTime();
+    }
+    function parseLocalDayEnd(ymd) {
+      if (!ymd) return null;
+      var p = ymd.split("-");
+      if (p.length !== 3) return null;
+      return new Date(+p[0], +p[1] - 1, +p[2], 23, 59, 59, 999).getTime();
     }
     function fmtTick(ms, spanMs) {
       var d = new Date(ms);
-      var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
-      var dd = d.getUTCDate();
-      var hh = String(d.getUTCHours()).padStart(2, "0");
-      var mm = String(d.getUTCMinutes()).padStart(2, "0");
+      var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+      var dd = d.getDate();
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mm = String(d.getMinutes()).padStart(2, "0");
       if (spanMs < 48 * 3600 * 1000) return hh + ":" + mm;
       if (spanMs < 14 * 86400 * 1000) return mon + " " + dd + " " + hh + "h";
       return mon + " " + dd;
@@ -566,6 +579,7 @@
 
     var state = {
       peers: [],
+      agreeRaw: [],
       agree: [],
       range: "7d",
       from: null,
@@ -578,11 +592,42 @@
       if (from == null && to == null) return pts.slice();
       return pts.filter(function (p) {
         var ms = parseT(p.t);
-        if (ms == null) return true;
+        if (ms == null) return false; // unparseable timestamps never match a range
         if (from != null && ms < from) return false;
         if (to != null && ms > to) return false;
         return true;
       });
+    }
+
+    /** Carry agreement snapshots onto the peer timeline so the chart densifies. */
+    function densifyAgreement(snaps, peerPts) {
+      var sorted = (snaps || []).slice().filter(function (p) {
+        return p && p.v != null && parseT(p.t) != null;
+      }).sort(function (a, b) { return parseT(a.t) - parseT(b.t); });
+      if (!sorted.length) return [];
+      if (!peerPts || !peerPts.length || sorted.length >= 40) {
+        return sorted;
+      }
+      var si = 0;
+      var lastV = sorted[0].v;
+      var out = [];
+      peerPts.forEach(function (p) {
+        var t = parseT(p.t);
+        if (t == null) return;
+        while (si < sorted.length && parseT(sorted[si].t) <= t) {
+          lastV = sorted[si].v;
+          si++;
+        }
+        // Only after first snap exists in time
+        if (t < parseT(sorted[0].t)) return;
+        out.push({ t: p.t, v: lastV });
+      });
+      // Ensure latest snap is present even if after last peer hour
+      var lastSnap = sorted[sorted.length - 1];
+      if (!out.length || parseT(out[out.length - 1].t) < parseT(lastSnap.t)) {
+        out.push({ t: lastSnap.t, v: lastSnap.v });
+      }
+      return out;
     }
 
     function applyPreset(name) {
@@ -593,14 +638,13 @@
       if (name === "24h") start = now - 24 * 3600 * 1000;
       else if (name === "7d") start = now - 7 * 86400 * 1000;
       else if (name === "30d") start = now - 30 * 86400 * 1000;
-      else { start = null; end = null; }
+      else { start = null; end = null; } // all
       state.from = start;
       state.to = end;
-      // Sync date inputs
       var fromEl = $("range-from");
       var toEl = $("range-to");
-      if (fromEl) fromEl.value = start ? dayKey(start) : "";
-      if (toEl) toEl.value = end ? dayKey(end) : dayKey(now);
+      if (fromEl) fromEl.value = start != null ? dayKeyLocal(start) : "";
+      if (toEl) toEl.value = end != null ? dayKeyLocal(end) : dayKeyLocal(now);
       document.querySelectorAll(".rbtn").forEach(function (b) {
         b.classList.toggle("active", b.getAttribute("data-range") === name);
       });
@@ -616,8 +660,14 @@
       document.querySelectorAll(".rbtn").forEach(function (b) {
         b.classList.remove("active");
       });
-      state.from = fv ? Date.parse(fv + "T00:00:00Z") : null;
-      state.to = tv ? Date.parse(tv + "T23:59:59Z") : null;
+      state.from = fv ? parseLocalDayStart(fv) : null;
+      state.to = tv ? parseLocalDayEnd(tv) : null;
+      // If only one bound set, keep it; if from > to, swap
+      if (state.from != null && state.to != null && state.from > state.to) {
+        var tmp = state.from;
+        state.from = state.to;
+        state.to = tmp;
+      }
       redraw();
     }
 
@@ -673,13 +723,41 @@
 
       var times = pts.map(function (p) { return parseT(p.t); });
       var useTime = times.every(function (t) { return t != null; });
-      var t0 = useTime ? Math.min.apply(null, times) : 0;
-      var t1 = useTime ? Math.max.apply(null, times) : Math.max(pts.length - 1, 1);
+      // Prefer selected calendar/preset range for the X axis so changing the
+      // picker always re-scales the axis — not only the data's own min/max.
+      var dataT0 = useTime ? Math.min.apply(null, times) : 0;
+      var dataT1 = useTime ? Math.max.apply(null, times) : Math.max(pts.length - 1, 1);
+      var t0 = useTime
+        ? (opts.axisFrom != null ? opts.axisFrom : dataT0)
+        : 0;
+      var t1 = useTime
+        ? (opts.axisTo != null ? opts.axisTo : dataT1)
+        : Math.max(pts.length - 1, 1);
+      // Expand axis to include data if selection is null-sided
+      if (useTime && opts.axisFrom == null) t0 = dataT0;
+      if (useTime && opts.axisTo == null) t1 = dataT1;
+      // If selection is set, still expand slightly if all points sit on one edge
+      if (useTime && t1 <= t0) t1 = t0 + 1;
       var span = Math.max(t1 - t0, 1);
 
       function xAt(i) {
-        if (useTime) return pad.l + (w * (times[i] - t0)) / span;
+        if (useTime) {
+          var x = pad.l + (w * (times[i] - t0)) / span;
+          // Clamp into plot so out-of-range never paints outside the frame
+          if (x < pad.l) x = pad.l;
+          if (x > pad.l + w) x = pad.l + w;
+          return x;
+        }
         return pad.l + (w * i) / Math.max(pts.length - 1, 1);
+      }
+      // Evenly spaced axis ticks across the *selected* range (not only point indices)
+      function xTicksTime() {
+        var n = 6;
+        var ticks = [];
+        for (var i = 0; i < n; i++) {
+          ticks.push(t0 + (span * i) / (n - 1));
+        }
+        return ticks;
       }
       function yAt(v) {
         return pad.t + h * (1 - (v - min) / (max - min));
@@ -720,27 +798,44 @@
       ctx.lineTo(pad.l, pad.t + h);
       ctx.stroke();
 
-      // X ticks
-      var xTickN = Math.min(6, Math.max(2, pts.length));
-      var xIdx = [];
-      if (pts.length === 1) xIdx = [0];
-      else for (var xi = 0; xi < xTickN; xi++) xIdx.push(Math.round((xi * (pts.length - 1)) / (xTickN - 1)));
-      xIdx = xIdx.filter(function (v, i, a) { return a.indexOf(v) === i; });
+      // X ticks — for time series, place evenly across selected axis range
       ctx.textBaseline = "top";
-      xIdx.forEach(function (i, tickI) {
-        var x = xAt(i);
-        ctx.strokeStyle = "rgba(28,58,102,0.5)";
-        ctx.beginPath();
-        ctx.moveTo(x, pad.t + h);
-        ctx.lineTo(x, pad.t + h + 5);
-        ctx.stroke();
-        var lab = useTime ? fmtTick(times[i], span) : String(i + 1);
-        ctx.fillStyle = "#828da3";
-        if (tickI === 0) ctx.textAlign = "left";
-        else if (tickI === xIdx.length - 1) ctx.textAlign = "right";
-        else ctx.textAlign = "center";
-        ctx.fillText(lab, x, pad.t + h + 8);
-      });
+      if (useTime) {
+        var xt = xTicksTime();
+        xt.forEach(function (ms, tickI) {
+          var x = pad.l + (w * (ms - t0)) / span;
+          ctx.strokeStyle = "rgba(28,58,102,0.5)";
+          ctx.beginPath();
+          ctx.moveTo(x, pad.t + h);
+          ctx.lineTo(x, pad.t + h + 5);
+          ctx.stroke();
+          var lab = fmtTick(ms, span);
+          ctx.fillStyle = "#828da3";
+          if (tickI === 0) ctx.textAlign = "left";
+          else if (tickI === xt.length - 1) ctx.textAlign = "right";
+          else ctx.textAlign = "center";
+          ctx.fillText(lab, x, pad.t + h + 8);
+        });
+      } else {
+        var xTickN = Math.min(6, Math.max(2, pts.length));
+        var xIdx = [];
+        if (pts.length === 1) xIdx = [0];
+        else for (var xi = 0; xi < xTickN; xi++) xIdx.push(Math.round((xi * (pts.length - 1)) / (xTickN - 1)));
+        xIdx = xIdx.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        xIdx.forEach(function (i, tickI) {
+          var x = xAt(i);
+          ctx.strokeStyle = "rgba(28,58,102,0.5)";
+          ctx.beginPath();
+          ctx.moveTo(x, pad.t + h);
+          ctx.lineTo(x, pad.t + h + 5);
+          ctx.stroke();
+          ctx.fillStyle = "#828da3";
+          if (tickI === 0) ctx.textAlign = "left";
+          else if (tickI === xIdx.length - 1) ctx.textAlign = "right";
+          else ctx.textAlign = "center";
+          ctx.fillText(String(i + 1), x, pad.t + h + 8);
+        });
+      }
 
       // Area fill under line
       var grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + h);
@@ -786,16 +881,27 @@
     }
 
     function redraw() {
+      // Rebuild densified agreement from raw snaps + peer hours, then filter.
+      state.agree = densifyAgreement(state.agreeRaw, state.peers);
       var peers = filterPts(state.peers);
       var agree = filterPts(state.agree);
       var rangeLabel = state.range === "custom"
-        ? "custom range"
+        ? "custom"
         : state.range;
+      var axisFrom = state.from;
+      var axisTo = state.to != null ? state.to : Date.now();
+      // "all" → null axis bounds → data-driven
+      if (state.range === "all") {
+        axisFrom = null;
+        axisTo = null;
+      }
       drawChart({
         canvasId: "agree-chart",
         emptyId: "agree-empty",
         captionId: "agree-caption",
         points: agree,
+        axisFrom: axisFrom,
+        axisTo: axisTo,
         asPct: true,
         fixedMin: 95,
         fixedMax: 100,
@@ -811,11 +917,13 @@
         emptyId: "chart-empty",
         captionId: "chart-caption",
         points: peers,
+        axisFrom: axisFrom,
+        axisTo: axisTo,
         stroke: "#5da8ff",
         fillTop: "rgba(93,168,255,0.28)",
         fillBot: "rgba(93,168,255,0.02)",
         dot: "#c9a86a",
-        caption: peers.length + " pts · hourly mean · " + rangeLabel,
+        caption: peers.length + " pts · hourly · " + rangeLabel,
         emptyText: "No peer points in this range.",
       });
     }
@@ -886,25 +994,36 @@
       setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s)" : "stale · " + (status.sample_time || "—"));
 
       state.peers = (history && history.series && history.series.peer_count) || [];
-      state.agree =
-        (history && history.series && history.series.agreement) ||
+      // Prefer raw publish snapshots for densify source of truth
+      state.agreeRaw =
         (history && history.series && history.series.agreement_1h_snapshots) ||
+        (history && history.series && history.series.agreement) ||
         [];
-      if (state.agree.length < 2 && ag.agreement_1h && ag.agreement_1h.pct != null) {
-        state.agree = state.agree.slice();
-        state.agree.push({ t: status.published_at || new Date().toISOString(), v: ag.agreement_1h.pct });
+      // Always append the live status agreement sample so "now" is on the chart
+      if (ag.agreement_1h && ag.agreement_1h.pct != null) {
+        var liveT = status.sample_time || status.published_at || new Date().toISOString();
+        var liveV = ag.agreement_1h.pct;
+        var last = state.agreeRaw.length
+          ? state.agreeRaw[state.agreeRaw.length - 1]
+          : null;
+        if (!last || parseT(last.t) !== parseT(liveT) || last.v !== liveV) {
+          state.agreeRaw = state.agreeRaw.concat([{ t: liveT, v: liveV }]);
+        }
       }
       applyPreset("7d");
     }
 
     document.querySelectorAll(".rbtn").forEach(function (b) {
-      b.addEventListener("click", function () {
+      b.addEventListener("click", function (ev) {
+        ev.preventDefault();
         applyPreset(b.getAttribute("data-range"));
       });
     });
     ["range-from", "range-to"].forEach(function (id) {
       var el = $(id);
-      if (el) el.addEventListener("change", applyCustomDates);
+      if (!el) return;
+      el.addEventListener("change", applyCustomDates);
+      el.addEventListener("input", applyCustomDates);
     });
     window.addEventListener("resize", function () {
       window.clearTimeout(window.__csRedraw);
