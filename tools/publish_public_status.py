@@ -460,32 +460,6 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     start_hist = now - timedelta(days=HISTORY_DAYS)
     timings: dict[str, float] = {}
 
-    def fetch_all_latest():
-        """One Monitoring call for every sidecar gauge (avoids 429 fan-out)."""
-        t = time.perf_counter()
-        # OR-union is more portable than starts_with across filter parsers.
-        or_filter = " OR ".join(
-            f'metric.type="{METRIC_PREFIX}/{n}"' for n in LATEST_METRICS
-        )
-        series = monitoring_get(
-            token,
-            start_latest,
-            now,
-            filter_expr=f"({or_filter})",
-            page_size=50,
-            timeout=25.0,
-        )
-        by_name: dict[str, list] = {}
-        for s in series:
-            name = _metric_short_name(s)
-            if not name:
-                continue
-            by_name.setdefault(name, []).append(s)
-        out: dict[str, tuple[float | None, datetime | None]] = {}
-        for name in LATEST_METRICS:
-            out[name] = latest_sample(by_name.get(name) or [])
-        return out, time.perf_counter() - t
-
     def fetch_hist(name: str, aligner: str):
         t = time.perf_counter()
         series = monitoring_get(
@@ -508,22 +482,48 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     daily_agree: list[dict] = []
     prior_snaps: list[dict] = []
 
-    # 1 latest bulk + 2 history + agreement + prior GCS ≈ 5 concurrent max.
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        latest_fut = pool.submit(fetch_all_latest)
+    # Monitoring: one metric type per request (API constraint). Fan-out causes
+    # hard 429s — run latest gauges sequentially, history+agreement in parallel.
+    t_lat = time.perf_counter()
+    for i, name in enumerate(LATEST_METRICS):
+        if i:
+            time.sleep(0.12)  # soft pacing under project quota
+        try:
+            series = monitoring_get(
+                token,
+                start_latest,
+                now,
+                metric=name,
+                page_size=1,
+                timeout=20.0,
+            )
+            val, sample_ts = latest_sample(series)
+            metrics[name] = val
+            sample_times[name] = sample_ts
+            timings[f"latest.{name}"] = round(time.perf_counter() - t_lat, 3)
+        except urllib.error.HTTPError as e:
+            timings[f"latest.{name}_err"] = e.code
+            metrics[name] = None
+            sample_times[name] = None
+    timings["latest.sequential"] = round(time.perf_counter() - t_lat, 3)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
         hist_peer = pool.submit(fetch_hist, "peer_count", "ALIGN_MEAN")
         hist_prop = pool.submit(fetch_hist, "proposing", "ALIGN_MEAN")
         agree_fut = pool.submit(fetch_agreement_xrpl_org)
         prior_fut = pool.submit(load_prior_agreement_snaps)
-        latest_map, dt_latest = latest_fut.result()
-        timings["latest.bulk"] = round(dt_latest, 3)
-        for name, (val, sample_ts) in latest_map.items():
-            metrics[name] = val
-            sample_times[name] = sample_ts
-        _, peer_hist, dt_p = hist_peer.result()
-        _, prop_hist, dt_pr = hist_prop.result()
-        timings["hist.peer_count"] = round(dt_p, 3)
-        timings["hist.proposing"] = round(dt_pr, 3)
+        try:
+            _, peer_hist, dt_p = hist_peer.result()
+            timings["hist.peer_count"] = round(dt_p, 3)
+        except urllib.error.HTTPError as e:
+            timings["hist.peer_count_err"] = e.code
+            peer_hist = []
+        try:
+            _, prop_hist, dt_pr = hist_prop.result()
+            timings["hist.proposing"] = round(dt_pr, 3)
+        except urllib.error.HTTPError as e:
+            timings["hist.proposing_err"] = e.code
+            prop_hist = []
         agreement, daily_agree, dt_ag = agree_fut.result()
         timings["agreement_xrpl_org"] = round(dt_ag, 3)
         prior_snaps = prior_fut.result()
