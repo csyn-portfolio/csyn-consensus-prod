@@ -463,13 +463,17 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     def fetch_all_latest():
         """One Monitoring call for every sidecar gauge (avoids 429 fan-out)."""
         t = time.perf_counter()
+        # OR-union is more portable than starts_with across filter parsers.
+        or_filter = " OR ".join(
+            f'metric.type="{METRIC_PREFIX}/{n}"' for n in LATEST_METRICS
+        )
         series = monitoring_get(
             token,
             start_latest,
             now,
-            filter_expr=f'metric.type = starts_with("{METRIC_PREFIX}/")',
+            filter_expr=f"({or_filter})",
             page_size=50,
-            timeout=20.0,
+            timeout=25.0,
         )
         by_name: dict[str, list] = {}
         for s in series:
