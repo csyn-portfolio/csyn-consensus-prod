@@ -7,6 +7,13 @@
 # us-south1 — same pattern as power-scheduler / retired poller).
 #
 # Gated on var.public_status_image_digest (empty = no job/cron; CI plan green).
+#
+# PRIMARY publisher today: GHA .github/workflows/publish-validator1-status.yml
+# (*/5 on main). Do NOT set public_status_image_digest while that workflow is
+# enabled — two writers race on history.json (I2). Cutover: disable GHA, pin digest, apply.
+#
+# SAs v1-public-status / v1-public-status-inv already exist (bootstrap). Use data
+# sources so apply does not 409 alreadyExists (C2 gate finding).
 
 locals {
   pub_status_image = (
@@ -17,25 +24,27 @@ locals {
   pub_status_on = var.public_status_image_digest != ""
 }
 
-# --- Runtime SA (Monitoring read + www bucket write) --------------------------
-resource "google_service_account" "public_status_publisher" {
-  project      = module.validator.project_id
-  account_id   = "v1-public-status"
-  display_name = "validator1 public status publisher"
-  description  = "Cloud Run Job identity: Monitoring timeSeries on this project + objectAdmin on gs://csyn-www-validator1-toml. Invoked every 5m by Cloud Scheduler."
+data "google_service_account" "public_status_publisher" {
+  account_id = "v1-public-status"
+  project    = module.validator.project_id
+}
+
+data "google_service_account" "public_status_invoker" {
+  account_id = "v1-public-status-inv"
+  project    = module.validator.project_id
 }
 
 resource "google_project_iam_member" "public_status_monitoring_viewer" {
   project = module.validator.project_id
   role    = "roles/monitoring.viewer"
-  member  = "serviceAccount:${google_service_account.public_status_publisher.email}"
+  member  = "serviceAccount:${data.google_service_account.public_status_publisher.email}"
 }
 
-# Cross-project write of public status/history JSON on the trust-card bucket.
+# Prefer objectAdmin only until a custom role scopes to status.json/history.json.
 resource "google_storage_bucket_iam_member" "public_status_www_object_admin" {
   bucket = "csyn-www-validator1-toml"
   role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${google_service_account.public_status_publisher.email}"
+  member = "serviceAccount:${data.google_service_account.public_status_publisher.email}"
 }
 
 # --- Cloud Run service agent → AR pull (csyn-ldg-images) ----------------------
@@ -73,7 +82,7 @@ resource "google_cloud_run_v2_job" "public_status" {
     template {
       timeout         = "120s"
       max_retries     = 1
-      service_account = google_service_account.public_status_publisher.email
+      service_account = data.google_service_account.public_status_publisher.email
       containers {
         image = local.pub_status_image
         resources {
@@ -93,21 +102,13 @@ resource "google_cloud_run_v2_job" "public_status" {
   depends_on = [time_sleep.wait_public_status_ar]
 }
 
-# Invoker SA — Scheduler oauth only (not the runtime SA).
-resource "google_service_account" "public_status_invoker" {
-  project      = module.validator.project_id
-  account_id   = "v1-public-status-inv"
-  display_name = "validator1 public status — scheduler invoker"
-  description  = "Cloud Scheduler authenticates as this SA to POST :run on validator1-public-status. run.developer on that job only."
-}
-
 resource "google_cloud_run_v2_job_iam_member" "public_status_invoker" {
   count    = local.pub_status_on ? 1 : 0
   project  = google_cloud_run_v2_job.public_status[0].project
   location = google_cloud_run_v2_job.public_status[0].location
   name     = google_cloud_run_v2_job.public_status[0].name
   role     = "roles/run.developer"
-  member   = "serviceAccount:${google_service_account.public_status_invoker.email}"
+  member   = "serviceAccount:${data.google_service_account.public_status_invoker.email}"
 }
 
 # Scheduler not available in us-south1 → us-central1, Admin API global.
@@ -130,7 +131,7 @@ resource "google_cloud_scheduler_job" "public_status_5m" {
     headers     = { "Content-Type" = "application/json" }
     body        = base64encode("{}")
     oauth_token {
-      service_account_email = google_service_account.public_status_invoker.email
+      service_account_email = data.google_service_account.public_status_invoker.email
     }
   }
 

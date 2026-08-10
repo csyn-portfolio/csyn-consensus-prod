@@ -714,10 +714,14 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
 def upload_gcs(
     local: Path, object_name: str, content_type: str, token: str | None = None
 ) -> None:
-    """Upload via GCS JSON API (ADC/token) or gcloud CLI fallback."""
+    """Upload via GCS JSON API (ADC/token) or gcloud CLI fallback.
+
+    Media upload does NOT persist Cache-Control from request headers — after a
+    token upload we PATCH object metadata so CDN max-age=15 actually lands.
+    """
     body = local.read_bytes()
+    cache_control = "public, max-age=15, must-revalidate"
     if token:
-        # media upload — simple and dependency-free
         url = (
             f"https://storage.googleapis.com/upload/storage/v1/b/{BUCKET}/o"
             f"?uploadType=media&name={urllib.parse.quote(object_name, safe='')}"
@@ -729,12 +733,31 @@ def upload_gcs(
             headers={
                 "Authorization": f"Bearer {token}",
                 "Content-Type": content_type,
-                "Cache-Control": "public, max-age=15, must-revalidate",
             },
         )
         with urllib.request.urlopen(req, timeout=60) as resp:
             if resp.status not in (200, 201):
                 raise RuntimeError(f"GCS upload {object_name} HTTP {resp.status}")
+        # Persist cacheControl (media upload ignores it as a request header).
+        meta_url = (
+            f"https://storage.googleapis.com/storage/v1/b/{BUCKET}/o/"
+            f"{urllib.parse.quote(object_name, safe='')}"
+        )
+        meta_body = json.dumps({"cacheControl": cache_control}).encode()
+        meta_req = urllib.request.Request(
+            meta_url,
+            data=meta_body,
+            method="PATCH",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(meta_req, timeout=30) as resp:
+            if resp.status not in (200, 201):
+                raise RuntimeError(
+                    f"GCS cacheControl PATCH {object_name} HTTP {resp.status}"
+                )
         return
     subprocess.check_call(
         [
@@ -744,7 +767,7 @@ def upload_gcs(
             str(local),
             f"gs://{BUCKET}/{object_name}",
             f"--content-type={content_type}",
-            "--cache-control=public, max-age=15, must-revalidate",
+            f"--cache-control={cache_control}",
         ]
     )
 

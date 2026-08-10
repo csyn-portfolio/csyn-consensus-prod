@@ -22,6 +22,9 @@ concurrency:
 
 jobs:
   publish:
+    # Schedule only fires on default branch; block PR-branch workflow_dispatch
+    # so a non-main ref cannot mint the publisher SA token (I1 gate finding).
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

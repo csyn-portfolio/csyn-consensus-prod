@@ -943,7 +943,10 @@
     }
 
     async function jget(url) {
-      var res = await fetch(url, { cache: "no-store" });
+      // Cache-bust so Cloud CDN (shared edge) cannot serve hour-old status/history
+      // — fetch cache:"no-store" only skips the browser cache, not the edge.
+      var sep = url.indexOf("?") >= 0 ? "&" : "?";
+      var res = await fetch(url + sep + "_=" + Date.now(), { cache: "no-store" });
       if (!res.ok) return null;
       return res.json();
     }
