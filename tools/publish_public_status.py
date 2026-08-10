@@ -9,9 +9,13 @@ Accuracy:
     gcplogs probe never invents a version from third parties.
   - History: 7d hourly ALIGN_MEAN — peers = mean peer count; proposing = mean
     of 0/1 gauge ≈ fraction of each hour spent proposing.
+  - Agreement %: network-observer scores from data.xrpl.org (XRPL.org Validator
+    History Service) — NOT reproducible from localhost and NOT XRPScan.
+    Windows: 1h / 24h / 30d. Daily report series when the API has them; else
+    we accumulate agreement_1h snapshots into history.json on each publish.
 
 Performance:
-  - Parallel Monitoring fetches (thread pool).
+  - Parallel Monitoring fetches (thread pool) + concurrent agreement HTTP.
   - Latest window 10m, pageSize=1 (only need newest point).
   - History pageSize=200 (≤168 hourly points for 7d).
   - Version logs OFF by default (was ~25s wall with zero hit rate).
@@ -47,6 +51,10 @@ PUBLIC_VALIDATOR_MASTER_KEY = (
     "nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq"  # gitleaks:allow
 )
 DOMAIN = "validator1.cloudsyndicate.io"
+# XRPL.org network observer (agreement scores). Not XRPScan; not our sidecar.
+XRPL_ORG_VALIDATORS = "https://data.xrpl.org/v1/network/validators"
+XRPL_ORG_VALIDATOR = "https://data.xrpl.org/v1/network/validator/"
+XRPL_ORG_REPORTS_SUFFIX = "/reports"
 
 # Sidecar writes every ~30s; samples older than this are not "live".
 FRESH_SECONDS = 120
@@ -56,6 +64,8 @@ DEPLOY_PIN_VERSION = "3.3.0"
 LATEST_LOOKBACK = timedelta(minutes=10)
 HISTORY_DAYS = 7
 HISTORY_ALIGN_S = 3600
+# Cap self-accumulated agreement snapshot series.
+AGREE_SNAP_MAX = 500
 
 LATEST_METRICS = (
     "proposing",
@@ -235,6 +245,159 @@ def history_points(series: list) -> list[dict]:
     return out
 
 
+def _window_score(win: dict | None) -> dict | None:
+    """Normalize {missed,total,score,incomplete} → pct fields. None if absent."""
+    if not win or not isinstance(win, dict):
+        return None
+    raw = win.get("score")
+    try:
+        score = float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        score = None
+    if score is None:
+        return None
+    # Clamp observer noise; score is a ratio in [0,1].
+    score = max(0.0, min(1.0, score))
+    missed = win.get("missed")
+    total = win.get("total")
+    try:
+        missed_i = int(missed) if missed is not None else None
+    except (TypeError, ValueError):
+        missed_i = None
+    try:
+        total_i = int(total) if total is not None else None
+    except (TypeError, ValueError):
+        total_i = None
+    return {
+        "score": round(score, 5),
+        "pct": round(score * 100.0, 3),
+        "missed": missed_i,
+        "total": total_i,
+        "incomplete": bool(win.get("incomplete")),
+    }
+
+
+def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
+    """Return (agreement_block, daily_report_points_pct, elapsed_s).
+
+    Source: data.xrpl.org Validator History Service (XRPL.org explorer backend).
+    Lookup by domain first (signing key can rotate; master may be null on-chain).
+    """
+    t0 = time.perf_counter()
+    rec: dict | None = None
+    try:
+        with urllib.request.urlopen(XRPL_ORG_VALIDATORS, timeout=12) as resp:
+            data = json.load(resp)
+        for v in data.get("validators") or []:
+            if v.get("domain") == DOMAIN:
+                rec = v
+                break
+            mk = v.get("master_key") or ""
+            if mk == PUBLIC_VALIDATOR_MASTER_KEY:
+                rec = v
+                break
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+        rec = None
+
+    # Fallback: try known master on single endpoint (may 5xx — ignore).
+    if rec is None:
+        try:
+            url = XRPL_ORG_VALIDATOR + urllib.parse.quote(
+                PUBLIC_VALIDATOR_MASTER_KEY, safe=""
+            )
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                rec = json.load(resp)
+            if rec.get("result") == "error":
+                rec = None
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+            rec = None
+
+    if not rec:
+        return None, [], time.perf_counter() - t0
+
+    signing = rec.get("signing_key") or rec.get("validation_public_key")
+    agreement = {
+        "source": "data.xrpl.org",
+        "source_detail": (
+            "XRPL.org Validator History Service — network-wide observer of "
+            "validation messages. Not XRPScan. Not our sidecar (agreement is "
+            "not measurable from localhost admin RPC alone)."
+        ),
+        "signing_key": signing,
+        "master_key": rec.get("master_key"),
+        "domain": rec.get("domain"),
+        "server_version_observed": rec.get("server_version"),
+        "unl": rec.get("unl"),
+        "agreement_1h": _window_score(rec.get("agreement_1h") or rec.get("agreement_1hour")),
+        "agreement_24h": _window_score(
+            rec.get("agreement_24h") or rec.get("agreement_24hour")
+        ),
+        "agreement_30d": _window_score(
+            rec.get("agreement_30day") or rec.get("agreement_30d")
+        ),
+    }
+
+    daily: list[dict] = []
+    if signing:
+        try:
+            url = (
+                XRPL_ORG_VALIDATOR
+                + urllib.parse.quote(signing, safe="")
+                + XRPL_ORG_REPORTS_SUFFIX
+            )
+            with urllib.request.urlopen(url, timeout=12) as resp:
+                rep = json.load(resp)
+            for r in rep.get("reports") or []:
+                if r.get("chain") and r.get("chain") not in ("main", "mainnet"):
+                    continue
+                sc = _window_score(
+                    {"score": r.get("score"), "missed": r.get("missed"), "total": r.get("total"),
+                     "incomplete": r.get("incomplete")}
+                )
+                if not sc:
+                    continue
+                daily.append({"t": r.get("date"), "v": sc["pct"], "incomplete": sc["incomplete"]})
+            daily.sort(key=lambda p: p.get("t") or "")
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+            daily = []
+
+    return agreement, daily, time.perf_counter() - t0
+
+
+def load_prior_agreement_snaps() -> list[dict]:
+    """Read previously published agreement_1h snapshots from GCS (best-effort)."""
+    try:
+        out = subprocess.check_output(
+            ["gcloud", "storage", "cat", f"gs://{BUCKET}/history.json"],
+            text=True,
+            timeout=20,
+            stderr=subprocess.DEVNULL,
+        )
+        prior = json.loads(out)
+        series = (prior.get("series") or {}).get("agreement_1h_snapshots") or []
+        return [p for p in series if isinstance(p, dict) and p.get("t") and p.get("v") is not None]
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
+        return []
+
+
+def merge_agreement_snaps(
+    prior: list[dict], *, now: datetime, pct: float | None
+) -> list[dict]:
+    """Append current 1h agreement pct; drop points older than HISTORY_DAYS."""
+    cutoff = (now - timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    out = [p for p in prior if (p.get("t") or "") >= cutoff]
+    if pct is not None:
+        ts = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Dedupe same-minute republish
+        if not out or out[-1].get("t") != ts:
+            out.append({"t": ts, "v": round(pct, 3)})
+        else:
+            out[-1] = {"t": ts, "v": round(pct, 3)}
+    if len(out) > AGREE_SNAP_MAX:
+        out = out[-AGREE_SNAP_MAX:]
+    return out
+
+
 def version_from_logs() -> tuple[str | None, str | None]:
     """Optional log probe. Bounded hard — prefer deploy pin on timeout/miss."""
     try:
@@ -310,11 +473,16 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     sample_times: dict[str, datetime | None] = {}
     peer_hist: list = []
     prop_hist: list = []
+    agreement: dict | None = None
+    daily_agree: list[dict] = []
+    prior_snaps: list[dict] = []
 
-    with ThreadPoolExecutor(max_workers=12) as pool:
+    with ThreadPoolExecutor(max_workers=14) as pool:
         latest_futs = [pool.submit(fetch_latest, n) for n in LATEST_METRICS]
         hist_peer = pool.submit(fetch_hist, "peer_count", "ALIGN_MEAN")
         hist_prop = pool.submit(fetch_hist, "proposing", "ALIGN_MEAN")
+        agree_fut = pool.submit(fetch_agreement_xrpl_org)
+        prior_fut = pool.submit(load_prior_agreement_snaps)
         for fut in as_completed(latest_futs):
             name, val, sample_ts, dt = fut.result()
             metrics[name] = val
@@ -324,6 +492,9 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
         _, prop_hist, dt_pr = hist_prop.result()
         timings["hist.peer_count"] = round(dt_p, 3)
         timings["hist.proposing"] = round(dt_pr, 3)
+        agreement, daily_agree, dt_ag = agree_fut.result()
+        timings["agreement_xrpl_org"] = round(dt_ag, 3)
+        prior_snaps = prior_fut.result()
 
     t_ver = time.perf_counter()
     if with_version_logs:
@@ -332,6 +503,8 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
         ver_log, ver_evidence = None, None
     timings["version_logs"] = round(time.perf_counter() - t_ver, 3)
 
+    # Prefer deploy pin; cross-check XRPL.org observed version when present.
+    observed_ver = (agreement or {}).get("server_version_observed") if agreement else None
     if ver_log:
         ver, ver_source = ver_log, "gcplogs"
     else:
@@ -345,6 +518,17 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
                 "(prod cutover 2026-08-08)."
             )
         )
+    if observed_ver and str(observed_ver).startswith(DEPLOY_PIN_VERSION[:3]):
+        # e.g. "3.3.0" from network observer — stronger than pin alone when equal.
+        if str(observed_ver).startswith(DEPLOY_PIN_VERSION) or DEPLOY_PIN_VERSION in str(
+            observed_ver
+        ):
+            ver = DEPLOY_PIN_VERSION
+            ver_source = "deploy_pin+xrpl_org_observed"
+            ver_evidence = (
+                f"Deploy pin {DEPLOY_PIN_VERSION}; data.xrpl.org reports "
+                f"server_version={observed_ver}."
+            )
 
     core_ts = [sample_times[k] for k in CORE_METRICS if sample_times.get(k)]
     newest = max(core_ts) if core_ts else None
@@ -411,21 +595,41 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
         "sidecar_heartbeat": metrics.get("poller_heartbeat") == 1.0
         if metrics.get("poller_heartbeat") is not None
         else None,
+        "agreement": agreement,
     }
+
+    a1 = (agreement or {}).get("agreement_1h") if agreement else None
+    a1_pct = a1.get("pct") if a1 else None
+    agree_snaps = merge_agreement_snaps(prior_snaps, now=now, pct=a1_pct)
+    # Prefer official daily reports when present; else accumulated 1h snapshots.
+    agree_series = daily_agree if daily_agree else agree_snaps
+    agree_series_kind = (
+        "data.xrpl.org daily reports (pct)"
+        if daily_agree
+        else "accumulated agreement_1h snapshots at publish (pct)"
+    )
 
     history = {
         "schema": "csyn-validator-public-history/v2",
-        "source": "cloud-monitoring-sidecar",
+        "source": "cloud-monitoring-sidecar+data.xrpl.org",
         "published_at": status["published_at"],
         "alignment": {
             "peer_count": f"{HISTORY_ALIGN_S}s ALIGN_MEAN",
             "proposing": f"{HISTORY_ALIGN_S}s ALIGN_MEAN (≈ fraction of hour proposing)",
+            "agreement": agree_series_kind,
         },
         "window_days": HISTORY_DAYS,
-        "series": {"peer_count": peer_hist, "proposing": prop_hist},
+        "series": {
+            "peer_count": peer_hist,
+            "proposing": prop_hist,
+            "agreement": agree_series,
+            "agreement_1h_snapshots": agree_snaps,
+        },
         "point_counts": {
             "peer_count": len(peer_hist),
             "proposing": len(prop_hist),
+            "agreement": len(agree_series),
+            "agreement_1h_snapshots": len(agree_snaps),
         },
     }
 
@@ -480,6 +684,8 @@ def main() -> int:
 
     print(f"wrote {status_path}")
     print(f"wrote {history_path}")
+    ag = status.get("agreement") or {}
+    a1 = (ag.get("agreement_1h") or {}) if ag else {}
     print(
         json.dumps(
             {
@@ -491,6 +697,9 @@ def main() -> int:
                 "sample_time": status["sample_time"],
                 "sample_age_seconds": status["sample_age_seconds"],
                 "metrics_fresh": status["metrics_fresh"],
+                "agreement_1h_pct": a1.get("pct"),
+                "agreement_24h_pct": (ag.get("agreement_24h") or {}).get("pct"),
+                "agreement_30d_pct": (ag.get("agreement_30d") or {}).get("pct"),
                 "history_points": history["point_counts"],
                 "timings_s": timings,
             },

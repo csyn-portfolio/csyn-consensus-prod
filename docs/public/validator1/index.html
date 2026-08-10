@@ -358,30 +358,41 @@
     <section class="card" id="network-presence" aria-live="polite">
       <h2>Live status · our validator</h2>
       <p style="margin:0 0 14px;font-size:0.88rem;color:var(--muted2);line-height:1.45">
-        Gauges from the on-node monitoring sidecar (localhost admin RPC → our Cloud Monitoring).
-        Not third-party explorer scores. Snapshot published to this domain as JSON.
+        Node gauges from our on-VM sidecar (localhost admin RPC → Cloud Monitoring).
+        Agreement % from the XRPL.org network observer (<code style="color:var(--muted2)">data.xrpl.org</code>) —
+        that score cannot be produced from the node alone. Not XRPScan.
       </p>
       <div class="metrics" id="metrics">
         <div class="metric"><div class="ml">Version</div><div class="mv muted" id="m-version">…</div><div class="mh" id="m-version-h">deploy / logs</div></div>
         <div class="metric"><div class="ml">State</div><div class="mv muted" id="m-state">…</div><div class="mh" id="m-state-h">server_info</div></div>
         <div class="metric"><div class="ml">Peers</div><div class="mv muted" id="m-peers">…</div><div class="mh" id="m-peers-h">connected</div></div>
+        <div class="metric"><div class="ml">Agreement 1h</div><div class="mv muted" id="m-a1h">…</div><div class="mh" id="m-a1h-h">network observer</div></div>
+        <div class="metric"><div class="ml">Agreement 24h</div><div class="mv muted" id="m-a24h">…</div><div class="mh" id="m-a24h-h">network observer</div></div>
+        <div class="metric"><div class="ml">Agreement 30d</div><div class="mv muted" id="m-a30d">…</div><div class="mh" id="m-a30d-h">network observer</div></div>
         <div class="metric"><div class="ml">Amendment blocked</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h">node</div></div>
         <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h">trusted set</div></div>
         <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h">sidecar sample</div></div>
       </div>
       <div class="chart-wrap">
         <div class="chart-head">
+          <span>Agreement % · network observer</span>
+          <em id="agree-caption">loading…</em>
+        </div>
+        <canvas id="agree-chart" width="700" height="140" hidden></canvas>
+        <div class="chart-empty" id="agree-empty">Loading agreement history…</div>
+      </div>
+      <div class="chart-wrap" style="margin-top:14px">
+        <div class="chart-head">
           <span>Peer count · 7d (hourly, our metrics)</span>
           <em id="chart-caption">loading…</em>
         </div>
-        <canvas id="agree-chart" width="700" height="140" hidden></canvas>
+        <canvas id="peer-chart" width="700" height="140" hidden></canvas>
         <div class="chart-empty" id="chart-empty">Loading our metric history…</div>
       </div>
       <p class="src-note" id="src-note">
-        Source: <code style="color:var(--muted2)">/status.json</code> + <code style="color:var(--muted2)">/history.json</code>
-        generated from <code style="color:var(--muted2)">custom.googleapis.com/xrpl/validator/*</code>
-        (sidecar on the validator VM). No XRPScan. Network-wide agreement scores are a different
-        measurement and are not shown here.
+        Sources: <code style="color:var(--muted2)">/status.json</code> + <code style="color:var(--muted2)">/history.json</code>.
+        Node gauges = <code style="color:var(--muted2)">custom.googleapis.com/xrpl/validator/*</code> (sidecar).
+        Agreement = XRPL.org <code style="color:var(--muted2)">data.xrpl.org</code> (not XRPScan).
       </p>
     </section>
 
@@ -431,25 +442,23 @@
         if (el) el.textContent = text;
       }
 
-      function drawPeerChart(points) {
-        var canvas = $("agree-chart");
-        var empty = $("chart-empty");
-        var cap = $("chart-caption");
-        var pts = (points || []).filter(function (p) {
+      function drawSeriesChart(opts) {
+        var canvas = $(opts.canvasId);
+        var empty = $(opts.emptyId);
+        var cap = $(opts.captionId);
+        var pts = (opts.points || []).filter(function (p) {
           return p && p.v != null && p.t;
         });
         if (!pts.length) {
           canvas.hidden = true;
           empty.hidden = false;
-          empty.textContent =
-            "No history.json yet. Run tools/publish_public_status.py --upload " +
-            "(reads our Cloud Monitoring sidecar series).";
+          empty.textContent = opts.emptyText || "No series yet.";
           cap.textContent = "unavailable";
           return;
         }
         empty.hidden = true;
         canvas.hidden = false;
-        cap.textContent = pts.length + " pts · 1h mean · our metrics";
+        cap.textContent = opts.caption || (pts.length + " pts");
 
         var dpr = window.devicePixelRatio || 1;
         var cssW = canvas.clientWidth || 700;
@@ -459,12 +468,18 @@
         var ctx = canvas.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        var pad = { l: 32, r: 10, t: 12, b: 22 };
+        var pad = { l: 36, r: 10, t: 12, b: 22 };
         var w = cssW - pad.l - pad.r;
         var h = cssH - pad.t - pad.b;
         var vals = pts.map(function (p) { return p.v; });
-        var min = Math.min.apply(null, vals);
-        var max = Math.max.apply(null, vals);
+        var min = opts.fixedMin != null ? opts.fixedMin : Math.min.apply(null, vals);
+        var max = opts.fixedMax != null ? opts.fixedMax : Math.max.apply(null, vals);
+        if (opts.asPct) {
+          var lo = Math.min.apply(null, vals);
+          min = Math.min(opts.fixedMin != null ? opts.fixedMin : 95, Math.floor(lo - 0.5));
+          if (min < 0) min = 0;
+          max = opts.fixedMax != null ? opts.fixedMax : 100;
+        }
         if (max === min) {
           min = Math.max(0, min - 1);
           max = max + 1;
@@ -481,10 +496,13 @@
           ctx.lineTo(pad.l + w, gy);
           ctx.stroke();
           var val = max - ((max - min) * g) / 3;
-          ctx.fillText(String(Math.round(val)), 4, gy + 3);
+          var label = opts.asPct
+            ? String(Math.round(val)) + "%"
+            : String(Math.round(val));
+          ctx.fillText(label, 2, gy + 3);
         }
 
-        ctx.strokeStyle = "#5da8ff";
+        ctx.strokeStyle = opts.stroke || "#5da8ff";
         ctx.lineWidth = 2;
         ctx.beginPath();
         pts.forEach(function (p, i) {
@@ -495,7 +513,7 @@
         });
         ctx.stroke();
 
-        ctx.fillStyle = "#c9a86a";
+        ctx.fillStyle = opts.dot || "#c9a86a";
         pts.forEach(function (p, i) {
           var x = pad.l + (w * i) / Math.max(pts.length - 1, 1);
           var y = pad.t + h * (1 - (p.v - min) / (max - min));
@@ -503,6 +521,22 @@
           ctx.arc(x, y, 2.2, 0, Math.PI * 2);
           ctx.fill();
         });
+      }
+
+      function setAgreementTile(id, hintId, win) {
+        if (!win || win.pct == null) {
+          setText(id, "—", "muted");
+          setHint(hintId, "unavailable");
+          return;
+        }
+        var pct = Number(win.pct);
+        var cls = pct >= 99.5 ? "ok" : pct >= 98 ? "ok" : "warn";
+        setText(id, pct.toFixed(pct >= 99.95 ? 2 : 2) + "%", cls);
+        var bits = [];
+        if (win.missed != null && win.total != null)
+          bits.push(win.missed + " missed / " + win.total);
+        if (win.incomplete) bits.push("incomplete window");
+        setHint(hintId, bits.join(" · ") || "data.xrpl.org");
       }
 
       async function jget(url) {
@@ -522,6 +556,8 @@
           $("chart-empty").textContent =
             "status.json missing. Publish from tools/publish_public_status.py --upload";
           $("chart-caption").textContent = "missing";
+          $("agree-empty").textContent = "status.json missing";
+          $("agree-caption").textContent = "missing";
           return;
         }
 
@@ -538,6 +574,11 @@
         } else {
           setText("m-peers", "—", "muted");
         }
+
+        var ag = status.agreement || {};
+        setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h);
+        setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h);
+        setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d);
 
         if (status.amendment_blocked === true) {
           setText("m-amend", "yes", "warn");
@@ -581,20 +622,71 @@
           "m-pub-h",
           fresh ? "fresh (≤" + thr + "s)" : "stale · sample " + (status.sample_time || "—")
         );
-        if (status.version_source === "deploy_pin" || status.version_source === "deploy_pin_fallback") {
+        if (
+          status.version_source === "deploy_pin" ||
+          status.version_source === "deploy_pin_fallback"
+        ) {
           setHint("m-version-h", "deploy pin · confirm soak");
         } else if (status.version_source) {
           setHint("m-version-h", status.version_source);
         }
 
         var peers = history && history.series && history.series.peer_count;
-        drawPeerChart(peers);
+        var agreePts =
+          (history && history.series && history.series.agreement) ||
+          (history && history.series && history.series.agreement_1h_snapshots) ||
+          [];
+        // Seed chart with current windows if series still thin (first publishes).
+        if (agreePts.length < 2 && ag.agreement_1h && ag.agreement_1h.pct != null) {
+          var nowIso = status.published_at || new Date().toISOString();
+          agreePts = agreePts.slice();
+          if (!agreePts.length || agreePts[agreePts.length - 1].v !== ag.agreement_1h.pct) {
+            agreePts.push({ t: nowIso, v: ag.agreement_1h.pct });
+          }
+          if (ag.agreement_24h && ag.agreement_24h.pct != null) {
+            agreePts.unshift({ t: "window:24h", v: ag.agreement_24h.pct });
+          }
+          if (ag.agreement_30d && ag.agreement_30d.pct != null) {
+            agreePts.unshift({ t: "window:30d", v: ag.agreement_30d.pct });
+          }
+        }
+        var agreeAlign =
+          (history && history.alignment && history.alignment.agreement) ||
+          "data.xrpl.org";
+        drawSeriesChart({
+          canvasId: "agree-chart",
+          emptyId: "agree-empty",
+          captionId: "agree-caption",
+          points: agreePts,
+          fixedMin: 95,
+          fixedMax: 100,
+          asPct: true,
+          stroke: "#3dd68c",
+          dot: "#c9a86a",
+          caption: agreePts.length + " pts · " + agreeAlign,
+          emptyText:
+            "No agreement series yet. Publish job pulls data.xrpl.org; series grows each run.",
+        });
+        drawSeriesChart({
+          canvasId: "peer-chart",
+          emptyId: "chart-empty",
+          captionId: "chart-caption",
+          points: peers,
+          stroke: "#5da8ff",
+          caption: (peers && peers.length ? peers.length : 0) + " pts · 1h mean · our metrics",
+          emptyText:
+            "No history.json yet. Run tools/publish_public_status.py --upload.",
+        });
       }
 
       load().catch(function () {
         setText("m-version", "error", "warn");
         $("chart-empty").textContent = "Could not load status.json from this domain.";
         $("chart-caption").textContent = "error";
+        if ($("agree-empty")) {
+          $("agree-empty").textContent = "Could not load status.json from this domain.";
+          $("agree-caption").textContent = "error";
+        }
       });
     })();
   </script>
