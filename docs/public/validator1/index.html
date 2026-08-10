@@ -557,7 +557,7 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, cssW, cssH);
 
-        var pad = { l: 44, r: 12, t: 14, b: 34 };
+        var pad = { l: 44, r: 18, t: 14, b: 36 };
         var w = cssW - pad.l - pad.r;
         var h = cssH - pad.t - pad.b;
         var vals = pts.map(function (p) { return Number(p.v); });
@@ -634,7 +634,7 @@
         }
         // de-dupe indices
         xIdx = xIdx.filter(function (v, i, a) { return a.indexOf(v) === i; });
-        xIdx.forEach(function (i) {
+        xIdx.forEach(function (i, tickI) {
           var x = xAt(i);
           ctx.strokeStyle = "rgba(28,58,102,0.55)";
           ctx.beginPath();
@@ -647,8 +647,13 @@
             lab = String(pts[i].t).replace("window:", "");
           else lab = String(i + 1);
           ctx.fillStyle = "#828da3";
+          // Edge ticks: pin text so it does not clip (was "Aug 1" for Aug 10)
+          if (tickI === 0) ctx.textAlign = "left";
+          else if (tickI === xIdx.length - 1) ctx.textAlign = "right";
+          else ctx.textAlign = "center";
           ctx.fillText(lab, x, pad.t + h + 8);
         });
+        ctx.textAlign = "center";
         // Axis titles (compact)
         ctx.save();
         ctx.fillStyle = "#6b758a";
