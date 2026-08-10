@@ -32,6 +32,7 @@ import json
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -162,11 +163,27 @@ def monitoring_get(
         f"https://monitoring.googleapis.com/v3/projects/{PROJECT}/timeSeries?"
         + urllib.parse.urlencode(q)
     )
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
     series: list = []
     while url:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.load(resp)
+        data = None
+        last_err: Exception | None = None
+        for attempt in range(4):
+            req = urllib.request.Request(
+                url, headers={"Authorization": f"Bearer {token}"}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    data = json.load(resp)
+                break
+            except urllib.error.HTTPError as e:
+                last_err = e
+                # 429 / 503: back off; accuracy needs the read to succeed.
+                if e.code in (429, 500, 503) and attempt < 3:
+                    time.sleep(0.4 * (2**attempt))
+                    continue
+                raise
+        if data is None:
+            raise last_err or RuntimeError("monitoring_get failed with no response")
         series.extend(data.get("timeSeries", []))
         token_page = data.get("nextPageToken")
         if not token_page:
@@ -175,7 +192,6 @@ def monitoring_get(
             f"https://monitoring.googleapis.com/v3/projects/{PROJECT}/timeSeries?"
             + urllib.parse.urlencode({**q, "pageToken": token_page})
         )
-        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
     return series
 
 
