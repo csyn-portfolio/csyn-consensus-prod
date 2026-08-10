@@ -407,7 +407,6 @@
       <span class="pill ok">Domain verified</span>
       <span class="pill gold">EverForge Consensus</span>
       <span class="pill">Mainnet</span>
-      <span class="pill">Public data only</span>
     </div>
 
     <section class="card">
@@ -444,21 +443,17 @@
     </section>
 
     <section class="card">
-      <h2>Live status · our validator</h2>
-      <p style="margin:0 0 14px;font-size:0.88rem;color:var(--muted2);line-height:1.45">
-        Node gauges from our on-VM sidecar. Agreement % from the XRPL.org network observer
-        (<code style="color:var(--muted2)">data.xrpl.org</code> — not XRPScan.
-      </p>
+      <h2>Live status</h2>
       <div class="metrics" id="metrics">
-        <div class="metric"><div class="ml">Version</div><div class="mv muted" id="m-version">…</div><div class="mh" id="m-version-h">deploy / logs</div></div>
-        <div class="metric"><div class="ml">State</div><div class="mv muted" id="m-state">…</div><div class="mh" id="m-state-h">server_info</div></div>
-        <div class="metric"><div class="ml">Peers</div><div class="mv muted" id="m-peers">…</div><div class="mh" id="m-peers-h">connected</div></div>
-        <div class="metric"><div class="ml">Agreement 1h</div><div class="mv muted" id="m-a1h">…</div><div class="mh" id="m-a1h-h">network observer</div></div>
-        <div class="metric"><div class="ml">Agreement 24h</div><div class="mv muted" id="m-a24h">…</div><div class="mh" id="m-a24h-h">network observer</div></div>
-        <div class="metric"><div class="ml">Agreement 30d</div><div class="mv muted" id="m-a30d">…</div><div class="mh" id="m-a30d-h">network observer</div></div>
-        <div class="metric"><div class="ml">Amendment blocked</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h">node</div></div>
-        <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h">trusted set</div></div>
-        <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h">sidecar sample</div></div>
+        <div class="metric"><div class="ml">Version</div><div class="mv muted" id="m-version">…</div><div class="mh" id="m-version-h"> </div></div>
+        <div class="metric"><div class="ml">State</div><div class="mv muted" id="m-state">…</div><div class="mh" id="m-state-h"> </div></div>
+        <div class="metric"><div class="ml">Peers</div><div class="mv muted" id="m-peers">…</div><div class="mh" id="m-peers-h"> </div></div>
+        <div class="metric"><div class="ml">Agreement 1h</div><div class="mv muted" id="m-a1h">…</div><div class="mh" id="m-a1h-h"> </div></div>
+        <div class="metric"><div class="ml">Agreement 24h</div><div class="mv muted" id="m-a24h">…</div><div class="mh" id="m-a24h-h"> </div></div>
+        <div class="metric"><div class="ml">Agreement 30d</div><div class="mv muted" id="m-a30d">…</div><div class="mh" id="m-a30d-h"> </div></div>
+        <div class="metric"><div class="ml">Amendment blocked</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h"> </div></div>
+        <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h"> </div></div>
+        <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h"> </div></div>
       </div>
 
       <div class="range-bar" role="group" aria-label="Chart date range">
@@ -491,10 +486,6 @@
         <canvas id="peer-chart" class="chart-canvas" width="760" height="200" hidden></canvas>
         <div class="chart-empty" id="chart-empty">Loading peer history…</div>
       </div>
-      <p class="src-note" id="src-note">
-        Sources: <code style="color:var(--muted2)">/status.json</code> + <code style="color:var(--muted2)">/history.json</code>.
-        Node gauges = sidecar Cloud Monitoring. Agreement = XRPL.org data.xrpl.org.
-      </p>
     </section>
 
     <section class="card">
@@ -840,7 +831,7 @@
       var bits = [];
       if (win.missed != null && win.total != null) bits.push(win.missed + " missed / " + win.total);
       if (win.incomplete) bits.push("incomplete window");
-      setHint(hintId, bits.join(" · ") || "data.xrpl.org");
+      setHint(hintId, bits.join(" · ") || " ");
     }
 
     async function jget(url) {
@@ -857,12 +848,12 @@
         return;
       }
       setText("m-version", status.version || "—", status.version ? "ok" : "muted");
-      setHint("m-version-h", status.version_source || "our node");
+      setHint("m-version-h", " ");
       setText("m-state", status.server_state || "unknown", status.proposing ? "ok" : "warn");
       setHint("m-state-h", status.proposing ? "proposing" : "not proposing");
       if (status.peer_count != null) {
         setText("m-peers", String(status.peer_count), "ok");
-        setHint("m-peers-h", "connected");
+        setHint("m-peers-h", " ");
       } else setText("m-peers", "—", "muted");
       var ag = status.agreement || {};
       setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h);
@@ -892,7 +883,7 @@
       var thr = status.fresh_threshold_seconds || 120;
       var fresh = age != null ? age <= thr : !!status.metrics_fresh;
       setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
-      setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s) · sidecar" : "stale · " + (status.sample_time || "—"));
+      setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s)" : "stale · " + (status.sample_time || "—"));
 
       state.peers = (history && history.series && history.series.peer_count) || [];
       state.agree =
