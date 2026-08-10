@@ -6,15 +6,14 @@
   <title>EverForge Consensus · XRPL validator · Cloud Syndicate</title>
   <meta name="description" content="Public identity for the Cloud Syndicate XRPL mainnet validator under EverForge Consensus." />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="icon" type="image/png" sizes="32x32" href="https://www.cloudsyndicate.io/brand/icons/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="https://www.cloudsyndicate.io/brand/icons/favicon-16.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="https://www.cloudsyndicate.io/brand/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="brand/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      /* Brand family aligned with cloudsyndicate.io (ink / navy / gold) */
       --bg: #05090f;
       --panel: #0d1522;
       --line: #1c3a66;
@@ -45,38 +44,57 @@
     a:hover { text-decoration: underline; }
     .top {
       border-bottom: 1px solid rgba(28,58,102,0.65);
-      background: rgba(5,9,15,0.9);
-      backdrop-filter: blur(12px);
+      background: rgba(5,9,15,0.92);
+      backdrop-filter: blur(14px);
     }
     .top-inner {
-      max-width: 760px;
+      max-width: 820px;
       margin: 0 auto;
-      padding: 16px 22px;
+      padding: 14px 22px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
     }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-logo {
-      height: 28px;
-      width: auto;
-      display: block;
-      /* wordmark is light-on-transparent for dark chrome */
-      filter: none;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
     }
-    .brand-name { font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em; }
+    .brand:hover { text-decoration: none; }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      display: block;
+      flex-shrink: 0;
+    }
+    .brand-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .brand-name {
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1.15;
+    }
     .brand-sub {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       color: var(--gold);
-      margin-top: 2px;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-weight: 500;
     }
-    .top-links { display: flex; gap: 16px; font-size: 0.85rem; flex-wrap: wrap; }
-    .top-links a { color: var(--muted2); }
-    .wrap { max-width: 760px; margin: 0 auto; padding: 36px 22px 56px; }
+    .top-links { display: flex; gap: 18px; font-size: 0.82rem; flex-wrap: wrap; }
+    .top-links a {
+      color: var(--muted2);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 36px 22px 56px; }
     .eyebrow {
       color: var(--gold);
       font-size: 0.7rem;
@@ -84,6 +102,7 @@
       text-transform: uppercase;
       font-weight: 600;
       margin-bottom: 10px;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
     }
     h1 {
       margin: 0 0 8px;
@@ -119,103 +138,64 @@
       background: rgba(201,168,106,0.08);
     }
     .card {
-      background: linear-gradient(180deg, #122036, var(--panel));
-      border: 1px solid rgba(28,58,102,0.9);
+      background: var(--panel);
+      border: 1px solid rgba(28,58,102,0.75);
       border-radius: 14px;
-      padding: 20px 22px;
-      margin-bottom: 14px;
+      padding: 20px 20px 18px;
+      margin-bottom: 16px;
     }
     .card h2 {
       margin: 0 0 14px;
-      font-size: 0.7rem;
-      text-transform: uppercase;
+      font-size: 0.72rem;
       letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--muted);
       font-weight: 600;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
     }
     .row {
       display: grid;
-      grid-template-columns: 128px 1fr;
-      gap: 6px 14px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(28,58,102,0.4);
+      grid-template-columns: 140px 1fr;
+      gap: 8px 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(28,58,102,0.45);
       font-size: 0.92rem;
     }
-    .row:last-child { border-bottom: 0; }
+    .row:last-of-type { border-bottom: none; }
     .k { color: var(--muted); }
-    .v { word-break: break-all; }
-    .v.mono {
+    .v { color: var(--ink); }
+    .mono, .keybox {
       font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 0.8rem;
-      color: #dce8f8;
+      font-size: 0.82rem;
+      word-break: break-all;
     }
     .keybox {
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      font-size: 0.78rem;
       background: #05090f;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(28,58,102,0.7);
       border-radius: 10px;
       padding: 12px 14px;
-      color: #9ec5ff;
-      word-break: break-all;
-      line-height: 1.45;
-    }
-    ul.policy {
-      margin: 0;
-      padding-left: 1.15rem;
       color: var(--muted2);
-      font-size: 0.93rem;
     }
-    ul.policy li { margin: 8px 0; }
-    ul.policy strong { color: var(--ink); font-weight: 600; }
-    .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; }
     .btn {
-      display: inline-block;
-      border-radius: 9px;
-      padding: 9px 14px;
-      font-size: 0.86rem;
-      font-weight: 550;
-      border: 1px solid #3a65b0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      border: 1px solid transparent;
       background: linear-gradient(180deg, #2a4f96, var(--navy));
-      color: #fff !important;
-      text-decoration: none !important;
+      color: var(--ink);
+      text-decoration: none;
     }
+    .btn:hover { text-decoration: none; filter: brightness(1.08); }
     .btn.ghost {
       background: transparent;
-      border-color: var(--line);
-      color: var(--muted2) !important;
-    }
-    .marketing {
-      margin-top: 6px;
-      padding: 16px 18px;
-      border-radius: 14px;
-      border: 1px solid rgba(201,168,106,0.28);
-      background: linear-gradient(135deg, rgba(201,168,106,0.07), rgba(31,66,134,0.12));
-    }
-    .marketing p {
-      margin: 0 0 10px;
+      border-color: rgba(28,58,102,0.9);
       color: var(--muted2);
-      font-size: 0.92rem;
-      max-width: 54ch;
     }
-    .marketing .title {
-      color: var(--gold);
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-    footer {
-      margin-top: 28px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(28,58,102,0.5);
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-    footer p { margin: 0 0 6px; }
-
-    /* Public network presence (XRPScan-style info + graph, public APIs only) */
     .metrics {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -224,6 +204,7 @@
     }
     @media (max-width: 640px) {
       .metrics { grid-template-columns: 1fr 1fr; }
+      .row { grid-template-columns: 1fr; }
     }
     .metric {
       background: #05090f;
@@ -232,14 +213,15 @@
       padding: 12px 12px 10px;
     }
     .metric .ml {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
     }
     .metric .mv {
       margin-top: 6px;
-      font-size: 1.05rem;
+      font-size: 1.08rem;
       font-weight: 650;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
@@ -247,30 +229,97 @@
     .metric .mv.ok { color: var(--ok); }
     .metric .mv.warn { color: var(--warn); }
     .metric .mv.muted { color: var(--muted2); font-size: 0.92rem; font-weight: 500; }
-    .metric .mh {
-      margin-top: 4px;
-      font-size: 0.72rem;
-      color: var(--muted);
+    .metric .mh { margin-top: 4px; font-size: 0.72rem; color: var(--muted); }
+
+    /* Range toolbar */
+    .range-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin: 4px 0 14px;
+      padding: 12px 14px;
+      background: #05090f;
+      border: 1px solid rgba(28,58,102,0.7);
+      border-radius: 12px;
     }
+    .range-bar .rl {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      margin-right: 4px;
+    }
+    .range-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .rbtn {
+      appearance: none;
+      border: 1px solid rgba(28,58,102,0.9);
+      background: transparent;
+      color: var(--muted2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+    .rbtn:hover { border-color: var(--blue); color: var(--ink); }
+    .rbtn.active {
+      background: rgba(93,168,255,0.12);
+      border-color: rgba(93,168,255,0.55);
+      color: var(--blue);
+    }
+    .range-dates {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+    .range-dates label {
+      font-size: 0.68rem;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .range-dates input[type="date"] {
+      appearance: none;
+      background: var(--panel);
+      border: 1px solid rgba(28,58,102,0.9);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      color-scheme: dark;
+    }
+    .range-dates input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.75);
+      cursor: pointer;
+    }
+
     .chart-wrap {
       background: #05090f;
       border: 1px solid rgba(28,58,102,0.7);
-      border-radius: 10px;
-      padding: 12px 12px 10px;
-      margin-top: 4px;
-      overflow: hidden; /* contain series stroke / dots */
+      border-radius: 12px;
+      padding: 14px 14px 12px;
+      margin-top: 12px;
+      overflow: hidden;
     }
     .chart-head {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .chart-head span {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       color: var(--muted);
       font-family: "IBM Plex Mono", ui-monospace, monospace;
     }
@@ -282,12 +331,12 @@
     }
     .chart-canvas {
       width: 100%;
-      height: 168px;
+      height: 200px;
       display: block;
       max-width: 100%;
     }
     .chart-empty {
-      min-height: 120px;
+      min-height: 160px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -297,45 +346,50 @@
       padding: 16px;
       line-height: 1.45;
     }
-    /* display:flex above would defeat the hidden attribute without this */
-    .chart-empty[hidden],
-    .chart-canvas[hidden] {
-      display: none !important;
-    }
-    .axis-note {
-      margin: 4px 0 0;
-      font-size: 0.68rem;
-      color: var(--muted);
-      font-family: "IBM Plex Mono", ui-monospace, monospace;
-      letter-spacing: 0.04em;
-    }
+    .chart-empty[hidden], .chart-canvas[hidden] { display: none !important; }
     .src-note {
       margin: 12px 0 0;
       font-size: 0.78rem;
       color: var(--muted);
       line-height: 1.4;
     }
+    .marketing {
+      border: 1px solid rgba(201,168,106,0.35);
+      border-radius: 14px;
+      padding: 18px 20px;
+      background: linear-gradient(145deg, rgba(13,21,34,0.95), rgba(13,33,71,0.55));
+      margin-bottom: 16px;
+    }
+    .marketing .title {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      margin-bottom: 8px;
+    }
+    .marketing p { margin: 0 0 14px; color: var(--muted2); font-size: 0.92rem; line-height: 1.5; }
+    footer {
+      padding-top: 16px;
+      border-top: 1px solid rgba(28,58,102,0.5);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    footer p { margin: 0 0 6px; }
   </style>
 </head>
 <body>
   <header class="top">
     <div class="top-inner">
-      <div class="brand">
-        <a href="https://www.cloudsyndicate.io/" aria-label="Cloud Syndicate">
-          <img
-            class="brand-logo"
-            src="https://www.cloudsyndicate.io/brand/wordmark-mono.svg"
-            alt="Cloud Syndicate"
-            width="160"
-            height="28"
-          />
-        </a>
-        <div>
-          <div class="brand-sub">EverForge Consensus</div>
-        </div>
-      </div>
+      <a class="brand" href="https://www.cloudsyndicate.io/" aria-label="Cloud Syndicate home">
+        <img class="brand-mark" src="brand/mark-on-dark.svg" width="36" height="36" alt="" />
+        <span class="brand-text">
+          <span class="brand-name">Cloud Syndicate</span>
+          <span class="brand-sub">EverForge Consensus</span>
+        </span>
+      </a>
       <nav class="top-links">
-        <a href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge Consensus</a>
+        <a href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge</a>
         <a href="https://www.cloudsyndicate.io/">cloudsyndicate.io</a>
       </nav>
     </div>
@@ -389,12 +443,11 @@
       </p>
     </section>
 
-    <section class="card" id="network-presence" aria-live="polite">
+    <section class="card">
       <h2>Live status · our validator</h2>
       <p style="margin:0 0 14px;font-size:0.88rem;color:var(--muted2);line-height:1.45">
-        Node gauges from our on-VM sidecar (localhost admin RPC → Cloud Monitoring).
-        Agreement % from the XRPL.org network observer (<code style="color:var(--muted2)">data.xrpl.org</code>) —
-        that score cannot be produced from the node alone. Not XRPScan.
+        Node gauges from our on-VM sidecar. Agreement % from the XRPL.org network observer
+        (<code style="color:var(--muted2)">data.xrpl.org</code> — not XRPScan.
       </p>
       <div class="metrics" id="metrics">
         <div class="metric"><div class="ml">Version</div><div class="mv muted" id="m-version">…</div><div class="mh" id="m-version-h">deploy / logs</div></div>
@@ -407,28 +460,40 @@
         <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h">trusted set</div></div>
         <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h">sidecar sample</div></div>
       </div>
+
+      <div class="range-bar" role="group" aria-label="Chart date range">
+        <span class="rl">Range</span>
+        <div class="range-presets">
+          <button type="button" class="rbtn" data-range="24h">24h</button>
+          <button type="button" class="rbtn active" data-range="7d">7d</button>
+          <button type="button" class="rbtn" data-range="30d">30d</button>
+          <button type="button" class="rbtn" data-range="all">All</button>
+        </div>
+        <div class="range-dates">
+          <label>From <input type="date" id="range-from" /></label>
+          <label>To <input type="date" id="range-to" /></label>
+        </div>
+      </div>
+
       <div class="chart-wrap">
         <div class="chart-head">
-          <span>Agreement % · network observer</span>
+          <span>Agreement %</span>
           <em id="agree-caption">loading…</em>
         </div>
-        <canvas id="agree-chart" class="chart-canvas" width="700" height="168" hidden></canvas>
+        <canvas id="agree-chart" class="chart-canvas" width="760" height="200" hidden></canvas>
         <div class="chart-empty" id="agree-empty">Loading agreement history…</div>
-        <p class="axis-note" id="agree-axis" hidden>Y: agreement % · X: time (UTC)</p>
       </div>
-      <div class="chart-wrap" style="margin-top:14px">
+      <div class="chart-wrap">
         <div class="chart-head">
-          <span>Peer count · 7d (hourly, our metrics)</span>
+          <span>Peer count</span>
           <em id="chart-caption">loading…</em>
         </div>
-        <canvas id="peer-chart" class="chart-canvas" width="700" height="168" hidden></canvas>
-        <div class="chart-empty" id="chart-empty">Loading our metric history…</div>
-        <p class="axis-note" id="peer-axis" hidden>Y: peers · X: time (UTC, hourly)</p>
+        <canvas id="peer-chart" class="chart-canvas" width="760" height="200" hidden></canvas>
+        <div class="chart-empty" id="chart-empty">Loading peer history…</div>
       </div>
       <p class="src-note" id="src-note">
         Sources: <code style="color:var(--muted2)">/status.json</code> + <code style="color:var(--muted2)">/history.json</code>.
-        Node gauges = <code style="color:var(--muted2)">custom.googleapis.com/xrpl/validator/*</code> (sidecar).
-        Agreement = XRPL.org <code style="color:var(--muted2)">data.xrpl.org</code> (not XRPScan).
+        Node gauges = sidecar Cloud Monitoring. Agreement = XRPL.org data.xrpl.org.
       </p>
     </section>
 
@@ -440,7 +505,7 @@
       </div>
       <div class="row">
         <div class="k">Security</div>
-        <div class="v">Subject line: <span style="font-family:IBM Plex Mono,monospace;font-size:0.85rem">XRPL Validator Security</span></div>
+        <div class="v">Subject line: <span class="mono" style="font-size:0.85rem">XRPL Validator Security</span></div>
       </div>
       <div class="row">
         <div class="k">Practice site</div>
@@ -461,436 +526,406 @@
 
     <footer>
       <p>Static public page · no cookies · no trackers · no admin endpoints.</p>
-      <p>Cloud Syndicate, LLC · © 2026</p>
+      <p>Cloud Syndicate, LLC · Texas · © 2026</p>
     </footer>
   </main>
+
   <script>
-    (function () {
-      function $(id) { return document.getElementById(id); }
-      function setText(id, text, cls) {
-        var el = $(id);
-        if (!el) return;
-        el.textContent = text;
-        el.className = "mv" + (cls ? " " + cls : "");
+  (function () {
+    function $(id) { return document.getElementById(id); }
+    function setText(id, text, cls) {
+      var el = $(id);
+      if (!el) return;
+      el.textContent = text;
+      el.className = "mv" + (cls ? " " + cls : "");
+    }
+    function setHint(id, text) {
+      var el = $(id);
+      if (el) el.textContent = text;
+    }
+    function formatAge(sec) {
+      if (sec == null || isNaN(sec)) return "—";
+      sec = Math.max(0, Math.round(sec));
+      if (sec < 90) return sec + "s";
+      if (sec < 3600) return Math.floor(sec / 60) + "m " + (sec % 60) + "s";
+      return Math.floor(sec / 3600) + "h " + Math.floor((sec % 3600) / 60) + "m";
+    }
+    function parseT(t) {
+      if (!t || typeof t !== "string") return null;
+      if (t.indexOf("window:") === 0) return null;
+      var ms = Date.parse(t);
+      return isNaN(ms) ? null : ms;
+    }
+    function dayKey(ms) {
+      var d = new Date(ms);
+      return d.getUTCFullYear() + "-" +
+        String(d.getUTCMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getUTCDate()).padStart(2, "0");
+    }
+    function fmtTick(ms, spanMs) {
+      var d = new Date(ms);
+      var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
+      var dd = d.getUTCDate();
+      var hh = String(d.getUTCHours()).padStart(2, "0");
+      var mm = String(d.getUTCMinutes()).padStart(2, "0");
+      if (spanMs < 48 * 3600 * 1000) return hh + ":" + mm;
+      if (spanMs < 14 * 86400 * 1000) return mon + " " + dd + " " + hh + "h";
+      return mon + " " + dd;
+    }
+
+    var state = {
+      peers: [],
+      agree: [],
+      range: "7d",
+      from: null,
+      to: null,
+    };
+
+    function filterPts(pts) {
+      var from = state.from;
+      var to = state.to;
+      if (from == null && to == null) return pts.slice();
+      return pts.filter(function (p) {
+        var ms = parseT(p.t);
+        if (ms == null) return true;
+        if (from != null && ms < from) return false;
+        if (to != null && ms > to) return false;
+        return true;
+      });
+    }
+
+    function applyPreset(name) {
+      state.range = name;
+      var now = Date.now();
+      var end = now;
+      var start = null;
+      if (name === "24h") start = now - 24 * 3600 * 1000;
+      else if (name === "7d") start = now - 7 * 86400 * 1000;
+      else if (name === "30d") start = now - 30 * 86400 * 1000;
+      else { start = null; end = null; }
+      state.from = start;
+      state.to = end;
+      // Sync date inputs
+      var fromEl = $("range-from");
+      var toEl = $("range-to");
+      if (fromEl) fromEl.value = start ? dayKey(start) : "";
+      if (toEl) toEl.value = end ? dayKey(end) : dayKey(now);
+      document.querySelectorAll(".rbtn").forEach(function (b) {
+        b.classList.toggle("active", b.getAttribute("data-range") === name);
+      });
+      redraw();
+    }
+
+    function applyCustomDates() {
+      var fromEl = $("range-from");
+      var toEl = $("range-to");
+      var fv = fromEl && fromEl.value;
+      var tv = toEl && toEl.value;
+      state.range = "custom";
+      document.querySelectorAll(".rbtn").forEach(function (b) {
+        b.classList.remove("active");
+      });
+      state.from = fv ? Date.parse(fv + "T00:00:00Z") : null;
+      state.to = tv ? Date.parse(tv + "T23:59:59Z") : null;
+      redraw();
+    }
+
+    function drawChart(opts) {
+      var canvas = $(opts.canvasId);
+      var empty = $(opts.emptyId);
+      var cap = $(opts.captionId);
+      var pts = (opts.points || []).filter(function (p) {
+        return p && p.v != null && p.t != null;
+      });
+      if (!pts.length) {
+        canvas.hidden = true;
+        empty.hidden = false;
+        empty.style.display = "flex";
+        empty.textContent = opts.emptyText || "No data in this range.";
+        if (cap) cap.textContent = "no points";
+        return;
       }
-      function setHint(id, text) {
-        var el = $(id);
-        if (el) el.textContent = text;
+      empty.hidden = true;
+      empty.style.display = "none";
+      canvas.hidden = false;
+      canvas.style.display = "block";
+      if (cap) cap.textContent = opts.caption || (pts.length + " pts");
+
+      var dpr = window.devicePixelRatio || 1;
+      var parent = canvas.parentElement;
+      var cssW = Math.max(280, Math.floor((parent.clientWidth || 760) - 28));
+      var cssH = 200;
+      canvas.style.width = cssW + "px";
+      canvas.style.height = cssH + "px";
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      var ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      var pad = { l: 48, r: 16, t: 16, b: 36 };
+      var w = cssW - pad.l - pad.r;
+      var h = cssH - pad.t - pad.b;
+      var vals = pts.map(function (p) { return Number(p.v); });
+      var min = Math.min.apply(null, vals);
+      var max = Math.max.apply(null, vals);
+      if (opts.asPct) {
+        min = Math.min(opts.fixedMin != null ? opts.fixedMin : 95, Math.floor(min - 0.5));
+        if (min < 0) min = 0;
+        max = opts.fixedMax != null ? opts.fixedMax : 100;
+      } else {
+        var padY = Math.max(1, (max - min) * 0.12 || 2);
+        min = Math.max(0, min - padY);
+        max = max + padY;
+      }
+      if (max <= min) { min = Math.max(0, min - 1); max = max + 1; }
+
+      var times = pts.map(function (p) { return parseT(p.t); });
+      var useTime = times.every(function (t) { return t != null; });
+      var t0 = useTime ? Math.min.apply(null, times) : 0;
+      var t1 = useTime ? Math.max.apply(null, times) : Math.max(pts.length - 1, 1);
+      var span = Math.max(t1 - t0, 1);
+
+      function xAt(i) {
+        if (useTime) return pad.l + (w * (times[i] - t0)) / span;
+        return pad.l + (w * i) / Math.max(pts.length - 1, 1);
+      }
+      function yAt(v) {
+        return pad.t + h * (1 - (v - min) / (max - min));
       }
 
-      function formatAge(sec) {
-        if (sec == null || isNaN(sec)) return "—";
-        sec = Math.max(0, Math.round(sec));
-        if (sec < 90) return sec + "s";
-        if (sec < 3600) {
-          var m = Math.floor(sec / 60);
-          var s = sec % 60;
-          return m + "m " + s + "s";
-        }
-        var h = Math.floor(sec / 3600);
-        var m2 = Math.floor((sec % 3600) / 60);
-        return h + "h " + m2 + "m";
-      }
+      // Background plot
+      ctx.fillStyle = "rgba(13,21,34,0.35)";
+      ctx.fillRect(pad.l, pad.t, w, h);
 
-      function parsePointTime(t) {
-        if (!t || typeof t !== "string") return null;
-        if (t.indexOf("window:") === 0) return null; // categorical seed
-        var ms = Date.parse(t);
-        return isNaN(ms) ? null : ms;
-      }
-
-      function fmtAxisTime(ms, spanMs) {
-        var d = new Date(ms);
-        var dd = d.getUTCDate();
-        var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
-        var hh = String(d.getUTCHours()).padStart(2, "0");
-        var mm = String(d.getUTCMinutes()).padStart(2, "0");
-        // Short window: HH:MM; multi-day: Mon DD
-        if (spanMs < 36 * 3600 * 1000) return hh + ":" + mm;
-        return mon + " " + dd;
-      }
-
-      function drawSeriesChart(opts) {
-        var canvas = $(opts.canvasId);
-        var empty = $(opts.emptyId);
-        var cap = $(opts.captionId);
-        var axisNote = opts.axisId ? $(opts.axisId) : null;
-        var pts = (opts.points || []).filter(function (p) {
-          return p && p.v != null && p.t != null;
-        });
-        if (!pts.length) {
-          canvas.hidden = true;
-          empty.hidden = false;
-          empty.textContent = opts.emptyText || "No series yet.";
-          if (cap) cap.textContent = "unavailable";
-          if (axisNote) axisNote.hidden = true;
-          return;
-        }
-        // Hide empty overlay (requires [hidden]{display:none!important} in CSS)
-        empty.hidden = true;
-        empty.setAttribute("hidden", "");
-        empty.style.display = "none";
-        canvas.hidden = false;
-        canvas.removeAttribute("hidden");
-        canvas.style.display = "block";
-        if (axisNote) {
-          axisNote.hidden = false;
-          axisNote.removeAttribute("hidden");
-        }
-        if (cap) cap.textContent = opts.caption || (pts.length + " pts");
-
-        var dpr = window.devicePixelRatio || 1;
-        // Measure from parent so we never paint wider than the card
-        var parent = canvas.parentElement;
-        var cssW = Math.max(
-          240,
-          Math.floor((parent && parent.clientWidth ? parent.clientWidth : 0) - 24) ||
-            canvas.clientWidth ||
-            680
-        );
-        var cssH = 168;
-        canvas.style.width = cssW + "px";
-        canvas.style.height = cssH + "px";
-        canvas.width = Math.floor(cssW * dpr);
-        canvas.height = Math.floor(cssH * dpr);
-        var ctx = canvas.getContext("2d");
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, cssW, cssH);
-
-        var pad = { l: 44, r: 18, t: 14, b: 36 };
-        var w = cssW - pad.l - pad.r;
-        var h = cssH - pad.t - pad.b;
-        var vals = pts.map(function (p) { return Number(p.v); });
-        var min = opts.fixedMin != null ? opts.fixedMin : Math.min.apply(null, vals);
-        var max = opts.fixedMax != null ? opts.fixedMax : Math.max.apply(null, vals);
-        if (opts.asPct) {
-          var lo = Math.min.apply(null, vals);
-          min = Math.min(opts.fixedMin != null ? opts.fixedMin : 95, Math.floor(lo - 0.5));
-          if (min < 0) min = 0;
-          max = opts.fixedMax != null ? opts.fixedMax : 100;
-        } else {
-          // Room on Y so series is not glued to the frame
-          var padY = Math.max(1, (max - min) * 0.08);
-          min = Math.max(0, min - padY);
-          max = max + padY;
-        }
-        if (max === min) {
-          min = Math.max(0, min - 1);
-          max = max + 1;
-        }
-
-        // Prefer real timestamps for X when present; else index
-        var times = pts.map(function (p) { return parsePointTime(p.t); });
-        var useTime = times.every(function (t) { return t != null; });
-        var t0 = useTime ? Math.min.apply(null, times) : 0;
-        var t1 = useTime ? Math.max.apply(null, times) : Math.max(pts.length - 1, 1);
-        var span = Math.max(t1 - t0, 1);
-
-        function xAt(i) {
-          if (useTime) return pad.l + (w * (times[i] - t0)) / span;
-          return pad.l + (w * i) / Math.max(pts.length - 1, 1);
-        }
-        function yAt(v) {
-          return pad.t + h * (1 - (v - min) / (max - min));
-        }
-
-        // Plot frame
-        ctx.strokeStyle = "rgba(28,58,102,0.85)";
+      // Grid
+      ctx.font = "10px IBM Plex Mono, ui-monospace, monospace";
+      var yTicks = 4;
+      for (var g = 0; g <= yTicks; g++) {
+        var frac = g / yTicks;
+        var gy = pad.t + h * frac;
+        var val = max - (max - min) * frac;
+        ctx.strokeStyle = "rgba(28,58,102," + (g === yTicks ? "0.9" : "0.35") + ")";
         ctx.lineWidth = 1;
-        ctx.strokeRect(pad.l + 0.5, pad.t + 0.5, w - 1, h - 1);
-
-        // Y grid + labels (left axis)
+        ctx.beginPath();
+        ctx.moveTo(pad.l, gy);
+        ctx.lineTo(pad.l + w, gy);
+        ctx.stroke();
         ctx.fillStyle = "#828da3";
-        ctx.font = "10px IBM Plex Mono, ui-monospace, monospace";
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        var yTicks = 4;
-        for (var g = 0; g <= yTicks; g++) {
-          var frac = g / yTicks;
-          var gy = pad.t + h * frac;
-          var val = max - (max - min) * frac;
-          ctx.strokeStyle = "rgba(28,58,102,0.45)";
-          ctx.beginPath();
-          ctx.moveTo(pad.l, gy);
-          ctx.lineTo(pad.l + w, gy);
-          ctx.stroke();
-          var yLab = opts.asPct
-            ? Math.round(val) + "%"
-            : String(Math.round(val));
-          ctx.fillStyle = "#828da3";
-          ctx.fillText(yLab, pad.l - 6, gy);
-        }
+        var yLab = opts.asPct ? Math.round(val) + "%" : String(Math.round(val));
+        ctx.fillText(yLab, pad.l - 8, gy);
+      }
 
-        // X ticks + labels (bottom axis)
-        ctx.textAlign = "center";
-        ctx.textBaseline = "top";
-        var xTickN = Math.min(5, Math.max(2, pts.length));
-        var xIdx = [];
-        if (pts.length === 1) xIdx = [0];
-        else {
-          for (var xi = 0; xi < xTickN; xi++) {
-            xIdx.push(Math.round((xi * (pts.length - 1)) / (xTickN - 1)));
-          }
-        }
-        // de-dupe indices
-        xIdx = xIdx.filter(function (v, i, a) { return a.indexOf(v) === i; });
-        xIdx.forEach(function (i, tickI) {
-          var x = xAt(i);
-          ctx.strokeStyle = "rgba(28,58,102,0.55)";
-          ctx.beginPath();
-          ctx.moveTo(x, pad.t + h);
-          ctx.lineTo(x, pad.t + h + 4);
-          ctx.stroke();
-          var lab;
-          if (useTime) lab = fmtAxisTime(times[i], span);
-          else if (String(pts[i].t).indexOf("window:") === 0)
-            lab = String(pts[i].t).replace("window:", "");
-          else lab = String(i + 1);
-          ctx.fillStyle = "#828da3";
-          // Edge ticks: pin text so it does not clip (was "Aug 1" for Aug 10)
-          if (tickI === 0) ctx.textAlign = "left";
-          else if (tickI === xIdx.length - 1) ctx.textAlign = "right";
-          else ctx.textAlign = "center";
-          ctx.fillText(lab, x, pad.t + h + 8);
-        });
-        ctx.textAlign = "center";
-        // Axis titles (compact)
-        ctx.save();
-        ctx.fillStyle = "#6b758a";
-        ctx.font = "9px IBM Plex Mono, ui-monospace, monospace";
-        ctx.textAlign = "left";
-        ctx.fillText(opts.yTitle || "Y", 4, pad.t - 4);
-        ctx.textAlign = "right";
-        ctx.fillText(opts.xTitle || "X · UTC", cssW - 4, cssH - 6);
-        ctx.restore();
+      // X axis line
+      ctx.strokeStyle = "rgba(28,58,102,0.9)";
+      ctx.beginPath();
+      ctx.moveTo(pad.l, pad.t + h);
+      ctx.lineTo(pad.l + w, pad.t + h);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pad.l, pad.t);
+      ctx.lineTo(pad.l, pad.t + h);
+      ctx.stroke();
 
-        // Series
-        ctx.strokeStyle = opts.stroke || "#5da8ff";
-        ctx.lineWidth = 2;
-        ctx.lineJoin = "round";
+      // X ticks
+      var xTickN = Math.min(6, Math.max(2, pts.length));
+      var xIdx = [];
+      if (pts.length === 1) xIdx = [0];
+      else for (var xi = 0; xi < xTickN; xi++) xIdx.push(Math.round((xi * (pts.length - 1)) / (xTickN - 1)));
+      xIdx = xIdx.filter(function (v, i, a) { return a.indexOf(v) === i; });
+      ctx.textBaseline = "top";
+      xIdx.forEach(function (i, tickI) {
+        var x = xAt(i);
+        ctx.strokeStyle = "rgba(28,58,102,0.5)";
         ctx.beginPath();
-        pts.forEach(function (p, i) {
-          var x = xAt(i);
-          var y = yAt(Number(p.v));
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
+        ctx.moveTo(x, pad.t + h);
+        ctx.lineTo(x, pad.t + h + 5);
         ctx.stroke();
-
-        ctx.fillStyle = opts.dot || "#c9a86a";
-        // Cap dots so dense series (168 pts) stay readable
-        var dotEvery = pts.length > 80 ? Math.ceil(pts.length / 40) : 1;
-        pts.forEach(function (p, i) {
-          if (i % dotEvery !== 0 && i !== pts.length - 1) return;
-          var x = xAt(i);
-          var y = yAt(Number(p.v));
-          ctx.beginPath();
-          ctx.arc(x, y, 2.0, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-
-      function setAgreementTile(id, hintId, win) {
-        if (!win || win.pct == null) {
-          setText(id, "—", "muted");
-          setHint(hintId, "unavailable");
-          return;
-        }
-        var pct = Number(win.pct);
-        var cls = pct >= 99.5 ? "ok" : pct >= 98 ? "ok" : "warn";
-        setText(id, pct.toFixed(pct >= 99.95 ? 2 : 2) + "%", cls);
-        var bits = [];
-        if (win.missed != null && win.total != null)
-          bits.push(win.missed + " missed / " + win.total);
-        if (win.incomplete) bits.push("incomplete window");
-        setHint(hintId, bits.join(" · ") || "data.xrpl.org");
-      }
-
-      async function jget(url) {
-        var res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) return null;
-        return res.json();
-      }
-
-      async function load() {
-        var status = await jget("/status.json");
-        var history = await jget("/history.json");
-
-        if (!status) {
-          setText("m-version", "—", "warn");
-          setText("m-state", "no status.json", "warn");
-          setHint("m-state-h", "publish job not run");
-          $("chart-empty").textContent =
-            "status.json missing. Publish from tools/publish_public_status.py --upload";
-          $("chart-caption").textContent = "missing";
-          $("agree-empty").textContent = "status.json missing";
-          $("agree-caption").textContent = "missing";
-          return;
-        }
-
-        setText("m-version", status.version || "—", status.version ? "ok" : "muted");
-        setHint("m-version-h", status.version_source || "our node");
-
-        var st = status.server_state || "unknown";
-        setText("m-state", st, status.proposing ? "ok" : "warn");
-        setHint("m-state-h", status.proposing ? "proposing" : "not proposing");
-
-        if (status.peer_count != null) {
-          setText("m-peers", String(status.peer_count), "ok");
-          setHint("m-peers-h", "connected");
-        } else {
-          setText("m-peers", "—", "muted");
-        }
-
-        var ag = status.agreement || {};
-        setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h);
-        setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h);
-        setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d);
-
-        if (status.amendment_blocked === true) {
-          setText("m-amend", "yes", "warn");
-          setHint("m-amend-h", "action required");
-        } else if (status.amendment_blocked === false) {
-          setText("m-amend", "no", "ok");
-          setHint("m-amend-h", "clear");
-        } else {
-          setText("m-amend", "—", "muted");
-        }
-
-        if (status.unl_active === true) {
-          setText("m-unl", "active", "ok");
-          var uh = "";
-          if (status.unl_publisher_lists_available != null)
-            uh = status.unl_publisher_lists_available + " lists";
-          if (status.unl_min_days_to_expiry != null)
-            uh += (uh ? " · " : "") + "min " + Number(status.unl_min_days_to_expiry).toFixed(1) + "d";
-          setHint("m-unl-h", uh || "trusted set usable");
-        } else if (status.unl_active === false) {
-          setText("m-unl", "inactive", "warn");
-          setHint("m-unl-h", "trusted set not usable");
-        } else {
-          setText("m-unl", "—", "muted");
-        }
-
-        // Prefer live age from sample_time so the page stays accurate between publishes.
-        var age = status.sample_age_seconds;
-        if (status.sample_time) {
-          var stMs = Date.parse(status.sample_time);
-          if (!isNaN(stMs)) age = Math.max(0, (Date.now() - stMs) / 1000);
-        }
-        var thr = status.fresh_threshold_seconds || 120;
-        var fresh = age != null ? age <= thr : !!status.metrics_fresh;
-        setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
-        setHint(
-          "m-pub-h",
-          fresh
-            ? "fresh (≤" + thr + "s) · sidecar"
-            : "stale · last sample " + (status.sample_time || "—") +
-              (status.published_at ? " · published " + status.published_at : "")
-        );
-        if (
-          status.version_source === "deploy_pin" ||
-          status.version_source === "deploy_pin_fallback"
-        ) {
-          setHint("m-version-h", "deploy pin · confirm soak");
-        } else if (status.version_source) {
-          setHint("m-version-h", status.version_source);
-        }
-
-        var peers = history && history.series && history.series.peer_count;
-        var agreePts =
-          (history && history.series && history.series.agreement) ||
-          (history && history.series && history.series.agreement_1h_snapshots) ||
-          [];
-        // Seed chart with current windows if series still thin (first publishes).
-        if (agreePts.length < 2 && ag.agreement_1h && ag.agreement_1h.pct != null) {
-          var nowIso = status.published_at || new Date().toISOString();
-          agreePts = agreePts.slice();
-          if (!agreePts.length || agreePts[agreePts.length - 1].v !== ag.agreement_1h.pct) {
-            agreePts.push({ t: nowIso, v: ag.agreement_1h.pct });
-          }
-          if (ag.agreement_24h && ag.agreement_24h.pct != null) {
-            agreePts.unshift({ t: "window:24h", v: ag.agreement_24h.pct });
-          }
-          if (ag.agreement_30d && ag.agreement_30d.pct != null) {
-            agreePts.unshift({ t: "window:30d", v: ag.agreement_30d.pct });
-          }
-        }
-        var agreeAlign =
-          (history && history.alignment && history.alignment.agreement) ||
-          "data.xrpl.org";
-        drawSeriesChart({
-          canvasId: "agree-chart",
-          emptyId: "agree-empty",
-          captionId: "agree-caption",
-          axisId: "agree-axis",
-          points: agreePts,
-          fixedMin: 95,
-          fixedMax: 100,
-          asPct: true,
-          stroke: "#3dd68c",
-          dot: "#c9a86a",
-          yTitle: "%",
-          xTitle: "X · UTC",
-          caption: agreePts.length + " pts · " + agreeAlign,
-          emptyText:
-            "No agreement series yet. Publish job pulls data.xrpl.org; series grows each run.",
-        });
-        drawSeriesChart({
-          canvasId: "peer-chart",
-          emptyId: "chart-empty",
-          captionId: "chart-caption",
-          axisId: "peer-axis",
-          points: peers,
-          stroke: "#5da8ff",
-          yTitle: "peers",
-          xTitle: "X · UTC",
-          caption: (peers && peers.length ? peers.length : 0) + " pts · 1h mean · our metrics",
-          emptyText:
-            "No history.json yet. Run tools/publish_public_status.py --upload.",
-        });
-        // Redraw after layout settles (font/logo load can change width)
-        window.setTimeout(function () {
-          drawSeriesChart({
-            canvasId: "agree-chart",
-            emptyId: "agree-empty",
-            captionId: "agree-caption",
-            axisId: "agree-axis",
-            points: agreePts,
-            fixedMin: 95,
-            fixedMax: 100,
-            asPct: true,
-            stroke: "#3dd68c",
-            dot: "#c9a86a",
-            yTitle: "%",
-            xTitle: "X · UTC",
-            caption: agreePts.length + " pts · " + agreeAlign,
-          });
-          drawSeriesChart({
-            canvasId: "peer-chart",
-            emptyId: "chart-empty",
-            captionId: "chart-caption",
-            axisId: "peer-axis",
-            points: peers,
-            stroke: "#5da8ff",
-            yTitle: "peers",
-            xTitle: "X · UTC",
-            caption: (peers && peers.length ? peers.length : 0) + " pts · 1h mean · our metrics",
-          });
-        }, 120);
-      }
-
-      load().catch(function () {
-        setText("m-version", "error", "warn");
-        $("chart-empty").textContent = "Could not load status.json from this domain.";
-        $("chart-caption").textContent = "error";
-        if ($("agree-empty")) {
-          $("agree-empty").textContent = "Could not load status.json from this domain.";
-          $("agree-caption").textContent = "error";
-        }
+        var lab = useTime ? fmtTick(times[i], span) : String(i + 1);
+        ctx.fillStyle = "#828da3";
+        if (tickI === 0) ctx.textAlign = "left";
+        else if (tickI === xIdx.length - 1) ctx.textAlign = "right";
+        else ctx.textAlign = "center";
+        ctx.fillText(lab, x, pad.t + h + 8);
       });
-    })();
+
+      // Area fill under line
+      var grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + h);
+      var stroke = opts.stroke || "#5da8ff";
+      grad.addColorStop(0, opts.fillTop || "rgba(93,168,255,0.28)");
+      grad.addColorStop(1, opts.fillBot || "rgba(93,168,255,0.02)");
+      ctx.beginPath();
+      pts.forEach(function (p, i) {
+        var x = xAt(i), y = yAt(Number(p.v));
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(xAt(pts.length - 1), pad.t + h);
+      ctx.lineTo(xAt(0), pad.t + h);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Line
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2.25;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      pts.forEach(function (p, i) {
+        var x = xAt(i), y = yAt(Number(p.v));
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Endpoints only (cleaner)
+      ctx.fillStyle = opts.dot || "#c9a86a";
+      [0, pts.length - 1].forEach(function (i) {
+        if (i < 0 || i >= pts.length) return;
+        ctx.beginPath();
+        ctx.arc(xAt(i), yAt(Number(pts[i].v)), 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(5,9,15,0.9)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+    }
+
+    function redraw() {
+      var peers = filterPts(state.peers);
+      var agree = filterPts(state.agree);
+      var rangeLabel = state.range === "custom"
+        ? "custom range"
+        : state.range;
+      drawChart({
+        canvasId: "agree-chart",
+        emptyId: "agree-empty",
+        captionId: "agree-caption",
+        points: agree,
+        asPct: true,
+        fixedMin: 95,
+        fixedMax: 100,
+        stroke: "#3dd68c",
+        fillTop: "rgba(61,214,140,0.28)",
+        fillBot: "rgba(61,214,140,0.02)",
+        dot: "#c9a86a",
+        caption: agree.length + " pts · " + rangeLabel,
+        emptyText: "No agreement points in this range.",
+      });
+      drawChart({
+        canvasId: "peer-chart",
+        emptyId: "chart-empty",
+        captionId: "chart-caption",
+        points: peers,
+        stroke: "#5da8ff",
+        fillTop: "rgba(93,168,255,0.28)",
+        fillBot: "rgba(93,168,255,0.02)",
+        dot: "#c9a86a",
+        caption: peers.length + " pts · hourly mean · " + rangeLabel,
+        emptyText: "No peer points in this range.",
+      });
+    }
+
+    function setAgreementTile(id, hintId, win) {
+      if (!win || win.pct == null) {
+        setText(id, "—", "muted");
+        setHint(hintId, "unavailable");
+        return;
+      }
+      var pct = Number(win.pct);
+      setText(id, pct.toFixed(2) + "%", pct >= 98 ? "ok" : "warn");
+      var bits = [];
+      if (win.missed != null && win.total != null) bits.push(win.missed + " missed / " + win.total);
+      if (win.incomplete) bits.push("incomplete window");
+      setHint(hintId, bits.join(" · ") || "data.xrpl.org");
+    }
+
+    async function jget(url) {
+      var res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) return null;
+      return res.json();
+    }
+
+    async function load() {
+      var status = await jget("/status.json");
+      var history = await jget("/history.json");
+      if (!status) {
+        setText("m-state", "no status.json", "warn");
+        return;
+      }
+      setText("m-version", status.version || "—", status.version ? "ok" : "muted");
+      setHint("m-version-h", status.version_source || "our node");
+      setText("m-state", status.server_state || "unknown", status.proposing ? "ok" : "warn");
+      setHint("m-state-h", status.proposing ? "proposing" : "not proposing");
+      if (status.peer_count != null) {
+        setText("m-peers", String(status.peer_count), "ok");
+        setHint("m-peers-h", "connected");
+      } else setText("m-peers", "—", "muted");
+      var ag = status.agreement || {};
+      setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h);
+      setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h);
+      setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d);
+      if (status.amendment_blocked === true) {
+        setText("m-amend", "yes", "warn"); setHint("m-amend-h", "action required");
+      } else if (status.amendment_blocked === false) {
+        setText("m-amend", "no", "ok"); setHint("m-amend-h", "clear");
+      } else setText("m-amend", "—", "muted");
+      if (status.unl_active === true) {
+        setText("m-unl", "active", "ok");
+        var uh = "";
+        if (status.unl_publisher_lists_available != null) uh = status.unl_publisher_lists_available + " lists";
+        if (status.unl_min_days_to_expiry != null)
+          uh += (uh ? " · " : "") + "min " + Number(status.unl_min_days_to_expiry).toFixed(1) + "d";
+        setHint("m-unl-h", uh || "trusted set usable");
+      } else if (status.unl_active === false) {
+        setText("m-unl", "inactive", "warn"); setHint("m-unl-h", "trusted set not usable");
+      } else setText("m-unl", "—", "muted");
+
+      var age = status.sample_age_seconds;
+      if (status.sample_time) {
+        var stMs = Date.parse(status.sample_time);
+        if (!isNaN(stMs)) age = Math.max(0, (Date.now() - stMs) / 1000);
+      }
+      var thr = status.fresh_threshold_seconds || 120;
+      var fresh = age != null ? age <= thr : !!status.metrics_fresh;
+      setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
+      setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s) · sidecar" : "stale · " + (status.sample_time || "—"));
+
+      state.peers = (history && history.series && history.series.peer_count) || [];
+      state.agree =
+        (history && history.series && history.series.agreement) ||
+        (history && history.series && history.series.agreement_1h_snapshots) ||
+        [];
+      if (state.agree.length < 2 && ag.agreement_1h && ag.agreement_1h.pct != null) {
+        state.agree = state.agree.slice();
+        state.agree.push({ t: status.published_at || new Date().toISOString(), v: ag.agreement_1h.pct });
+      }
+      applyPreset("7d");
+    }
+
+    document.querySelectorAll(".rbtn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        applyPreset(b.getAttribute("data-range"));
+      });
+    });
+    ["range-from", "range-to"].forEach(function (id) {
+      var el = $(id);
+      if (el) el.addEventListener("change", applyCustomDates);
+    });
+    window.addEventListener("resize", function () {
+      window.clearTimeout(window.__csRedraw);
+      window.__csRedraw = window.setTimeout(redraw, 120);
+    });
+
+    load().catch(function () {
+      setText("m-version", "error", "warn");
+      $("chart-empty").textContent = "Could not load status.json";
+      $("agree-empty").textContent = "Could not load status.json";
+    });
+  })();
   </script>
 </body>
 </html>
-
