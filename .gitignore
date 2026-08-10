@@ -8,3 +8,7 @@
 
 # ORACLE1 gate transcripts — evidence artifacts, not source.
 gates/
+
+# Python
+__pycache__/
+*.py[cod]

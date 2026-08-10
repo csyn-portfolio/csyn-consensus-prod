@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Validator surfaces — open mocks here</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0b1220;
+      color: #eef4fb;
+      line-height: 1.45;
+      padding: 32px 20px 48px;
+      max-width: 720px;
+      margin-inline: auto;
+    }
+    h1 { font-size: 1.4rem; margin: 0 0 8px; }
+    .sub { color: #8fa0b5; margin: 0 0 24px; font-size: 0.95rem; }
+    .box {
+      border: 1px solid #2a3f5c;
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      background: #121c2c;
+    }
+    .box h2 {
+      margin: 0 0 10px;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #c9a86a;
+    }
+    a {
+      display: block;
+      color: #5da8ff;
+      padding: 10px 0;
+      border-bottom: 1px solid #1c2a3d;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+    a:last-child { border-bottom: 0; }
+    a:hover { color: #9ec5ff; }
+    .live a { color: #3dd68c; }
+    code { font-size: 0.8rem; color: #828da3; }
+    .note { font-size: 0.85rem; color: #828da3; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Validator surfaces — START HERE</h1>
+  <p class="sub">
+    Use these <strong>http://127.0.0.1:8765/…</strong> links (not file://).
+    Server must be running from the repo root on port 8765.
+  </p>
+
+  <div class="box live">
+    <h2>Live (production)</h2>
+    <a href="https://validator1.cloudsyndicate.io/">https://validator1.cloudsyndicate.io/</a>
+    <a href="https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml">TOML</a>
+  </div>
+
+  <div class="box">
+    <h2>OPTIONS / MOCKS (local only)</h2>
+    <a href="/docs/mocks/validator-surfaces/options-board.html">Options board (A1–A3, D1–D3 side-by-side)</a>
+    <a href="/docs/mocks/validator-surfaces/option-a3-status-lite.html">A3 — status-lite tiles</a>
+    <a href="/docs/mocks/validator-surfaces/option-d2-report.html">D2 — health report mock</a>
+    <a href="/docs/public/health/index.html">D2 — health report (ship draft)</a>
+    <a href="/docs/public/validator1/index.html">A1 — landing (design source)</a>
+    <a href="/docs/mocks/validator-surfaces/ref-tachyon-style.html">Status host feel (Tachyon-style ref)</a>
+    <a href="/docs/mocks/validator-surfaces/option-c-directory.html">C — directory (deferred)</a>
+  </div>
+
+  <p class="note">
+    If a link fails: in a terminal,<br />
+    <code>cd ~/pete-ai/claude/cs/csyn-consensus-prod && python3 -m http.server 8765 --bind 127.0.0.1</code><br />
+    then open <a href="http://127.0.0.1:8765/docs/mocks/START-HERE.html">http://127.0.0.1:8765/docs/mocks/START-HERE.html</a>
+  </p>
+</body>
+</html>
