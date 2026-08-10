@@ -149,16 +149,23 @@ def _fmt_rfc3339_ms(dt: datetime) -> str:
 
 def monitoring_get(
     token: str,
-    metric: str,
     start: datetime,
     end: datetime,
     *,
+    metric: str | None = None,
+    filter_expr: str | None = None,
     align_seconds: int | None = None,
     aligner: str = "ALIGN_MEAN",
     page_size: int = 250,
     timeout: float = 20.0,
 ) -> list:
-    filt = f'metric.type="{METRIC_PREFIX}/{metric}"'
+    """Fetch time series. Prefer one starts_with filter over N per-metric calls."""
+    if filter_expr:
+        filt = filter_expr
+    elif metric:
+        filt = f'metric.type="{METRIC_PREFIX}/{metric}"'
+    else:
+        raise ValueError("metric or filter_expr required")
     q: dict[str, str] = {
         "filter": filt,
         "interval.startTime": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -177,7 +184,7 @@ def monitoring_get(
     while url:
         data = None
         last_err: Exception | None = None
-        for attempt in range(4):
+        for attempt in range(6):
             req = urllib.request.Request(
                 url, headers={"Authorization": f"Bearer {token}"}
             )
@@ -188,9 +195,8 @@ def monitoring_get(
             except urllib.error.HTTPError as e:
                 last_err = e
                 # 429 / 503: back off; accuracy needs the read to succeed.
-                # Stagger under parallel fan-out (many workers often 429 together).
                 if e.code in (429, 500, 503) and attempt < 5:
-                    time.sleep((0.8 * (2**attempt)) + (0.15 * attempt))
+                    time.sleep((1.2 * (2**attempt)) + 0.25)
                     continue
                 raise
         if data is None:
@@ -225,6 +231,13 @@ def latest_sample(series: list) -> tuple[float | None, datetime | None]:
                 best_ts = ts
                 best_val = val
     return best_val, best_ts
+
+
+def _metric_short_name(series_item: dict) -> str | None:
+    mtype = (series_item.get("metric") or {}).get("type") or ""
+    if mtype.startswith(METRIC_PREFIX + "/"):
+        return mtype[len(METRIC_PREFIX) + 1 :]
+    return None
 
 
 def history_points(series: list) -> list[dict]:
@@ -447,22 +460,35 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     start_hist = now - timedelta(days=HISTORY_DAYS)
     timings: dict[str, float] = {}
 
-    def fetch_latest(name: str):
+    def fetch_all_latest():
+        """One Monitoring call for every sidecar gauge (avoids 429 fan-out)."""
         t = time.perf_counter()
-        # pageSize=1: Monitoring returns newest first for unaligned series.
         series = monitoring_get(
-            token, name, start_latest, now, page_size=1, timeout=15.0
+            token,
+            start_latest,
+            now,
+            filter_expr=f'metric.type = starts_with("{METRIC_PREFIX}/")',
+            page_size=50,
+            timeout=20.0,
         )
-        val, sample_ts = latest_sample(series)
-        return name, val, sample_ts, time.perf_counter() - t
+        by_name: dict[str, list] = {}
+        for s in series:
+            name = _metric_short_name(s)
+            if not name:
+                continue
+            by_name.setdefault(name, []).append(s)
+        out: dict[str, tuple[float | None, datetime | None]] = {}
+        for name in LATEST_METRICS:
+            out[name] = latest_sample(by_name.get(name) or [])
+        return out, time.perf_counter() - t
 
     def fetch_hist(name: str, aligner: str):
         t = time.perf_counter()
         series = monitoring_get(
             token,
-            name,
             start_hist,
             now,
+            metric=name,
             align_seconds=HISTORY_ALIGN_S,
             aligner=aligner,
             page_size=200,
@@ -478,18 +504,18 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     daily_agree: list[dict] = []
     prior_snaps: list[dict] = []
 
-    # Cap concurrency: Monitoring quotas 429 hard when ~12 raw reads fan out.
-    with ThreadPoolExecutor(max_workers=6) as pool:
-        latest_futs = [pool.submit(fetch_latest, n) for n in LATEST_METRICS]
+    # 1 latest bulk + 2 history + agreement + prior GCS ≈ 5 concurrent max.
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        latest_fut = pool.submit(fetch_all_latest)
         hist_peer = pool.submit(fetch_hist, "peer_count", "ALIGN_MEAN")
         hist_prop = pool.submit(fetch_hist, "proposing", "ALIGN_MEAN")
         agree_fut = pool.submit(fetch_agreement_xrpl_org)
         prior_fut = pool.submit(load_prior_agreement_snaps)
-        for fut in as_completed(latest_futs):
-            name, val, sample_ts, dt = fut.result()
+        latest_map, dt_latest = latest_fut.result()
+        timings["latest.bulk"] = round(dt_latest, 3)
+        for name, (val, sample_ts) in latest_map.items():
             metrics[name] = val
             sample_times[name] = sample_ts
-            timings[f"latest.{name}"] = round(dt, 3)
         _, peer_hist, dt_p = hist_peer.result()
         _, prop_hist, dt_pr = hist_prop.result()
         timings["hist.peer_count"] = round(dt_p, 3)
