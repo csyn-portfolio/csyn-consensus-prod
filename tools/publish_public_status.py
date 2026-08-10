@@ -442,8 +442,8 @@ def upload_gcs(local: Path, object_name: str, content_type: str) -> None:
             str(local),
             f"gs://{BUCKET}/{object_name}",
             f"--content-type={content_type}",
-            # Short cache: accuracy over edge stickiness
-            "--cache-control=public, max-age=30",
+            # Accuracy over edge stickiness — force revalidate at CDN/browsers.
+            "--cache-control=public, max-age=15, must-revalidate",
         ]
     )
 
