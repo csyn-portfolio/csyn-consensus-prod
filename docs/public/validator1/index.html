@@ -367,7 +367,7 @@
         <div class="metric"><div class="ml">Peers</div><div class="mv muted" id="m-peers">…</div><div class="mh" id="m-peers-h">connected</div></div>
         <div class="metric"><div class="ml">Amendment blocked</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h">node</div></div>
         <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h">trusted set</div></div>
-        <div class="metric"><div class="ml">Published</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h">status.json</div></div>
+        <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h">sidecar sample</div></div>
       </div>
       <div class="chart-wrap">
         <div class="chart-head">
@@ -564,9 +564,28 @@
           setText("m-unl", "—", "muted");
         }
 
-        var pub = status.published_at || "—";
-        setText("m-pub", pub.replace("T", " ").replace("Z", ""), status.metrics_fresh ? "ok" : "warn");
-        setHint("m-pub-h", status.metrics_fresh ? "sidecar heartbeat OK" : "stale / missing heartbeat");
+        // Prefer live age from sample_time so the page stays accurate between publishes.
+        var age = status.sample_age_seconds;
+        if (status.sample_time) {
+          var stMs = Date.parse(status.sample_time);
+          if (!isNaN(stMs)) age = Math.max(0, (Date.now() - stMs) / 1000);
+        }
+        var thr = status.fresh_threshold_seconds || 120;
+        var fresh = age != null ? age <= thr : !!status.metrics_fresh;
+        setText(
+          "m-pub",
+          age != null ? age.toFixed(0) + "s" : "—",
+          fresh ? "ok" : "warn"
+        );
+        setHint(
+          "m-pub-h",
+          fresh ? "fresh (≤" + thr + "s)" : "stale · sample " + (status.sample_time || "—")
+        );
+        if (status.version_source === "deploy_pin" || status.version_source === "deploy_pin_fallback") {
+          setHint("m-version-h", "deploy pin · confirm soak");
+        } else if (status.version_source) {
+          setHint("m-version-h", status.version_source);
+        }
 
         var peers = history && history.series && history.series.peer_count;
         drawPeerChart(peers);
