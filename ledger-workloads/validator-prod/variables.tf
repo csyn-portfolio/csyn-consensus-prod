@@ -42,3 +42,9 @@ variable "slack_channel_name" {
   default     = "#consensus-alerts"
   description = "Slack channel that receives validator alerts (used only when slack_auth_token is set)."
 }
+
+variable "public_status_image_digest" {
+  type        = string
+  default     = ""
+  description = "Immutable digest of validator1-status-publisher image in csyn-ldg-images. Empty disables Cloud Run Job + 5m Scheduler (CI plan stays green). Set after: gcloud builds submit --config=tools/cloudbuild.public-status.yaml tools/"
+}

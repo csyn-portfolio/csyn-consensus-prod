@@ -1,0 +1,138 @@
+# public-status-publisher.tf — Cloud Run Job + 5m Cloud Scheduler that publishes
+# tools/publish_public_status.py → gs://csyn-www-validator1-toml/{status,history}.json
+#
+# Reads sidecar gauges in this project (Monitoring) + data.xrpl.org agreement
+# (public HTTPS). Writes public status objects to the www trust-card bucket
+# (cross-project objectAdmin). Scheduler lives in us-central1 (Scheduler not in
+# us-south1 — same pattern as power-scheduler / retired poller).
+#
+# Gated on var.public_status_image_digest (empty = no job/cron; CI plan green).
+
+locals {
+  pub_status_image = (
+    var.public_status_image_digest != ""
+    ? "us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/validator1-status-publisher@${var.public_status_image_digest}"
+    : ""
+  )
+  pub_status_on = var.public_status_image_digest != ""
+}
+
+# --- Runtime SA (Monitoring read + www bucket write) --------------------------
+resource "google_service_account" "public_status_publisher" {
+  project      = module.validator.project_id
+  account_id   = "v1-public-status"
+  display_name = "validator1 public status publisher"
+  description  = "Cloud Run Job identity: Monitoring timeSeries on this project + objectAdmin on gs://csyn-www-validator1-toml. Invoked every 5m by Cloud Scheduler."
+}
+
+resource "google_project_iam_member" "public_status_monitoring_viewer" {
+  project = module.validator.project_id
+  role    = "roles/monitoring.viewer"
+  member  = "serviceAccount:${google_service_account.public_status_publisher.email}"
+}
+
+# Cross-project write of public status/history JSON on the trust-card bucket.
+resource "google_storage_bucket_iam_member" "public_status_www_object_admin" {
+  bucket = "csyn-www-validator1-toml"
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.public_status_publisher.email}"
+}
+
+# --- Cloud Run service agent → AR pull (csyn-ldg-images) ----------------------
+resource "google_project_service_identity" "run_agent_public_status" {
+  count      = local.pub_status_on ? 1 : 0
+  provider   = google-beta
+  project    = module.validator.project_id
+  service    = "run.googleapis.com"
+  depends_on = [time_sleep.apis]
+}
+
+resource "google_artifact_registry_repository_iam_member" "public_status_image_pull" {
+  count      = local.pub_status_on ? 1 : 0
+  project    = "csyn-ldg-host-dev"
+  location   = "us-south1"
+  repository = "csyn-ldg-images"
+  role       = "roles/artifactregistry.reader"
+  member     = "serviceAccount:${google_project_service_identity.run_agent_public_status[0].email}"
+}
+
+resource "time_sleep" "wait_public_status_ar" {
+  count           = local.pub_status_on ? 1 : 0
+  depends_on      = [google_artifact_registry_repository_iam_member.public_status_image_pull]
+  create_duration = "60s"
+}
+
+# --- Cloud Run Job ------------------------------------------------------------
+resource "google_cloud_run_v2_job" "public_status" {
+  count    = local.pub_status_on ? 1 : 0
+  project  = module.validator.project_id
+  name     = "validator1-public-status"
+  location = "us-south1"
+
+  template {
+    template {
+      timeout         = "120s"
+      max_retries     = 1
+      service_account = google_service_account.public_status_publisher.email
+      containers {
+        image = local.pub_status_image
+        resources {
+          limits = {
+            cpu    = "1"
+            memory = "512Mi"
+          }
+        }
+        env {
+          name  = "GOOGLE_CLOUD_PROJECT"
+          value = module.validator.project_id
+        }
+      }
+    }
+  }
+
+  depends_on = [time_sleep.wait_public_status_ar]
+}
+
+# Invoker SA — Scheduler oauth only (not the runtime SA).
+resource "google_service_account" "public_status_invoker" {
+  project      = module.validator.project_id
+  account_id   = "v1-public-status-inv"
+  display_name = "validator1 public status — scheduler invoker"
+  description  = "Cloud Scheduler authenticates as this SA to POST :run on validator1-public-status. run.developer on that job only."
+}
+
+resource "google_cloud_run_v2_job_iam_member" "public_status_invoker" {
+  count    = local.pub_status_on ? 1 : 0
+  project  = google_cloud_run_v2_job.public_status[0].project
+  location = google_cloud_run_v2_job.public_status[0].location
+  name     = google_cloud_run_v2_job.public_status[0].name
+  role     = "roles/run.developer"
+  member   = "serviceAccount:${google_service_account.public_status_invoker.email}"
+}
+
+# Scheduler not available in us-south1 → us-central1, Admin API global.
+resource "google_cloud_scheduler_job" "public_status_5m" {
+  count       = local.pub_status_on ? 1 : 0
+  project     = module.validator.project_id
+  region      = "us-central1"
+  name        = "validator1-public-status-5m"
+  schedule    = "*/5 * * * *"
+  time_zone   = "UTC"
+  description = "Publish validator1 status.json + history.json every 5 minutes"
+
+  retry_config {
+    retry_count = 1
+  }
+
+  http_target {
+    http_method = "POST"
+    uri         = "https://run.googleapis.com/v2/projects/${module.validator.project_id}/locations/us-south1/jobs/${google_cloud_run_v2_job.public_status[0].name}:run"
+    headers     = { "Content-Type" = "application/json" }
+    body        = base64encode("{}")
+    oauth_token {
+      service_account_email = google_service_account.public_status_invoker.email
+    }
+  }
+
+  depends_on = [google_cloud_run_v2_job_iam_member.public_status_invoker]
+}

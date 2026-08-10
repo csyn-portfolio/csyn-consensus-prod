@@ -83,11 +83,30 @@ CORE_METRICS = ("proposing", "peer_count", "poller_heartbeat")
 
 
 def access_token() -> str:
-    out = subprocess.check_output(
-        ["gcloud", "auth", "print-access-token"], text=True
-    ).strip()
+    """ADC first (Cloud Run / GCE), then gcloud CLI (local laptop)."""
+    try:
+        import google.auth  # type: ignore
+        import google.auth.transport.requests  # type: ignore
+
+        creds, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        creds.refresh(google.auth.transport.requests.Request())
+        if creds.token:
+            return creds.token
+    except Exception:
+        pass
+    try:
+        out = subprocess.check_output(
+            ["gcloud", "auth", "print-access-token"], text=True
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        raise SystemExit(
+            "no credentials: ADC failed and gcloud auth print-access-token failed "
+            f"({e})"
+        ) from e
     if not out:
-        raise SystemExit("empty access token — run gcloud auth login")
+        raise SystemExit("empty access token — run gcloud auth login or use ADC")
     return out
 
 
@@ -378,19 +397,42 @@ def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
     return agreement, daily, time.perf_counter() - t0
 
 
-def load_prior_agreement_snaps() -> list[dict]:
+def load_prior_agreement_snaps(token: str | None = None) -> list[dict]:
     """Read previously published agreement_1h snapshots from GCS (best-effort)."""
     try:
-        out = subprocess.check_output(
-            ["gcloud", "storage", "cat", f"gs://{BUCKET}/history.json"],
-            text=True,
-            timeout=20,
-            stderr=subprocess.DEVNULL,
-        )
-        prior = json.loads(out)
+        if token:
+            url = (
+                f"https://storage.googleapis.com/storage/v1/b/{BUCKET}/o/"
+                f"{urllib.parse.quote('history.json', safe='')}?alt=media"
+            )
+            req = urllib.request.Request(
+                url, headers={"Authorization": f"Bearer {token}"}
+            )
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                prior = json.load(resp)
+        else:
+            out = subprocess.check_output(
+                ["gcloud", "storage", "cat", f"gs://{BUCKET}/history.json"],
+                text=True,
+                timeout=20,
+                stderr=subprocess.DEVNULL,
+            )
+            prior = json.loads(out)
         series = (prior.get("series") or {}).get("agreement_1h_snapshots") or []
-        return [p for p in series if isinstance(p, dict) and p.get("t") and p.get("v") is not None]
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
+        return [
+            p
+            for p in series
+            if isinstance(p, dict) and p.get("t") and p.get("v") is not None
+        ]
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        json.JSONDecodeError,
+        FileNotFoundError,
+        urllib.error.HTTPError,
+        urllib.error.URLError,
+        TimeoutError,
+    ):
         return []
 
 
@@ -511,7 +553,7 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
         hist_peer = pool.submit(fetch_hist, "peer_count", "ALIGN_MEAN")
         hist_prop = pool.submit(fetch_hist, "proposing", "ALIGN_MEAN")
         agree_fut = pool.submit(fetch_agreement_xrpl_org)
-        prior_fut = pool.submit(load_prior_agreement_snaps)
+        prior_fut = pool.submit(load_prior_agreement_snaps, token)
         try:
             _, peer_hist, dt_p = hist_peer.result()
             timings["hist.peer_count"] = round(dt_p, 3)
@@ -669,7 +711,31 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     return status, history, timings
 
 
-def upload_gcs(local: Path, object_name: str, content_type: str) -> None:
+def upload_gcs(
+    local: Path, object_name: str, content_type: str, token: str | None = None
+) -> None:
+    """Upload via GCS JSON API (ADC/token) or gcloud CLI fallback."""
+    body = local.read_bytes()
+    if token:
+        # media upload — simple and dependency-free
+        url = (
+            f"https://storage.googleapis.com/upload/storage/v1/b/{BUCKET}/o"
+            f"?uploadType=media&name={urllib.parse.quote(object_name, safe='')}"
+        )
+        req = urllib.request.Request(
+            url,
+            data=body,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": content_type,
+                "Cache-Control": "public, max-age=15, must-revalidate",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            if resp.status not in (200, 201):
+                raise RuntimeError(f"GCS upload {object_name} HTTP {resp.status}")
+        return
     subprocess.check_call(
         [
             "gcloud",
@@ -678,7 +744,6 @@ def upload_gcs(local: Path, object_name: str, content_type: str) -> None:
             str(local),
             f"gs://{BUCKET}/{object_name}",
             f"--content-type={content_type}",
-            # Accuracy over edge stickiness — force revalidate at CDN/browsers.
             "--cache-control=public, max-age=15, must-revalidate",
         ]
     )
@@ -741,8 +806,8 @@ def main() -> int:
 
     if args.upload:
         t_up = time.perf_counter()
-        upload_gcs(status_path, "status.json", "application/json")
-        upload_gcs(history_path, "history.json", "application/json")
+        upload_gcs(status_path, "status.json", "application/json", token=token)
+        upload_gcs(history_path, "history.json", "application/json", token=token)
         print(
             f"uploaded gs://{BUCKET}/{{status,history}}.json "
             f"in {time.perf_counter() - t_up:.2f}s"
