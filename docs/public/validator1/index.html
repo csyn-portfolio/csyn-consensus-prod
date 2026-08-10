@@ -6,11 +6,15 @@
   <title>EverForge Consensus · XRPL validator · Cloud Syndicate</title>
   <meta name="description" content="Public identity for the Cloud Syndicate XRPL mainnet validator under EverForge Consensus." />
   <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" sizes="32x32" href="https://www.cloudsyndicate.io/brand/icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="https://www.cloudsyndicate.io/brand/icons/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://www.cloudsyndicate.io/brand/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
+      /* Brand family aligned with cloudsyndicate.io (ink / navy / gold) */
       --bg: #05090f;
       --panel: #0d1522;
       --line: #1c3a66;
@@ -18,6 +22,7 @@
       --muted: #828da3;
       --muted2: #b0bacd;
       --navy: #1f4286;
+      --deep: #0d2147;
       --gold: #c9a86a;
       --gold2: #b08d57;
       --blue: #5da8ff;
@@ -53,16 +58,22 @@
       gap: 16px;
     }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .mark {
-      width: 36px; height: 36px; border-radius: 9px;
-      background: linear-gradient(145deg, #1f4286, #0d2147);
-      border: 1px solid var(--gold2);
-      display: grid; place-items: center;
-      font-size: 10px; font-weight: 700; color: var(--gold);
-      letter-spacing: 0.06em;
+    .brand-logo {
+      height: 28px;
+      width: auto;
+      display: block;
+      /* wordmark is light-on-transparent for dark chrome */
+      filter: none;
     }
     .brand-name { font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em; }
-    .brand-sub { font-size: 0.72rem; color: var(--muted); margin-top: 1px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .brand-sub {
+      font-size: 0.68rem;
+      color: var(--gold);
+      margin-top: 2px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+    }
     .top-links { display: flex; gap: 16px; font-size: 0.85rem; flex-wrap: wrap; }
     .top-links a { color: var(--muted2); }
     .wrap { max-width: 760px; margin: 0 auto; padding: 36px 22px 56px; }
@@ -245,8 +256,9 @@
       background: #05090f;
       border: 1px solid rgba(28,58,102,0.7);
       border-radius: 10px;
-      padding: 12px 12px 8px;
+      padding: 12px 12px 10px;
       margin-top: 4px;
+      overflow: hidden; /* contain series stroke / dots */
     }
     .chart-head {
       display: flex;
@@ -260,16 +272,19 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
     }
     .chart-head em {
       font-style: normal;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--muted2);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
     }
-    #agree-chart {
+    .chart-canvas {
       width: 100%;
-      height: 140px;
+      height: 168px;
       display: block;
+      max-width: 100%;
     }
     .chart-empty {
       min-height: 120px;
@@ -281,6 +296,18 @@
       font-size: 0.88rem;
       padding: 16px;
       line-height: 1.45;
+    }
+    /* display:flex above would defeat the hidden attribute without this */
+    .chart-empty[hidden],
+    .chart-canvas[hidden] {
+      display: none !important;
+    }
+    .axis-note {
+      margin: 4px 0 0;
+      font-size: 0.68rem;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.04em;
     }
     .src-note {
       margin: 12px 0 0;
@@ -294,9 +321,16 @@
   <header class="top">
     <div class="top-inner">
       <div class="brand">
-        <div class="mark">CS</div>
+        <a href="https://www.cloudsyndicate.io/" aria-label="Cloud Syndicate">
+          <img
+            class="brand-logo"
+            src="https://www.cloudsyndicate.io/brand/wordmark-mono.svg"
+            alt="Cloud Syndicate"
+            width="160"
+            height="28"
+          />
+        </a>
         <div>
-          <div class="brand-name">Cloud Syndicate</div>
           <div class="brand-sub">EverForge Consensus</div>
         </div>
       </div>
@@ -378,16 +412,18 @@
           <span>Agreement % · network observer</span>
           <em id="agree-caption">loading…</em>
         </div>
-        <canvas id="agree-chart" width="700" height="140" hidden></canvas>
+        <canvas id="agree-chart" class="chart-canvas" width="700" height="168" hidden></canvas>
         <div class="chart-empty" id="agree-empty">Loading agreement history…</div>
+        <p class="axis-note" id="agree-axis" hidden>Y: agreement % · X: time (UTC)</p>
       </div>
       <div class="chart-wrap" style="margin-top:14px">
         <div class="chart-head">
           <span>Peer count · 7d (hourly, our metrics)</span>
           <em id="chart-caption">loading…</em>
         </div>
-        <canvas id="peer-chart" width="700" height="140" hidden></canvas>
+        <canvas id="peer-chart" class="chart-canvas" width="700" height="168" hidden></canvas>
         <div class="chart-empty" id="chart-empty">Loading our metric history…</div>
+        <p class="axis-note" id="peer-axis" hidden>Y: peers · X: time (UTC, hourly)</p>
       </div>
       <p class="src-note" id="src-note">
         Sources: <code style="color:var(--muted2)">/status.json</code> + <code style="color:var(--muted2)">/history.json</code>.
@@ -442,36 +478,89 @@
         if (el) el.textContent = text;
       }
 
+      function formatAge(sec) {
+        if (sec == null || isNaN(sec)) return "—";
+        sec = Math.max(0, Math.round(sec));
+        if (sec < 90) return sec + "s";
+        if (sec < 3600) {
+          var m = Math.floor(sec / 60);
+          var s = sec % 60;
+          return m + "m " + s + "s";
+        }
+        var h = Math.floor(sec / 3600);
+        var m2 = Math.floor((sec % 3600) / 60);
+        return h + "h " + m2 + "m";
+      }
+
+      function parsePointTime(t) {
+        if (!t || typeof t !== "string") return null;
+        if (t.indexOf("window:") === 0) return null; // categorical seed
+        var ms = Date.parse(t);
+        return isNaN(ms) ? null : ms;
+      }
+
+      function fmtAxisTime(ms, spanMs) {
+        var d = new Date(ms);
+        var dd = d.getUTCDate();
+        var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()];
+        var hh = String(d.getUTCHours()).padStart(2, "0");
+        var mm = String(d.getUTCMinutes()).padStart(2, "0");
+        // Short window: HH:MM; multi-day: Mon DD
+        if (spanMs < 36 * 3600 * 1000) return hh + ":" + mm;
+        return mon + " " + dd;
+      }
+
       function drawSeriesChart(opts) {
         var canvas = $(opts.canvasId);
         var empty = $(opts.emptyId);
         var cap = $(opts.captionId);
+        var axisNote = opts.axisId ? $(opts.axisId) : null;
         var pts = (opts.points || []).filter(function (p) {
-          return p && p.v != null && p.t;
+          return p && p.v != null && p.t != null;
         });
         if (!pts.length) {
           canvas.hidden = true;
           empty.hidden = false;
           empty.textContent = opts.emptyText || "No series yet.";
-          cap.textContent = "unavailable";
+          if (cap) cap.textContent = "unavailable";
+          if (axisNote) axisNote.hidden = true;
           return;
         }
+        // Hide empty overlay (requires [hidden]{display:none!important} in CSS)
         empty.hidden = true;
+        empty.setAttribute("hidden", "");
+        empty.style.display = "none";
         canvas.hidden = false;
-        cap.textContent = opts.caption || (pts.length + " pts");
+        canvas.removeAttribute("hidden");
+        canvas.style.display = "block";
+        if (axisNote) {
+          axisNote.hidden = false;
+          axisNote.removeAttribute("hidden");
+        }
+        if (cap) cap.textContent = opts.caption || (pts.length + " pts");
 
         var dpr = window.devicePixelRatio || 1;
-        var cssW = canvas.clientWidth || 700;
-        var cssH = 140;
+        // Measure from parent so we never paint wider than the card
+        var parent = canvas.parentElement;
+        var cssW = Math.max(
+          240,
+          Math.floor((parent && parent.clientWidth ? parent.clientWidth : 0) - 24) ||
+            canvas.clientWidth ||
+            680
+        );
+        var cssH = 168;
+        canvas.style.width = cssW + "px";
+        canvas.style.height = cssH + "px";
         canvas.width = Math.floor(cssW * dpr);
         canvas.height = Math.floor(cssH * dpr);
         var ctx = canvas.getContext("2d");
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssW, cssH);
 
-        var pad = { l: 36, r: 10, t: 12, b: 22 };
+        var pad = { l: 44, r: 12, t: 14, b: 34 };
         var w = cssW - pad.l - pad.r;
         var h = cssH - pad.t - pad.b;
-        var vals = pts.map(function (p) { return p.v; });
+        var vals = pts.map(function (p) { return Number(p.v); });
         var min = opts.fixedMin != null ? opts.fixedMin : Math.min.apply(null, vals);
         var max = opts.fixedMax != null ? opts.fixedMax : Math.max.apply(null, vals);
         if (opts.asPct) {
@@ -479,46 +568,119 @@
           min = Math.min(opts.fixedMin != null ? opts.fixedMin : 95, Math.floor(lo - 0.5));
           if (min < 0) min = 0;
           max = opts.fixedMax != null ? opts.fixedMax : 100;
+        } else {
+          // Room on Y so series is not glued to the frame
+          var padY = Math.max(1, (max - min) * 0.08);
+          min = Math.max(0, min - padY);
+          max = max + padY;
         }
         if (max === min) {
           min = Math.max(0, min - 1);
           max = max + 1;
         }
 
-        ctx.strokeStyle = "rgba(28,58,102,0.7)";
+        // Prefer real timestamps for X when present; else index
+        var times = pts.map(function (p) { return parsePointTime(p.t); });
+        var useTime = times.every(function (t) { return t != null; });
+        var t0 = useTime ? Math.min.apply(null, times) : 0;
+        var t1 = useTime ? Math.max.apply(null, times) : Math.max(pts.length - 1, 1);
+        var span = Math.max(t1 - t0, 1);
+
+        function xAt(i) {
+          if (useTime) return pad.l + (w * (times[i] - t0)) / span;
+          return pad.l + (w * i) / Math.max(pts.length - 1, 1);
+        }
+        function yAt(v) {
+          return pad.t + h * (1 - (v - min) / (max - min));
+        }
+
+        // Plot frame
+        ctx.strokeStyle = "rgba(28,58,102,0.85)";
         ctx.lineWidth = 1;
+        ctx.strokeRect(pad.l + 0.5, pad.t + 0.5, w - 1, h - 1);
+
+        // Y grid + labels (left axis)
         ctx.fillStyle = "#828da3";
-        ctx.font = "10px IBM Plex Sans, system-ui, sans-serif";
-        for (var g = 0; g < 4; g++) {
-          var gy = pad.t + (h * g) / 3;
+        ctx.font = "10px IBM Plex Mono, ui-monospace, monospace";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        var yTicks = 4;
+        for (var g = 0; g <= yTicks; g++) {
+          var frac = g / yTicks;
+          var gy = pad.t + h * frac;
+          var val = max - (max - min) * frac;
+          ctx.strokeStyle = "rgba(28,58,102,0.45)";
           ctx.beginPath();
           ctx.moveTo(pad.l, gy);
           ctx.lineTo(pad.l + w, gy);
           ctx.stroke();
-          var val = max - ((max - min) * g) / 3;
-          var label = opts.asPct
-            ? String(Math.round(val)) + "%"
+          var yLab = opts.asPct
+            ? Math.round(val) + "%"
             : String(Math.round(val));
-          ctx.fillText(label, 2, gy + 3);
+          ctx.fillStyle = "#828da3";
+          ctx.fillText(yLab, pad.l - 6, gy);
         }
 
+        // X ticks + labels (bottom axis)
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        var xTickN = Math.min(5, Math.max(2, pts.length));
+        var xIdx = [];
+        if (pts.length === 1) xIdx = [0];
+        else {
+          for (var xi = 0; xi < xTickN; xi++) {
+            xIdx.push(Math.round((xi * (pts.length - 1)) / (xTickN - 1)));
+          }
+        }
+        // de-dupe indices
+        xIdx = xIdx.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        xIdx.forEach(function (i) {
+          var x = xAt(i);
+          ctx.strokeStyle = "rgba(28,58,102,0.55)";
+          ctx.beginPath();
+          ctx.moveTo(x, pad.t + h);
+          ctx.lineTo(x, pad.t + h + 4);
+          ctx.stroke();
+          var lab;
+          if (useTime) lab = fmtAxisTime(times[i], span);
+          else if (String(pts[i].t).indexOf("window:") === 0)
+            lab = String(pts[i].t).replace("window:", "");
+          else lab = String(i + 1);
+          ctx.fillStyle = "#828da3";
+          ctx.fillText(lab, x, pad.t + h + 8);
+        });
+        // Axis titles (compact)
+        ctx.save();
+        ctx.fillStyle = "#6b758a";
+        ctx.font = "9px IBM Plex Mono, ui-monospace, monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(opts.yTitle || "Y", 4, pad.t - 4);
+        ctx.textAlign = "right";
+        ctx.fillText(opts.xTitle || "X · UTC", cssW - 4, cssH - 6);
+        ctx.restore();
+
+        // Series
         ctx.strokeStyle = opts.stroke || "#5da8ff";
         ctx.lineWidth = 2;
+        ctx.lineJoin = "round";
         ctx.beginPath();
         pts.forEach(function (p, i) {
-          var x = pad.l + (w * i) / Math.max(pts.length - 1, 1);
-          var y = pad.t + h * (1 - (p.v - min) / (max - min));
+          var x = xAt(i);
+          var y = yAt(Number(p.v));
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
         ctx.fillStyle = opts.dot || "#c9a86a";
+        // Cap dots so dense series (168 pts) stay readable
+        var dotEvery = pts.length > 80 ? Math.ceil(pts.length / 40) : 1;
         pts.forEach(function (p, i) {
-          var x = pad.l + (w * i) / Math.max(pts.length - 1, 1);
-          var y = pad.t + h * (1 - (p.v - min) / (max - min));
+          if (i % dotEvery !== 0 && i !== pts.length - 1) return;
+          var x = xAt(i);
+          var y = yAt(Number(p.v));
           ctx.beginPath();
-          ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+          ctx.arc(x, y, 2.0, 0, Math.PI * 2);
           ctx.fill();
         });
       }
@@ -613,14 +775,13 @@
         }
         var thr = status.fresh_threshold_seconds || 120;
         var fresh = age != null ? age <= thr : !!status.metrics_fresh;
-        setText(
-          "m-pub",
-          age != null ? age.toFixed(0) + "s" : "—",
-          fresh ? "ok" : "warn"
-        );
+        setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
         setHint(
           "m-pub-h",
-          fresh ? "fresh (≤" + thr + "s)" : "stale · sample " + (status.sample_time || "—")
+          fresh
+            ? "fresh (≤" + thr + "s) · sidecar"
+            : "stale · last sample " + (status.sample_time || "—") +
+              (status.published_at ? " · published " + status.published_at : "")
         );
         if (
           status.version_source === "deploy_pin" ||
@@ -657,12 +818,15 @@
           canvasId: "agree-chart",
           emptyId: "agree-empty",
           captionId: "agree-caption",
+          axisId: "agree-axis",
           points: agreePts,
           fixedMin: 95,
           fixedMax: 100,
           asPct: true,
           stroke: "#3dd68c",
           dot: "#c9a86a",
+          yTitle: "%",
+          xTitle: "X · UTC",
           caption: agreePts.length + " pts · " + agreeAlign,
           emptyText:
             "No agreement series yet. Publish job pulls data.xrpl.org; series grows each run.",
@@ -671,12 +835,44 @@
           canvasId: "peer-chart",
           emptyId: "chart-empty",
           captionId: "chart-caption",
+          axisId: "peer-axis",
           points: peers,
           stroke: "#5da8ff",
+          yTitle: "peers",
+          xTitle: "X · UTC",
           caption: (peers && peers.length ? peers.length : 0) + " pts · 1h mean · our metrics",
           emptyText:
             "No history.json yet. Run tools/publish_public_status.py --upload.",
         });
+        // Redraw after layout settles (font/logo load can change width)
+        window.setTimeout(function () {
+          drawSeriesChart({
+            canvasId: "agree-chart",
+            emptyId: "agree-empty",
+            captionId: "agree-caption",
+            axisId: "agree-axis",
+            points: agreePts,
+            fixedMin: 95,
+            fixedMax: 100,
+            asPct: true,
+            stroke: "#3dd68c",
+            dot: "#c9a86a",
+            yTitle: "%",
+            xTitle: "X · UTC",
+            caption: agreePts.length + " pts · " + agreeAlign,
+          });
+          drawSeriesChart({
+            canvasId: "peer-chart",
+            emptyId: "chart-empty",
+            captionId: "chart-caption",
+            axisId: "peer-axis",
+            points: peers,
+            stroke: "#5da8ff",
+            yTitle: "peers",
+            xTitle: "X · UTC",
+            caption: (peers && peers.length ? peers.length : 0) + " pts · 1h mean · our metrics",
+          });
+        }, 120);
       }
 
       load().catch(function () {
