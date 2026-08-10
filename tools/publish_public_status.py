@@ -188,8 +188,9 @@ def monitoring_get(
             except urllib.error.HTTPError as e:
                 last_err = e
                 # 429 / 503: back off; accuracy needs the read to succeed.
-                if e.code in (429, 500, 503) and attempt < 3:
-                    time.sleep(0.4 * (2**attempt))
+                # Stagger under parallel fan-out (many workers often 429 together).
+                if e.code in (429, 500, 503) and attempt < 5:
+                    time.sleep((0.8 * (2**attempt)) + (0.15 * attempt))
                     continue
                 raise
         if data is None:
@@ -477,7 +478,8 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     daily_agree: list[dict] = []
     prior_snaps: list[dict] = []
 
-    with ThreadPoolExecutor(max_workers=14) as pool:
+    # Cap concurrency: Monitoring quotas 429 hard when ~12 raw reads fan out.
+    with ThreadPoolExecutor(max_workers=6) as pool:
         latest_futs = [pool.submit(fetch_latest, n) for n in LATEST_METRICS]
         hist_peer = pool.submit(fetch_hist, "peer_count", "ALIGN_MEAN")
         hist_prop = pool.submit(fetch_hist, "proposing", "ALIGN_MEAN")
