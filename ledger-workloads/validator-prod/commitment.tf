@@ -1,11 +1,30 @@
 # Committed use discount — 1 year, resource-based, N2D, us-south1.
 #
+# GATED OFF BY DEFAULT. `enable_n2d_cud` defaults to false, so merging this file buys
+# nothing. Flipping it to true is a separate, deliberate change — which is the point:
+# this root is dispatched by apply.yml with a `configs` input, so without the flag anyone
+# applying ledger-workloads/validator-prod for an unrelated reason would execute the
+# purchase. A comment saying "human apply only" is not a control; a default-false count is.
+#
+# PRE-FLIGHT, and this blocks: the COMMITMENTS regional quota must be >= 1 before the
+# purchase can succeed at all.
+#   OBSERVED: gcloud compute regions describe us-south1 --project=csyn-ldg-validator-prod
+#     -> COMMITMENTS limit=0.0 usage=0.0, while COMMITTED_N2D_CPUS limit=9.22e18 and 106
+#     other quotas in the same response are non-zero @ 2026-08-11
+# COMMITMENTS caps the NUMBER of commitment objects, separately from the committed-CPU
+# quota, and it is zero on this project. Request an increase to >= 1 in us-south1 first.
+# Fail-closed: an apply before that errors out and spends nothing.
+#
 # ONE-WAY DOOR. A commitment is irrevocable, non-cancellable and non-transferable.
 # Applying this resource spends $2,928 over twelve months whether or not the instance
 # it was bought for still exists. Deleting the VM does not stop the charge; deleting
 # this resource does not stop the charge either. Treat the apply like a purchase order,
-# because it is one. Human-apply only — never let this ride along in a CI dispatch that
-# somebody kicked off for an unrelated change in this root.
+# because it is one — the flag above is what makes it a deliberate one.
+#
+# Flipping the flag back to false does NOT cancel anything. It proposes a destroy, which
+# `prevent_destroy` refuses, so the root's applies start failing until the flag goes back
+# to true. That is deliberate: a commitment cannot be un-bought, and a config that let you
+# quietly pretend otherwise would be lying. Loud failure beats a silent false cancel.
 #
 # ---------------------------------------------------------------------------------
 # Sizing — matches the one instance in the estate that runs continuously.
@@ -73,6 +92,8 @@
 #   WHERE service.description = 'Compute Engine' AND sku.description LIKE '%N2D%Dallas%'
 #   GROUP BY 1,2 ORDER BY 1,2;
 resource "google_compute_region_commitment" "n2d_validator_1yr" {
+  count = var.enable_n2d_cud ? 1 : 0
+
   project = module.validator.project_id
   name    = "csyn-ldg-n2d-us-south1-1yr"
   # Taken from the validator's own subnet rather than a literal, so the commitment
