@@ -25,6 +25,20 @@
 # `prevent_destroy` refuses, so the root's applies start failing until the flag goes back
 # to true. That is deliberate: a commitment cannot be un-bought, and a config that let you
 # quietly pretend otherwise would be lying. Loud failure beats a silent false cancel.
+# `gcloud compute commitments` has no delete subcommand at all — the API will not take the
+# request either, so the lifecycle guard just fails at plan time instead of mid-apply.
+#
+# AFTER THE PURCHASE, `enable_n2d_cud = true` must LIVE IN COMMITTED CONFIG for the whole
+# twelve months. It is not a momentary buy-once toggle. The trap, which does not require
+# anyone to flip anything back: purchase via a one-shot `apply -var enable_n2d_cud=true`
+# without committing `true`, and state then holds `[0]` while config says `count = 0` — so
+# the next routine apply of this root proposes the destroy and hits `prevent_destroy`.
+# Same breakage, reached without `true` ever appearing in git. Commit the flag.
+#
+# The escape, if this root ever does get stuck: `tofu state rm
+# 'google_compute_region_commitment.n2d_validator_1yr[0]'` detaches management. Billing
+# continues — correctly, because the obligation is real — and drift detection on a $2,928
+# object is lost, so prefer restoring the flag over the state surgery.
 #
 # ---------------------------------------------------------------------------------
 # Sizing — matches the one instance in the estate that runs continuously.
