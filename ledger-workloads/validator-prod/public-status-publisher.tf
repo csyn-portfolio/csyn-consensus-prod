@@ -40,12 +40,25 @@ resource "google_project_iam_member" "public_status_monitoring_viewer" {
   member  = "serviceAccount:${data.google_service_account.public_status_publisher.email}"
 }
 
-# Prefer objectAdmin only until a custom role scopes to status.json/history.json.
-resource "google_storage_bucket_iam_member" "public_status_www_object_admin" {
-  bucket = "csyn-www-validator1-toml"
-  role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${data.google_service_account.public_status_publisher.email}"
-}
+# The publisher's write access to gs://csyn-www-validator1-toml is NOT declared here.
+# That bucket belongs to cloud-syndicate-platform (shared/www/validator1.tf creates it,
+# in project csyn-www-prod), and IAM on a resource belongs with the resource.
+#
+# This root did declare it, and could not apply it — this repo's apply SA cannot read,
+# let alone write, that bucket's IAM policy across the project boundary, so the 403 took
+# down the entire root's apply rather than just this one binding:
+#   OBSERVED: apply run 31444004150 -> "Error 403: ledger-apply@csyn-platform
+#     .iam.gserviceaccount.com does not have storage.buckets.getIamPolicy access to
+#     ... csyn-www-validator1-toml"; the other six resources in that plan had already
+#     applied successfully @ 2026-08-10
+#
+# One home: cloud-syndicate-platform shared/www/validator1.tf,
+# google_storage_bucket_iam_member.validator1_public_status_publisher. If the publisher
+# ever loses write access, that is the file to look in — not this one.
+#
+# Open follow-up carried over from the removed resource: objectAdmin is broader than
+# needed. A custom role scoped to status.json and history.json would be tighter, and it
+# would now be authored in the owning repo.
 
 # --- Cloud Run service agent → AR pull (csyn-ldg-images) ----------------------
 resource "google_project_service_identity" "run_agent_public_status" {
