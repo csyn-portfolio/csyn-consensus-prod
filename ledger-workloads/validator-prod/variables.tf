@@ -49,9 +49,23 @@ variable "public_status_image_digest" {
   description = "Immutable digest of validator1-status-publisher image in csyn-ldg-images. Empty disables Cloud Run Job + 5m Scheduler (CI plan stays green). Set after: gcloud builds submit --config=tools/cloudbuild.public-status.yaml tools/"
 }
 
-# Purchase gate for the 1-year N2D commitment (commitment.tf). TRUE since 2026-08-11 —
-# this value IS the purchase. Applying this root with it set creates an irrevocable
-# twelve-month obligation of roughly $2,928 that no later change can cancel.
+# Purchase gate for the 1-year N2D commitment (commitment.tf). THIS VALUE IS THE ANSWER —
+# commitment.tf deliberately does not restate it, because three attempts to mirror it in
+# prose went stale within a day each. True means an apply of this root purchases; false
+# means an apply cannot.
+#
+# FALSE, parked 2026-08-11 (Pete). The decision to buy is made and both pre-flight gates
+# are cleared; only the apply is outstanding, revisit ~2026-08-25. It was true briefly
+# when #50 merged, which left main able to buy the commitment as a side effect of any
+# apply of this directory — including the queued dashboard-diff fix. Reverting to false
+# is clean while nothing is in state: count goes 1 -> 0, no destroy is proposed, and
+# `prevent_destroy` is never reached. That jam only exists after a purchase.
+#   OBSERVED: tofu plan with this false -> "Plan: 0 to add, 1 to change, 0 to destroy",
+#     the change being the pre-existing dashboard diff; state list -> 0 matches for
+#     n2d_validator_1yr @ 2026-08-11
+#
+# Setting it true again creates an irrevocable twelve-month obligation of roughly $2,928
+# that no later change can cancel.
 #
 # It stays true for the commitment's whole term. It is not a buy-once toggle: with the
 # commitment in state, setting this false proposes a destroy that `prevent_destroy`
@@ -69,5 +83,5 @@ variable "public_status_image_digest" {
 variable "enable_n2d_cud" {
   type        = bool
   description = "Purchase the 1-year resource-based N2D commitment in us-south1. Irrevocable once applied; must remain true for the full term."
-  default     = true
+  default     = false
 }
