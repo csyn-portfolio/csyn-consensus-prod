@@ -1,19 +1,29 @@
 # Committed use discount — 1 year, resource-based, N2D, us-south1.
 #
-# GATED OFF BY DEFAULT. `enable_n2d_cud` defaults to false, so merging this file buys
-# nothing. Flipping it to true is a separate, deliberate change — which is the point:
-# this root is dispatched by apply.yml with a `configs` input, so without the flag anyone
-# applying ledger-workloads/validator-prod for an unrelated reason would execute the
-# purchase. A comment saying "human apply only" is not a control; a default-false count is.
+# LIVE AND ARMED since 2026-08-11. `enable_n2d_cud` is TRUE in committed config
+# (variables.tf), so ANY apply of this root buys the commitment if it is not already
+# bought. There is no gate left in front of it. This root is dispatched by apply.yml with
+# a `configs` input — an apply started for the dashboard, an API enablement or anything
+# else in this directory will create the obligation as a side effect if it has not
+# already been created.
 #
-# PRE-FLIGHT, and this blocks: the COMMITMENTS regional quota must be >= 1 before the
-# purchase can succeed at all.
+# That is a deliberate end state, not an oversight: the flag has to stay true for the
+# commitment's whole term (see the note further down), so "armed" and "purchased" are the
+# same setting. Check `gcloud compute commitments list --project=csyn-ldg-validator-prod
+# --region=us-south1` before assuming an apply here is free.
+#
+# The flag defaulted to FALSE between #49 and #50, which is why this header previously
+# said the file was gated off and the quota was fail-closed at zero. Both statements are
+# now wrong and have been removed rather than left to mislead an operator into thinking a
+# dispatch is safe.
+#
+# The COMMITMENTS quota pre-flight is CLEARED — it is no longer a backstop:
 #   OBSERVED: gcloud compute regions describe us-south1 --project=csyn-ldg-validator-prod
-#     -> COMMITMENTS limit=0.0 usage=0.0, while COMMITTED_N2D_CPUS limit=9.22e18 and 106
-#     other quotas in the same response are non-zero @ 2026-08-11
+#     -> COMMITMENTS limit=1.0 usage=0.0, raised from the 0.0 that gate r1 of #49 found;
+#     control CPUS limit=750.0 confirms the probe reads live values @ 2026-08-11
 # COMMITMENTS caps the NUMBER of commitment objects, separately from the committed-CPU
-# quota, and it is zero on this project. Request an increase to >= 1 in us-south1 first.
-# Fail-closed: an apply before that errors out and spends nothing.
+# quota. At 1.0 it admits exactly this one purchase and no second one — a further
+# commitment anywhere in us-south1 on this project needs another quota request.
 #
 # ONE-WAY DOOR. A commitment is irrevocable, non-cancellable and non-transferable.
 # Applying this resource spends $2,928 over twelve months whether or not the instance

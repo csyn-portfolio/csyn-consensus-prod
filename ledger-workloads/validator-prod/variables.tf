@@ -49,16 +49,25 @@ variable "public_status_image_digest" {
   description = "Immutable digest of validator1-status-publisher image in csyn-ldg-images. Empty disables Cloud Run Job + 5m Scheduler (CI plan stays green). Set after: gcloud builds submit --config=tools/cloudbuild.public-status.yaml tools/"
 }
 
-# Purchase gate for the 1-year N2D commitment (commitment.tf). Default false so that
-# merging the commitment, or dispatching this root's apply for any unrelated reason,
-# buys nothing. Setting this true is the purchase decision — it creates an irrevocable
+# Purchase gate for the 1-year N2D commitment (commitment.tf). TRUE since 2026-08-11 —
+# this value IS the purchase. Applying this root with it set creates an irrevocable
 # twelve-month obligation of roughly $2,928 that no later change can cancel.
 #
-# Pre-flight before flipping: the COMMITMENTS regional quota in us-south1 must be >= 1
-# (observed 0 on 2026-08-11) and the billing account's CUD sharing scope should be
-# confirmed as "Billing account" rather than "Project" in the console.
+# It stays true for the commitment's whole term. It is not a buy-once toggle: with the
+# commitment in state, setting this false proposes a destroy that `prevent_destroy`
+# refuses, and the root's applies fail until it goes back. See commitment.tf's header.
+#
+# Both pre-flight gates cleared before this flip:
+#   OBSERVED: gcloud compute regions describe us-south1 --project=csyn-ldg-validator-prod
+#     -> COMMITMENTS limit=1.0 usage=0.0, raised from the 0.0 observed earlier the same
+#     day; control CPUS limit=750.0 confirms the probe reads live values @ 2026-08-11
+#   CONFIRMED BY PETE (console, 2026-08-11): billing-account CUD sharing scope is
+#     "Billing account", not "Project". Not independently verifiable here — the Cloud
+#     Billing API exposes no sharing-scope field (billingAccounts.get returns only
+#     currencyCode, displayName, masterBillingAccount, name, open, parent), so this rests
+#     on Pete's report rather than an observation of mine.
 variable "enable_n2d_cud" {
   type        = bool
-  description = "Purchase the 1-year resource-based N2D commitment in us-south1. Irrevocable once applied."
-  default     = false
+  description = "Purchase the 1-year resource-based N2D commitment in us-south1. Irrevocable once applied; must remain true for the full term."
+  default     = true
 }
