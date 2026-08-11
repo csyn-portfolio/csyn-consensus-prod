@@ -35,6 +35,19 @@ module "validator" {
     "artifactregistry.googleapis.com", # image pull from csyn-ldg-images (xrpld + sidecar)
     "run.googleapis.com",              # public-status-publisher Cloud Run Job
     "cloudscheduler.googleapis.com",   # 5m public-status cron (job itself runs us-central1)
+    # Google's own commitment / machine-type recommenders. This project holds the only
+    # 24/7 instance in the estate, so it is the only one with a commitable footprint —
+    # every other ledger VM is TERMINATED and its Compute spend is persistent disk.
+    # FinOps task A3 enabled Recommender on the five dev roots and not on this one, so
+    # UsageCommitmentRecommender returned empty here and that emptiness was mistaken for
+    # "Google recommends no commitment".
+    #   OBSERVED: gcloud services list --enabled --project=csyn-ldg-validator-prod
+    #     | grep recommender -> no rows, i.e. the earlier empty recommendation list was a
+    #     disabled API rather than a finding @ 2026-08-11
+    #   OBSERVED: N2D Core+RAM in Dallas, invoice month 202607 -> $387.35 at list with a
+    #     -$74.05 sustained-use credit already applied (19.1%) @ 2026-08-11
+    # Read-only: the recommender surfaces analysis, it does not act.
+    "recommender.googleapis.com",
   ]
 
   machine_type       = "n2d-highmem-8" # CONSVAL1 mainnet standard; non-confidential (us-south1 offers no Confidential VM, verified 2026-06-18)
