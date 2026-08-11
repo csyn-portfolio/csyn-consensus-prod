@@ -1,40 +1,47 @@
 # Committed use discount — 1 year, resource-based, N2D, us-south1.
 #
-# LIVE AND ARMED since 2026-08-11. `enable_n2d_cud` is TRUE in committed config
-# (variables.tf), so ANY apply of this root buys the commitment if it is not already
-# bought. There is no gate left in front of it. This root is dispatched by apply.yml with
-# a `configs` input — an apply started for the dashboard, an API enablement or anything
-# else in this directory will create the obligation as a side effect if it has not
-# already been created.
+# WHETHER AN APPLY OF THIS ROOT BUYS ANYTHING IS NOT STATED HERE. It is `enable_n2d_cud`
+# in variables.tf, and whether the commitment already exists. Read both — do not trust a
+# sentence in this header, including this one, to tell you the current position:
 #
-# That is a deliberate end state, not an oversight: the flag has to stay true for the
-# commitment's whole term (see the note further down), so "armed" and "purchased" are the
-# same setting. Check `gcloud compute commitments list --project=csyn-ldg-validator-prod
-# --region=us-south1` before assuming an apply here is free.
+#   grep -A4 'variable "enable_n2d_cud"' variables.tf     # true => an apply purchases
+#   gcloud compute commitments list \
+#     --project=csyn-ldg-validator-prod --regions=us-south1  # non-empty => already bought
 #
-# The flag defaulted to FALSE between #49 and #50, which is why this header previously
-# said the file was gated off and the quota was fail-closed at zero. Both statements are
-# now wrong and have been removed rather than left to mislead an operator into thinking a
-# dispatch is safe.
+# This paragraph replaced three successive attempts to state the answer in prose, each of
+# which was correct when written and false within a day. #49 said "GATED OFF BY DEFAULT…
+# merging buys nothing"; #50 flipped the flag and that became an invitation to buy by
+# accident (caught by the gate, not by me); the replacement said "LIVE AND ARMED", which
+# the very next change falsified again. A value with one home in variables.tf does not get
+# a second home in a comment.
 #
-# The COMMITMENTS quota pre-flight is CLEARED — it is no longer a backstop:
+# What does not change, and is therefore safe to write down: this root is dispatched by
+# apply.yml with a `configs` input, so an apply started for the dashboard diff, an API
+# enablement, or anything else in this directory is capable of creating the obligation as
+# a side effect. Check the two commands above before dispatching, every time.
+#
+# The COMMITMENTS regional quota is no longer a backstop. It was 0 when #49 was written,
+# which made an accidental apply fail closed; that is no longer the case.
 #   OBSERVED: gcloud compute regions describe us-south1 --project=csyn-ldg-validator-prod
-#     -> COMMITMENTS limit=1.0 usage=0.0, raised from the 0.0 that gate r1 of #49 found;
-#     control CPUS limit=750.0 confirms the probe reads live values @ 2026-08-11
+#     -> COMMITMENTS limit=1.0 usage=0.0, raised from 0.0 the same day; control
+#     CPUS limit=750.0 confirms the probe reads live values @ 2026-08-11
 # COMMITMENTS caps the NUMBER of commitment objects, separately from the committed-CPU
-# quota. At 1.0 it admits exactly this one purchase and no second one — a further
-# commitment anywhere in us-south1 on this project needs another quota request.
+# quota. At 1.0 it admits one purchase and no second — a further commitment anywhere in
+# us-south1 on this project needs another quota request.
 #
 # ONE-WAY DOOR. A commitment is irrevocable, non-cancellable and non-transferable.
 # Applying this resource spends $2,928 over twelve months whether or not the instance
 # it was bought for still exists. Deleting the VM does not stop the charge; deleting
 # this resource does not stop the charge either. Treat the apply like a purchase order,
-# because it is one — the flag above is what makes it a deliberate one.
+# because it is one — enable_n2d_cud in variables.tf is what makes it a deliberate one.
 #
-# Flipping the flag back to false does NOT cancel anything. It proposes a destroy, which
-# `prevent_destroy` refuses, so the root's applies start failing until the flag goes back
-# to true. That is deliberate: a commitment cannot be un-bought, and a config that let you
-# quietly pretend otherwise would be lying. Loud failure beats a silent false cancel.
+# ONCE THE COMMITMENT EXISTS, flipping the flag back to false does NOT cancel anything. It
+# proposes a destroy, which `prevent_destroy` refuses, so the root's applies start failing
+# until the flag goes back to true. (Before the purchase this is not so: with nothing in
+# state, count 1 -> 0 proposes no destroy and the guard is never reached, which is what
+# made disarming while parked free.) That is deliberate: a commitment cannot be
+# un-bought, and a config that let you quietly pretend otherwise would be lying. Loud
+# failure beats a silent false cancel.
 # `gcloud compute commitments` has no delete subcommand at all — the API will not take the
 # request either, so the lifecycle guard just fails at plan time instead of mid-apply.
 #
@@ -104,8 +111,17 @@
 #     uncommittable — Confidential Computing is a separate billing service carrying zero
 #     Commit1Yr/Commit3Yr SKUs. Prefer SEV-SNP over SEV when that happens: cheaper
 #     (~$33/mo vs ~$66/mo on this shape) and the stronger attestation model.
-#     Note also validator.tf's finding that us-south1 offers no Confidential VM at all,
-#     so that rebuild is a region move as well — and a region move breaks this.
+#     This does NOT imply a region move. An earlier version of this note said us-south1
+#     offers no Confidential VM, so a confidential rebuild would also relocate and thereby
+#     break the commitment. That was wrong on both halves.
+#       OBSERVED by the r2 gate on #51: three n2d-standard-2 VMs with
+#         confidentialInstanceConfig (SEV) reached RUNNING in us-south1-a on this project
+#         and were then deleted; post-cleanup the instance list is csyn-ldg-validator
+#         alone @ 2026-08-11
+#       OBSERVED: gcloud compute zones describe us-south1-a -> availableCpuPlatforms
+#         includes AMD Milan, AMD Rome, AMD Turin among 13 entries; Milan is the
+#         SEV/SEV-SNP platform N2D runs on @ 2026-08-11
+#     So a confidential rebuild stays in region and the commitment survives it.
 #
 # Verify it landed with the list-price-delta form, NOT by watching the Compute Engine
 # total: the commitment fee is a distinct SKU from the usage it covers, so a naive
