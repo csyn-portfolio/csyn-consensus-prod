@@ -82,6 +82,6 @@ variable "public_status_image_digest" {
 #     on Pete's report rather than an observation of mine.
 variable "enable_n2d_cud" {
   type        = bool
-  description = "Purchase the 1-year resource-based N2D commitment in us-south1. Irrevocable once applied; must remain true for the full term."
+  description = "Purchase the 1-year resource-based N2D commitment in us-south1. Irrevocable once applied, and must then remain true for the full term."
   default     = false
 }

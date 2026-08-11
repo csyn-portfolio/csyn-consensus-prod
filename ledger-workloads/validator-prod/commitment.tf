@@ -6,7 +6,7 @@
 #
 #   grep -A4 'variable "enable_n2d_cud"' variables.tf     # true => an apply purchases
 #   gcloud compute commitments list \
-#     --project=csyn-ldg-validator-prod --region=us-south1  # non-empty => already bought
+#     --project=csyn-ldg-validator-prod --regions=us-south1  # non-empty => already bought
 #
 # This paragraph replaced three successive attempts to state the answer in prose, each of
 # which was correct when written and false within a day. #49 said "GATED OFF BY DEFAULT…
@@ -33,12 +33,15 @@
 # Applying this resource spends $2,928 over twelve months whether or not the instance
 # it was bought for still exists. Deleting the VM does not stop the charge; deleting
 # this resource does not stop the charge either. Treat the apply like a purchase order,
-# because it is one — the flag above is what makes it a deliberate one.
+# because it is one — enable_n2d_cud in variables.tf is what makes it a deliberate one.
 #
-# Flipping the flag back to false does NOT cancel anything. It proposes a destroy, which
-# `prevent_destroy` refuses, so the root's applies start failing until the flag goes back
-# to true. That is deliberate: a commitment cannot be un-bought, and a config that let you
-# quietly pretend otherwise would be lying. Loud failure beats a silent false cancel.
+# ONCE THE COMMITMENT EXISTS, flipping the flag back to false does NOT cancel anything. It
+# proposes a destroy, which `prevent_destroy` refuses, so the root's applies start failing
+# until the flag goes back to true. (Before the purchase this is not so: with nothing in
+# state, count 1 -> 0 proposes no destroy and the guard is never reached, which is what
+# made disarming while parked free.) That is deliberate: a commitment cannot be
+# un-bought, and a config that let you quietly pretend otherwise would be lying. Loud
+# failure beats a silent false cancel.
 # `gcloud compute commitments` has no delete subcommand at all — the API will not take the
 # request either, so the lifecycle guard just fails at plan time instead of mid-apply.
 #
