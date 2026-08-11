@@ -50,7 +50,7 @@ module "validator" {
     "recommender.googleapis.com",
   ]
 
-  machine_type       = "n2d-highmem-8" # CONSVAL1 mainnet standard; non-confidential (us-south1 offers no Confidential VM, verified 2026-06-18)
+  machine_type       = "n2d-highmem-8" # CONSVAL1 mainnet standard; non-confidential by choice — see the header note, the old "us-south1 has none" reason was falsified 2026-08-11
   disk_profile       = "pd-ssd-150"    # CONSVAL1-A2: n2d CANNOT attach hyperdisk-balanced (API 400, verified 2026-06-18); pd-ssd is n2d-native + CMEK + IOPS scales with the vertical-resize lever. Metadata-only (not consumed in a resource).
   provisioning_model = "STANDARD"      # never Spot — dUNL clock continuity (spec §9.1)
   # n2d-highmem-8 + 150 GB pd-ssd ≈ $326/mo machine (1yr CUD) + ~$25/mo disk + variable P2P egress; 850 = steady-state x1.28 headroom for egress spikes (finops re-audit, 2026-08-08).
@@ -70,8 +70,20 @@ resource "time_sleep" "apis" {
 
 # ---------------------------------------------------------------------------
 # Mainnet validator VM (CONSVAL1 — sprint Task 9)
-# NON-confidential: us-south1 offers no Confidential VM (SEV-SNP or TDX), verified
-# 2026-06-18, and no XRPL requirement mandates it. Dropping it removes ONLY in-use
+# NON-confidential BY CHOICE, not by regional constraint. This block said until
+# 2026-08-11 that us-south1 "offers no Confidential VM (SEV-SNP or TDX), verified
+# 2026-06-18". That is false as of 2026-08-11 and the correction matters, because the
+# claim was being cited elsewhere as a reason a confidential rebuild would force a region
+# move:
+#   OBSERVED by the r2 gate on #51: three n2d-standard-2 VMs with confidentialInstanceConfig
+#     (SEV) reached RUNNING in us-south1-a on this project, then were deleted @ 2026-08-11
+#   OBSERVED: gcloud compute zones describe us-south1-a -> availableCpuPlatforms includes
+#     AMD Milan / Rome / Turin; Milan is the SEV/SEV-SNP platform N2D runs on @ 2026-08-11
+# Whether the 2026-06-18 verification was wrong then or the region gained support since is
+# not established — either way, do not re-derive an availability claim from this comment.
+# The standing reason to stay non-confidential is that no XRPL requirement mandates it and
+# the premium is real (~$33/mo SEV-SNP, ~$66/mo SEV on this shape, and Confidential
+# Computing carries no commitment-eligible SKUs). Dropping it removes ONLY in-use
 # memory encryption + boot attestation; the rest of the tight posture is retained:
 # Shielded VM (secure boot + vTPM + integrity monitoring), CMEK on both disks
 # (sensitive data-classification; the data disk holds the boot-injected token),

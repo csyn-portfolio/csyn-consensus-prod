@@ -111,8 +111,17 @@
 #     uncommittable — Confidential Computing is a separate billing service carrying zero
 #     Commit1Yr/Commit3Yr SKUs. Prefer SEV-SNP over SEV when that happens: cheaper
 #     (~$33/mo vs ~$66/mo on this shape) and the stronger attestation model.
-#     Note also validator.tf's finding that us-south1 offers no Confidential VM at all,
-#     so that rebuild is a region move as well — and a region move breaks this.
+#     This does NOT imply a region move. An earlier version of this note said us-south1
+#     offers no Confidential VM, so a confidential rebuild would also relocate and thereby
+#     break the commitment. That was wrong on both halves.
+#       OBSERVED by the r2 gate on #51: three n2d-standard-2 VMs with
+#         confidentialInstanceConfig (SEV) reached RUNNING in us-south1-a on this project
+#         and were then deleted; post-cleanup the instance list is csyn-ldg-validator
+#         alone @ 2026-08-11
+#       OBSERVED: gcloud compute zones describe us-south1-a -> availableCpuPlatforms
+#         includes AMD Milan, AMD Rome, AMD Turin among 13 entries; Milan is the
+#         SEV/SEV-SNP platform N2D runs on @ 2026-08-11
+#     So a confidential rebuild stays in region and the commitment survives it.
 #
 # Verify it landed with the list-price-delta form, NOT by watching the Compute Engine
 # total: the commitment fee is a distinct SKU from the usage it covers, so a naive
