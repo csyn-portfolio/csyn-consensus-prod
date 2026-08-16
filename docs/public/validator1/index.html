@@ -27,6 +27,7 @@
       --blue: #5da8ff;
       --ok: #3dd68c;
       --warn: #f0b429;
+      --bad: #f07178;
     }
     * { box-sizing: border-box; }
     body {
@@ -48,7 +49,7 @@
       backdrop-filter: blur(14px);
     }
     .top-inner {
-      max-width: 820px;
+      max-width: 1120px;
       margin: 0 auto;
       padding: 14px 22px;
       display: flex;
@@ -94,7 +95,11 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
-    .wrap { max-width: 820px; margin: 0 auto; padding: 36px 22px 56px; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 36px 22px 56px; }
+    :focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 2px;
+    }
     .eyebrow {
       color: var(--gold);
       font-size: 0.7rem;
@@ -117,7 +122,19 @@
       font-size: 1.02rem;
       max-width: 48ch;
     }
-    .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .stamp {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .status-row .stamp { margin-left: auto; }
     .pill {
       font-size: 0.75rem;
       font-weight: 500;
@@ -131,6 +148,16 @@
       color: var(--ok);
       border-color: rgba(61,214,140,0.35);
       background: rgba(61,214,140,0.08);
+    }
+    .pill.warn {
+      color: var(--warn);
+      border-color: rgba(240,180,41,0.4);
+      background: rgba(240,180,41,0.08);
+    }
+    .pill.bad {
+      color: var(--bad);
+      border-color: rgba(240,113,120,0.4);
+      background: rgba(240,113,120,0.08);
     }
     .pill.gold {
       color: var(--gold);
@@ -196,15 +223,25 @@
       border-color: rgba(28,58,102,0.9);
       color: var(--muted2);
     }
+    .live-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px 16px;
+      margin-bottom: 14px;
+    }
+    .live-head h2 { margin: 0; }
     .metrics {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 0;
     }
-    @media (max-width: 640px) {
+    @media (max-width: 720px) {
       .metrics { grid-template-columns: 1fr 1fr; }
       .row { grid-template-columns: 1fr; }
+      .status-row .stamp { margin-left: 0; width: 100%; }
     }
     .metric {
       background: #05090f;
@@ -228,8 +265,13 @@
     }
     .metric .mv.ok { color: var(--ok); }
     .metric .mv.warn { color: var(--warn); }
+    .metric .mv.bad { color: var(--bad); }
     .metric .mv.muted { color: var(--muted2); font-size: 0.92rem; font-weight: 500; }
     .metric .mh { margin-top: 4px; font-size: 0.72rem; color: var(--muted); }
+    .metric .mh .trend { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .metric .mh .trend.up { color: var(--ok); }
+    .metric .mh .trend.down { color: var(--bad); }
+    .metric .mh .trend.flat { color: var(--muted); }
 
     /* Range toolbar */
     .range-bar {
@@ -301,7 +343,11 @@
       cursor: pointer;
     }
 
+    .charts {
+      margin: 14px 0 16px;
+    }
     .chart-wrap {
+      position: relative;
       background: #05090f;
       border: 1px solid rgba(28,58,102,0.7);
       border-radius: 12px;
@@ -309,6 +355,22 @@
       margin-top: 12px;
       overflow: hidden;
     }
+    .chart-tip {
+      position: absolute;
+      pointer-events: none;
+      z-index: 3;
+      background: #0d1522;
+      border: 1px solid rgba(28,58,102,0.95);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.72rem;
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      color: var(--ink);
+      white-space: nowrap;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+      transform: translate(-50%, calc(-100% - 10px));
+    }
+    .chart-tip[hidden] { display: none !important; }
     .chart-head {
       display: flex;
       justify-content: space-between;
@@ -331,9 +393,10 @@
     }
     .chart-canvas {
       width: 100%;
-      height: 200px;
+      height: 240px;
       display: block;
       max-width: 100%;
+      cursor: crosshair;
     }
     .chart-empty {
       min-height: 160px;
@@ -352,6 +415,49 @@
       font-size: 0.78rem;
       color: var(--muted);
       line-height: 1.4;
+    }
+    .glossary {
+      margin: 0 0 16px;
+      border: 1px solid rgba(28,58,102,0.65);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 4px 16px 4px;
+    }
+    .glossary summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 12px 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-weight: 600;
+    }
+    .glossary summary::-webkit-details-marker { display: none; }
+    .glossary summary::after {
+      content: " +";
+      color: var(--gold);
+    }
+    .glossary[open] summary::after { content: " −"; }
+    .glossary dl {
+      margin: 0 0 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .glossary dt {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--ink);
+    }
+    .glossary dd {
+      margin: 4px 0 0;
+      color: var(--muted2);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; }
     }
     .marketing {
       border: 1px solid rgba(201,168,106,0.35);
@@ -407,6 +513,8 @@
       <span class="pill ok">Domain verified</span>
       <span class="pill gold">EverForge Consensus</span>
       <span class="pill">Mainnet</span>
+      <span class="pill" id="health-pill">Checking</span>
+      <span class="stamp" id="last-updated">Last updated —</span>
     </div>
 
     <section class="card">
@@ -443,7 +551,10 @@
     </section>
 
     <section class="card">
-      <h2>Live status</h2>
+      <div class="live-head">
+        <h2>Live status</h2>
+        <span class="stamp" id="live-stamp">Waiting for status.json</span>
+      </div>
       <div class="metrics" id="metrics">
         <div class="metric"><div class="ml">Version</div><div class="mv muted" id="m-version">…</div><div class="mh" id="m-version-h"> </div></div>
         <div class="metric"><div class="ml">State</div><div class="mv muted" id="m-state">…</div><div class="mh" id="m-state-h"> </div></div>
@@ -451,11 +562,13 @@
         <div class="metric"><div class="ml">Agreement 1h</div><div class="mv muted" id="m-a1h">…</div><div class="mh" id="m-a1h-h"> </div></div>
         <div class="metric"><div class="ml">Agreement 24h</div><div class="mv muted" id="m-a24h">…</div><div class="mh" id="m-a24h-h"> </div></div>
         <div class="metric"><div class="ml">Agreement 30d</div><div class="mv muted" id="m-a30d">…</div><div class="mh" id="m-a30d-h"> </div></div>
-        <div class="metric"><div class="ml">Amendment blocked</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h"> </div></div>
+        <div class="metric"><div class="ml">Amendment</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h"> </div></div>
         <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h"> </div></div>
         <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h"> </div></div>
       </div>
+    </section>
 
+    <div class="charts">
       <div class="range-bar" role="group" aria-label="Chart date range">
         <span class="rl">Range</span>
         <div class="range-presets">
@@ -473,20 +586,64 @@
       <div class="chart-wrap">
         <div class="chart-head">
           <span>Agreement %</span>
-          <em id="agree-caption">loading…</em>
+          <em id="agree-caption"> </em>
         </div>
-        <canvas id="agree-chart" class="chart-canvas" width="760" height="200" hidden></canvas>
-        <div class="chart-empty" id="agree-empty">Loading agreement history…</div>
+        <canvas id="agree-chart" class="chart-canvas" width="760" height="240" hidden></canvas>
+        <div class="chart-tip" id="agree-tip" hidden></div>
+        <div class="chart-empty" id="agree-empty">Agreement history will appear when status.json is reachable.</div>
       </div>
       <div class="chart-wrap">
         <div class="chart-head">
           <span>Peer count</span>
-          <em id="chart-caption">loading…</em>
+          <em id="chart-caption"> </em>
         </div>
-        <canvas id="peer-chart" class="chart-canvas" width="760" height="200" hidden></canvas>
-        <div class="chart-empty" id="chart-empty">Loading peer history…</div>
+        <canvas id="peer-chart" class="chart-canvas" width="760" height="240" hidden></canvas>
+        <div class="chart-tip" id="peer-tip" hidden></div>
+        <div class="chart-empty" id="chart-empty">Peer history will appear when history.json is reachable.</div>
       </div>
-    </section>
+    </div>
+
+    <details class="glossary">
+      <summary>What these metrics mean</summary>
+      <dl>
+        <div>
+          <dt>Agreement</dt>
+          <dd>
+            Share of recent ledgers where this validator’s vote matched the ledger
+            the network accepted. Scored by the XRPL.org observer
+            (<span class="mono">data.xrpl.org</span>), not from this page’s host.
+            Healthy operators sit near 100%. A drop is the first public sign the
+            node is missing or disagreeing with closes.
+          </dd>
+        </div>
+        <div>
+          <dt>UNL active</dt>
+          <dd>
+            Whether <em>this</em> node has a usable Unique Node List — the set of
+            validators it trusts to close ledgers — loaded and unexpired.
+            It does <em>not</em> mean Cloud Syndicate is on the default XRPL UNL.
+            Default-UNL membership is a separate, public-list question.
+          </dd>
+        </div>
+        <div>
+          <dt>State</dt>
+          <dd>
+            <strong>Proposing</strong> means the node is issuing validations
+            (the healthy operating mode). <strong>Connected</strong> means it is
+            on the peer network but not validating. Offline or unknown needs attention.
+          </dd>
+        </div>
+        <div>
+          <dt>Sample age</dt>
+          <dd>
+            Age of the newest sidecar reading from the validator’s localhost
+            admin RPC (version, peers, proposing, UNL gauges). Fresh is ≤120s.
+            Charts retain about seven days of hourly points; 30d / All show that
+            retained window, not a fabricated longer series.
+          </dd>
+        </div>
+      </dl>
+    </details>
 
     <section class="card">
       <h2>Contact &amp; security</h2>
@@ -521,6 +678,7 @@
     </footer>
   </main>
 
+  <script src="status-logic.js"></script>
   <script>
   (function () {
     function $(id) { return document.getElementById(id); }
@@ -577,6 +735,7 @@
       return mon + " " + dd;
     }
 
+    var S = window.CsynStatus || {};
     var state = {
       peers: [],
       agreeRaw: [],
@@ -584,7 +743,17 @@
       range: "7d",
       from: null,
       to: null,
+      status: null,
+      loaded: false,
+      hover: { agree: null, peer: null },
     };
+
+    function dataOrigin() {
+      if (location.protocol === "https:" && /validator1\.cloudsyndicate\.io$/.test(location.hostname)) {
+        return "";
+      }
+      return "https://validator1.cloudsyndicate.io";
+    }
 
     function filterPts(pts) {
       var from = state.from;
@@ -680,10 +849,13 @@
       });
       if (!pts.length) {
         canvas.hidden = true;
+        canvas._hit = null;
         empty.hidden = false;
         empty.style.display = "flex";
         empty.textContent = opts.emptyText || "No data in this range.";
         if (cap) cap.textContent = "no points";
+        var emptyTip = $(opts.tipId);
+        if (emptyTip) emptyTip.hidden = true;
         return;
       }
       empty.hidden = true;
@@ -695,7 +867,7 @@
       var dpr = window.devicePixelRatio || 1;
       var parent = canvas.parentElement;
       var cssW = Math.max(280, Math.floor((parent.clientWidth || 760) - 28));
-      var cssH = 200;
+      var cssH = 240;
       canvas.style.width = cssW + "px";
       canvas.style.height = cssH + "px";
       canvas.width = Math.floor(cssW * dpr);
@@ -711,9 +883,11 @@
       var min = Math.min.apply(null, vals);
       var max = Math.max.apply(null, vals);
       if (opts.asPct) {
-        min = Math.min(opts.fixedMin != null ? opts.fixedMin : 95, Math.floor(min - 0.5));
-        if (min < 0) min = 0;
-        max = opts.fixedMax != null ? opts.fixedMax : 100;
+        var domain = S.agreementYDomain
+          ? S.agreementYDomain(vals)
+          : { min: 95, max: 100 };
+        min = domain.min;
+        max = domain.max;
       } else {
         var padY = Math.max(1, (max - min) * 0.12 || 2);
         min = Math.max(0, min - padY);
@@ -837,6 +1011,29 @@
         });
       }
 
+      // Healthy-threshold reference line (98% in the tight view; 90% when the axis opens)
+      var refs = [];
+      if (opts.asPct) {
+        if (min <= 98 && 98 <= max) refs.push({ y: 98, label: "98%" });
+        if (min <= 90 && 90 <= max) refs.push({ y: 90, label: "90%" });
+      }
+      refs.forEach(function (ref) {
+        var ry = yAt(ref.y);
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = "rgba(201,168,106,0.55)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, ry);
+        ctx.lineTo(pad.l + w, ry);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillStyle = "#c9a86a";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(ref.label, pad.l + 6, ry - 2);
+      });
+
       // Area fill under line
       var grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + h);
       var stroke = opts.stroke || "#5da8ff";
@@ -878,6 +1075,31 @@
         ctx.lineWidth = 1.5;
         ctx.stroke();
       });
+
+      if (opts.hoverIndex != null && pts[opts.hoverIndex]) {
+        var hx = xAt(opts.hoverIndex);
+        var hy = yAt(Number(pts[opts.hoverIndex].v));
+        ctx.strokeStyle = "rgba(243,250,252,0.22)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(hx, pad.t);
+        ctx.lineTo(hx, pad.t + h);
+        ctx.stroke();
+        ctx.fillStyle = stroke;
+        ctx.beginPath();
+        ctx.arc(hx, hy, 4.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      canvas._hit = {
+        pts: pts,
+        xs: pts.map(function (_, i) { return xAt(i); }),
+        pad: pad,
+        cssW: cssW,
+        asPct: !!opts.asPct,
+        tipId: opts.tipId,
+        unit: opts.unit || "",
+      };
     }
 
     function redraw() {
@@ -885,9 +1107,10 @@
       state.agree = densifyAgreement(state.agreeRaw, state.peers);
       var peers = filterPts(state.peers);
       var agree = filterPts(state.agree);
-      var rangeLabel = state.range === "custom"
-        ? "custom"
-        : state.range;
+      var rangeLabel = state.range === "custom" ? "custom" : state.range;
+      var retain = (state.range === "30d" || state.range === "all")
+        ? " · 7-day retained window"
+        : "";
       var axisFrom = state.from;
       var axisTo = state.to != null ? state.to : Date.now();
       // "all" → null axis bounds → data-driven
@@ -899,23 +1122,27 @@
         canvasId: "agree-chart",
         emptyId: "agree-empty",
         captionId: "agree-caption",
+        tipId: "agree-tip",
+        unit: "%",
+        hoverIndex: state.hover.agree,
         points: agree,
         axisFrom: axisFrom,
         axisTo: axisTo,
         asPct: true,
-        fixedMin: 95,
-        fixedMax: 100,
         stroke: "#3dd68c",
         fillTop: "rgba(61,214,140,0.28)",
         fillBot: "rgba(61,214,140,0.02)",
         dot: "#c9a86a",
-        caption: agree.length + " pts · " + rangeLabel,
+        caption: agree.length + " pts · " + rangeLabel + retain,
         emptyText: "No agreement points in this range.",
       });
       drawChart({
         canvasId: "peer-chart",
         emptyId: "chart-empty",
         captionId: "chart-caption",
+        tipId: "peer-tip",
+        unit: " peers",
+        hoverIndex: state.hover.peer,
         points: peers,
         axisFrom: axisFrom,
         axisTo: axisTo,
@@ -923,23 +1150,65 @@
         fillTop: "rgba(93,168,255,0.28)",
         fillBot: "rgba(93,168,255,0.02)",
         dot: "#c9a86a",
-        caption: peers.length + " pts · hourly · " + rangeLabel,
+        caption: peers.length + " pts · hourly · " + rangeLabel + retain,
         emptyText: "No peer points in this range.",
       });
     }
 
-    function setAgreementTile(id, hintId, win) {
+    function setAgreementTile(id, hintId, win, prevPct) {
       if (!win || win.pct == null) {
         setText(id, "—", "muted");
         setHint(hintId, "unavailable");
         return;
       }
       var pct = Number(win.pct);
-      setText(id, pct.toFixed(2) + "%", pct >= 98 ? "ok" : "warn");
+      setText(id, pct.toFixed(2) + "%", pct >= 98 ? "ok" : (pct >= 90 ? "warn" : "bad"));
       var bits = [];
+      var delta = S.agreementDelta ? S.agreementDelta(pct, prevPct) : null;
+      if (delta) {
+        var arrow = delta.dir === "up" ? "↑ " : delta.dir === "down" ? "↓ " : "→ ";
+        bits.push(arrow + delta.text);
+      }
       if (win.missed != null && win.total != null) bits.push(win.missed + " missed / " + win.total);
       if (win.incomplete) bits.push("incomplete window");
       setHint(hintId, bits.join(" · ") || " ");
+    }
+
+    function paintHealth(status) {
+      var pill = $("health-pill");
+      if (!pill) return;
+      var h = S.classifyHealth
+        ? S.classifyHealth(status)
+        : { level: "attention", label: "Attention" };
+      pill.textContent = h.label;
+      pill.className = "pill " + (h.level === "healthy" ? "ok" : h.level === "degraded" ? "warn" : "bad");
+    }
+
+    function paintStamp() {
+      var st = state.status;
+      var last = $("last-updated");
+      var live = $("live-stamp");
+      if (!st) {
+        if (last) last.textContent = "Last updated —";
+        if (live) live.textContent = "Waiting for status.json";
+        return;
+      }
+      var pub = st.published_at || st.sample_time;
+      var ms = parseT(pub);
+      var age = null;
+      if (ms != null) age = Math.max(0, (Date.now() - ms) / 1000);
+      else if (st.sample_age_seconds != null) age = st.sample_age_seconds;
+      var when = "—";
+      if (ms != null) {
+        var d = new Date(ms);
+        when =
+          String(d.getUTCHours()).padStart(2, "0") + ":" +
+          String(d.getUTCMinutes()).padStart(2, "0") + ":" +
+          String(d.getUTCSeconds()).padStart(2, "0") + " UTC";
+      }
+      var text = "Last updated " + when + (age != null ? " · " + formatAge(age) + " ago" : "");
+      if (last) last.textContent = text;
+      if (live) live.textContent = text;
     }
 
     async function jget(url) {
@@ -951,58 +1220,104 @@
       return res.json();
     }
 
-    async function load() {
-      var status = await jget("/status.json");
-      var history = await jget("/history.json");
-      if (!status) {
-        setText("m-state", "no status.json", "warn");
+    function nearestIndex(hit, clientX, rect) {
+      if (!hit || !hit.xs || !hit.xs.length) return null;
+      var x = ((clientX - rect.left) / rect.width) * hit.cssW;
+      var best = 0;
+      var bestD = Math.abs(hit.xs[0] - x);
+      for (var i = 1; i < hit.xs.length; i++) {
+        var d = Math.abs(hit.xs[i] - x);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      return best;
+    }
+
+    function fmtTipTime(t) {
+      var ms = parseT(t);
+      if (ms == null) return String(t || "");
+      var d = new Date(ms);
+      var mon = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+      return mon + " " + d.getDate() + " " +
+        String(d.getHours()).padStart(2, "0") + ":" +
+        String(d.getMinutes()).padStart(2, "0");
+    }
+
+    function placeTip(canvas, tip, idx) {
+      var hit = canvas._hit;
+      if (!hit || idx == null || !hit.pts[idx]) {
+        if (tip) tip.hidden = true;
         return;
       }
-      setText("m-version", status.version || "—", status.version ? "ok" : "muted");
-      setHint("m-version-h", " ");
-      setText("m-state", status.server_state || "unknown", status.proposing ? "ok" : "warn");
-      setHint("m-state-h", status.proposing ? "proposing" : "not proposing");
-      if (status.peer_count != null) {
-        setText("m-peers", String(status.peer_count), "ok");
-        setHint("m-peers-h", " ");
-      } else setText("m-peers", "—", "muted");
-      var ag = status.agreement || {};
-      setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h);
-      setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h);
-      setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d);
-      if (status.amendment_blocked === true) {
-        setText("m-amend", "yes", "warn"); setHint("m-amend-h", "action required");
-      } else if (status.amendment_blocked === false) {
-        setText("m-amend", "no", "ok"); setHint("m-amend-h", "clear");
-      } else setText("m-amend", "—", "muted");
-      if (status.unl_active === true) {
-        setText("m-unl", "active", "ok");
-        var uh = "";
-        if (status.unl_publisher_lists_available != null) uh = status.unl_publisher_lists_available + " lists";
-        if (status.unl_min_days_to_expiry != null)
-          uh += (uh ? " · " : "") + "min " + Number(status.unl_min_days_to_expiry).toFixed(1) + "d";
-        setHint("m-unl-h", uh || "trusted set usable");
-      } else if (status.unl_active === false) {
-        setText("m-unl", "inactive", "warn"); setHint("m-unl-h", "trusted set not usable");
-      } else setText("m-unl", "—", "muted");
+      var p = hit.pts[idx];
+      var val = Number(p.v);
+      var shown = hit.asPct ? val.toFixed(2) + "%" : String(Math.round(val * 10) / 10) + hit.unit;
+      tip.hidden = false;
+      tip.textContent = shown + " · " + fmtTipTime(p.t);
+      var x = hit.xs[idx];
+      var parent = canvas.parentElement;
+      var left = Math.max(56, Math.min(x, (parent.clientWidth || hit.cssW) - 56));
+      tip.style.left = left + "px";
+      tip.style.top = "52px";
+    }
 
-      var age = status.sample_age_seconds;
-      if (status.sample_time) {
-        var stMs = Date.parse(status.sample_time);
-        if (!isNaN(stMs)) age = Math.max(0, (Date.now() - stMs) / 1000);
+    function bindHover(canvasId, key) {
+      var canvas = $(canvasId);
+      if (!canvas) return;
+      canvas.addEventListener("mousemove", function (ev) {
+        var hit = canvas._hit;
+        if (!hit) return;
+        var idx = nearestIndex(hit, ev.clientX, canvas.getBoundingClientRect());
+        if (idx === state.hover[key]) {
+          placeTip(canvas, $(hit.tipId), idx);
+          return;
+        }
+        state.hover[key] = idx;
+        redraw();
+        placeTip(canvas, $(canvas._hit && canvas._hit.tipId), idx);
+      });
+      canvas.addEventListener("mouseleave", function () {
+        state.hover[key] = null;
+        var tip = canvas._hit && $(canvas._hit.tipId);
+        if (tip) tip.hidden = true;
+        redraw();
+      });
+    }
+
+    async function load() {
+      var origin = dataOrigin();
+      var status = await jget(origin + "/status.json");
+      var history = await jget(origin + "/history.json");
+      if (!status) {
+        state.status = null;
+        paintHealth(null);
+        paintStamp();
+        setText("m-state", "no status.json", "bad");
+        return;
       }
-      var thr = status.fresh_threshold_seconds || 120;
-      var fresh = age != null ? age <= thr : !!status.metrics_fresh;
-      setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
-      setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s)" : "stale · " + (status.sample_time || "—"));
+      state.status = status;
+      paintHealth(status);
+      paintStamp();
 
-      state.peers = (history && history.series && history.series.peer_count) || [];
-      // Prefer raw publish snapshots for densify source of truth
+      setText("m-version", status.version || "—", status.version ? "ok" : "muted");
+      setHint("m-version-h", status.version_source === "deploy_pin+xrpl_org_observed" ? "pin + observer" : (status.version_source || " "));
+
+      var tone = S.stateTone ? S.stateTone(status) : (status.proposing ? "ok" : "warn");
+      setText("m-state", status.server_state || "unknown", tone);
+      setHint("m-state-h", status.proposing ? "proposing" : "not proposing");
+
+      if (status.peer_count != null) {
+        var peerTone = status.peer_count >= 10 ? "ok" : (status.peer_count >= 3 ? "warn" : "bad");
+        setText("m-peers", String(status.peer_count), peerTone);
+        setHint("m-peers-h", "connected");
+      } else setText("m-peers", "—", "muted");
+
+      state.peers = (history && history.series && history.series.peer_count) || state.peers || [];
       state.agreeRaw =
         (history && history.series && history.series.agreement_1h_snapshots) ||
         (history && history.series && history.series.agreement) ||
+        state.agreeRaw ||
         [];
-      // Always append the live status agreement sample so "now" is on the chart
+      var ag = status.agreement || {};
       if (ag.agreement_1h && ag.agreement_1h.pct != null) {
         var liveT = status.sample_time || status.published_at || new Date().toISOString();
         var liveV = ag.agreement_1h.pct;
@@ -1013,7 +1328,43 @@
           state.agreeRaw = state.agreeRaw.concat([{ t: liveT, v: liveV }]);
         }
       }
-      applyPreset("7d");
+      var prev1h = state.agreeRaw.length >= 2 ? state.agreeRaw[state.agreeRaw.length - 2].v : null;
+      setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h, prev1h);
+      setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h, null);
+      setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d, null);
+
+      if (status.amendment_blocked === true) {
+        setText("m-amend", "blocked", "bad"); setHint("m-amend-h", "action required");
+      } else if (status.amendment_blocked === false) {
+        setText("m-amend", "clear", "ok"); setHint("m-amend-h", "not blocked");
+      } else setText("m-amend", "—", "muted");
+      if (status.unl_active === true) {
+        setText("m-unl", "active", "ok");
+        var uh = "";
+        if (status.unl_publisher_lists_available != null) uh = status.unl_publisher_lists_available + " lists";
+        if (status.unl_min_days_to_expiry != null)
+          uh += (uh ? " · " : "") + "min " + Number(status.unl_min_days_to_expiry).toFixed(1) + "d";
+        setHint("m-unl-h", uh || "trusted set usable");
+      } else if (status.unl_active === false) {
+        setText("m-unl", "inactive", "bad"); setHint("m-unl-h", "trusted set not usable");
+      } else setText("m-unl", "—", "muted");
+
+      var age = status.sample_age_seconds;
+      if (status.sample_time) {
+        var stMs = Date.parse(status.sample_time);
+        if (!isNaN(stMs)) age = Math.max(0, (Date.now() - stMs) / 1000);
+      }
+      var thr = status.fresh_threshold_seconds || 120;
+      var fresh = age != null ? age <= thr : !!status.metrics_fresh;
+      setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
+      setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s)" : "stale · sidecar sample");
+
+      if (!state.loaded) {
+        state.loaded = true;
+        applyPreset("7d");
+      } else {
+        redraw();
+      }
     }
 
     document.querySelectorAll(".rbtn").forEach(function (b) {
@@ -1032,12 +1383,19 @@
       window.clearTimeout(window.__csRedraw);
       window.__csRedraw = window.setTimeout(redraw, 120);
     });
+    bindHover("agree-chart", "agree");
+    bindHover("peer-chart", "peer");
 
     load().catch(function () {
-      setText("m-version", "error", "warn");
+      paintHealth(null);
+      setText("m-version", "error", "bad");
       $("chart-empty").textContent = "Could not load status.json";
       $("agree-empty").textContent = "Could not load status.json";
     });
+    window.setInterval(function () {
+      load().catch(function () { /* keep last good tiles */ });
+    }, 30000);
+    window.setInterval(paintStamp, 1000);
   })();
   </script>
 </body>

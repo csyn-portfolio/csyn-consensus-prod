@@ -12,12 +12,14 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 ## Public surfaces — A1 trust card + D2 health (2026-08-09)
 
 - **Decision:** Ship **A1** then **D2**; defer **C** (directory). **A is OpenTofu**, not `gcloud cp`.
-- **A TF home (one home):** `cloud-syndicate-platform/shared/www` branch `feat/www-validator1-trust-card`
-  - worktree: `/Users/petermorse/pete-ai/claude/cs/cloud-syndicate-platform-wt-validator1-trust`
+- **A TF home (one home):** `cloud-syndicate-platform/shared/www` (live HTML object)
   - objects: `validator1_index` + `validator1_toml` under `validator1-content/`
   - `/` → `/index.html` rewrite in `gclb.tf` path_matcher `validator1`
-  - first apply: **import** existing toml object (see `docs/public/validator1/README.md`)
-- **Mocks / design source:** `docs/mocks/…` · `docs/public/validator1/index.html` · plan `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
+- **Design source (this repo):** `docs/public/validator1/index.html` + `status-logic.js`
+  - branch `feat/validator1-status-strip` (worktree `/Users/petermorse/pete-ai/claude/cs/csyn-consensus-prod-wt-validator1-status`)
+  - health pill + last-updated + hover charts + glossary + 30s poll
+  - does **not** update the live URL until a www content PR + apply
+- **Mocks / plan:** `docs/mocks/…` · plan `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
 - **Verify A after apply (re-run; do not freeze):**
   ```bash
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
