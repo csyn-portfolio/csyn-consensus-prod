@@ -15,6 +15,9 @@ This file under `docs/public/validator1/` is the **design source** mirrored into
 www content dir for that PR. Prefer editing the www `validator1-content/` copy when
 landing the apply, or keep both in sync.
 
+`index.html` loads `status-logic.js` (health / trend / Y-domain helpers). Ship both
+objects together. Tests: `node --test docs/public/validator1/status-logic.test.js`.
+
 ## Verify (after apply)
 
 ```bash
