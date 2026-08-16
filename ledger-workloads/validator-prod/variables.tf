@@ -53,7 +53,7 @@ variable "slack_channel_name" {
 
 variable "public_status_image_digest" {
   type        = string
-  default     = ""
+  default     = "sha256:fd9b3b0ed0863c2b733a3f60f44c1266c08ec29b0f6f367d651c75659e5e5463"
   description = "Immutable digest of validator1-status-publisher image in csyn-ldg-images. Empty disables Cloud Run Job + 5m Scheduler (CI plan stays green). Set after: gcloud builds submit --config=tools/cloudbuild.public-status.yaml tools/"
 }
 
