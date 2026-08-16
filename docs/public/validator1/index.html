@@ -637,7 +637,9 @@
           <dt>Sample age</dt>
           <dd>
             Age of the newest sidecar reading from the validator’s localhost
-            admin RPC (version, peers, proposing, UNL gauges). Fresh is ≤120s.
+            admin RPC (version, peers, proposing, UNL gauges). Fresh means the
+            sidecar sample was ≤120s old when this page’s snapshot was published
+            (the snapshot itself refreshes about every five minutes).
             Charts retain the window advertised by history.json
             (<span class="mono">window_days</span>); 30d / All show that
             retained window, not a fabricated longer series.
@@ -1361,7 +1363,12 @@
         ? S.freshness(status, Date.now())
         : { sampleAge: null, fresh: false, threshold: 120 };
       setText("m-pub", formatAge(fr.sampleAge), fr.fresh ? "ok" : "warn");
-      setHint("m-pub-h", fr.fresh ? "fresh (≤" + fr.threshold + "s)" : "stale · sidecar sample");
+      setHint(
+        "m-pub-h",
+        fr.fresh
+          ? "sidecar at last snapshot (≤" + fr.threshold + "s)"
+          : "sidecar stale at last snapshot"
+      );
 
       if (!state.loaded) {
         state.loaded = true;

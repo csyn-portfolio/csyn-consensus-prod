@@ -36,12 +36,16 @@
     }
     var sampleMs = _parseMs(status.sample_time);
     var pubMs = _parseMs(status.published_at);
-    var sampleAge =
-      sampleMs != null ? (now - sampleMs) / 1000 : status.sample_age_seconds;
-    // Same clamp the tile used (Math.max(0, age)) — one derivation for pill and tile.
-    if (sampleAge != null && sampleAge < 0) sampleAge = 0;
     var pubAge = pubMs != null ? (now - pubMs) / 1000 : null;
-    var fresh = sampleAge != null && sampleAge <= thr;
+    // Sidecar freshness is lag at snapshot (published_at − sample_time), not
+    // wall-clock since sample_time. The public file only refreshes every ~5m,
+    // so comparing sample_time to now false-Degrades a proposing node.
+    var sidecarLag = null;
+    if (sampleMs != null && pubMs != null) sidecarLag = (pubMs - sampleMs) / 1000;
+    else if (status.sample_age_seconds != null) sidecarLag = status.sample_age_seconds;
+    if (sidecarLag != null && sidecarLag < 0) sidecarLag = 0;
+    var sampleAge = sidecarLag;
+    var fresh = sidecarLag != null && sidecarLag <= thr;
     var publishStale = pubAge != null && pubAge > STALE_PUBLISH_SECONDS;
     return {
       sampleAge: sampleAge,
