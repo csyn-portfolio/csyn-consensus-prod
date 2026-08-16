@@ -72,6 +72,38 @@ test("classifyHealth: missing status is Attention", () => {
   assert.equal(h.level, "attention");
 });
 
+test("classifyHealth: baked metrics_fresh is ignored when sample_time is stale", () => {
+  const now = Date.parse("2026-08-16T16:40:00Z");
+  const h = classifyHealth(
+    base({
+      metrics_fresh: true,
+      sample_age_seconds: 20,
+      sample_time: "2026-08-16T10:40:00Z",
+      published_at: "2026-08-16T10:40:10Z",
+    }),
+    now
+  );
+  assert.notEqual(h.level, "healthy");
+});
+
+test("classifyHealth: published_at older than 15m is Attention", () => {
+  const now = Date.parse("2026-08-16T16:40:00Z");
+  const h = classifyHealth(
+    base({
+      metrics_fresh: true,
+      sample_time: "2026-08-16T16:39:50Z",
+      published_at: "2026-08-16T16:20:00Z",
+    }),
+    now
+  );
+  assert.equal(h.level, "attention");
+});
+
+test("classifyHealth: missing UNL or amendment gauges is Degraded not Healthy", () => {
+  assert.equal(classifyHealth(base({ unl_active: null })).level, "degraded");
+  assert.equal(classifyHealth(base({ amendment_blocked: null })).level, "degraded");
+});
+
 test("stateTone: proposing is ok, connected is warn, blocked/unknown is bad", () => {
   assert.equal(stateTone(base()), "ok");
   assert.equal(stateTone(base({ proposing: false, server_state: "connected" })), "warn");

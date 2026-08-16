@@ -13,22 +13,40 @@
     return isNaN(n) ? null : n;
   }
 
-  function classifyHealth(status) {
+  var STALE_PUBLISH_SECONDS = 900; // 3× 5m publisher interval
+
+  function _parseMs(t) {
+    if (!t || typeof t !== "string") return null;
+    var ms = Date.parse(t);
+    return isNaN(ms) ? null : ms;
+  }
+
+  function classifyHealth(status, nowMs) {
     if (!status) {
       return { level: "attention", label: "Attention" };
     }
+    var now = nowMs != null ? nowMs : Date.now();
     var blocked = status.amendment_blocked === true;
     var unlDown = status.unl_active === false;
     var proposing = status.proposing === true;
+    var thr = status.fresh_threshold_seconds || 120;
+    var sampleMs = _parseMs(status.sample_time);
+    var pubMs = _parseMs(status.published_at);
+    var sampleAge =
+      sampleMs != null
+        ? (now - sampleMs) / 1000
+        : status.sample_age_seconds;
+    var pubAge = pubMs != null ? (now - pubMs) / 1000 : null;
     var fresh =
-      status.metrics_fresh === true ||
-      (status.sample_age_seconds != null &&
-        status.sample_age_seconds <= (status.fresh_threshold_seconds || 120));
-    if (blocked || unlDown || (!proposing && !fresh)) {
+      sampleAge != null && sampleAge >= 0 && sampleAge <= thr;
+    var publishStale = pubAge != null && pubAge > STALE_PUBLISH_SECONDS;
+    if (blocked || unlDown || publishStale || (!proposing && !fresh)) {
       return { level: "attention", label: "Attention" };
     }
+    var gaugesKnown =
+      status.amendment_blocked === false && status.unl_active === true;
     var a1 = _a1h(status);
-    if (!proposing || !fresh || a1 == null || a1 < 98) {
+    if (!proposing || !fresh || !gaugesKnown || a1 == null || a1 < 98) {
       return { level: "degraded", label: "Degraded" };
     }
     return { level: "healthy", label: "Healthy" };

@@ -1180,7 +1180,7 @@
       var pill = $("health-pill");
       if (!pill) return;
       var h = S.classifyHealth
-        ? S.classifyHealth(status)
+        ? S.classifyHealth(status, Date.now())
         : { level: "attention", label: "Attention" };
       pill.textContent = h.label;
       pill.className = "pill " + (h.level === "healthy" ? "ok" : h.level === "degraded" ? "warn" : "bad");
@@ -1368,6 +1368,8 @@
       if (!state.loaded) {
         state.loaded = true;
         applyPreset("7d");
+      } else if (state.range && state.range !== "custom") {
+        applyPreset(state.range);
       } else {
         redraw();
       }
