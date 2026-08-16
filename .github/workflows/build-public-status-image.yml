@@ -1,0 +1,59 @@
+name: build-public-status-image
+# Manual build of the validator1 public-status publisher image.
+# Push identity: ledger-apply via WIF_PROVIDER_APPLY — same AR writer as
+# csyn-consensus-infra sidecar/rippled builds (csyn-ldg-images).
+# Pin the emitted digest in ledger-workloads/validator-prod
+# var.public_status_image_digest, then disable this repo's GHA cron
+# before applying the Cloud Run Job (two writers race on history.json).
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image version tag"
+        required: true
+        default: "1.0.0"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      AR_HOST: us-south1-docker.pkg.dev
+      AR_REPO: us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_APPLY }}
+          service_account: ledger-apply@csyn-platform.iam.gserviceaccount.com
+
+      - run: gcloud auth configure-docker ${{ env.AR_HOST }} --quiet
+
+      - name: Build
+        run: |
+          docker build \
+            -f tools/Dockerfile.public-status \
+            -t ${AR_REPO}/validator1-status-publisher:${{ github.event.inputs.image_tag }} \
+            tools/
+
+      - name: Smoke test (import, no upload)
+        run: |
+          docker run --rm --entrypoint python3 \
+            ${AR_REPO}/validator1-status-publisher:${{ github.event.inputs.image_tag }} \
+            -c "import publish_public_status; print(publish_public_status.HISTORY_DAYS)"
+
+      - name: Push
+        id: push
+        run: |
+          docker push ${AR_REPO}/validator1-status-publisher:${{ github.event.inputs.image_tag }}
+          echo "digest=$(gcloud artifacts docker images describe ${AR_REPO}/validator1-status-publisher:${{ github.event.inputs.image_tag }} --format='value(image_summary.digest)')" >> "$GITHUB_OUTPUT"
+
+      - name: Emit digest
+        run: echo "PIN THIS DIGEST → ${{ steps.push.outputs.digest }}"
