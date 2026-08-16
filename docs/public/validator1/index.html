@@ -1357,15 +1357,11 @@
         setText("m-unl", "inactive", "bad"); setHint("m-unl-h", "trusted set not usable");
       } else setText("m-unl", "—", "muted");
 
-      var age = status.sample_age_seconds;
-      if (status.sample_time) {
-        var stMs = Date.parse(status.sample_time);
-        if (!isNaN(stMs)) age = Math.max(0, (Date.now() - stMs) / 1000);
-      }
-      var thr = status.fresh_threshold_seconds || 120;
-      var fresh = age != null ? age <= thr : !!status.metrics_fresh;
-      setText("m-pub", formatAge(age), fresh ? "ok" : "warn");
-      setHint("m-pub-h", fresh ? "fresh (≤" + thr + "s)" : "stale · sidecar sample");
+      var fr = S.freshness
+        ? S.freshness(status, Date.now())
+        : { sampleAge: null, fresh: false, threshold: 120 };
+      setText("m-pub", formatAge(fr.sampleAge), fr.fresh ? "ok" : "warn");
+      setHint("m-pub-h", fr.fresh ? "fresh (≤" + fr.threshold + "s)" : "stale · sidecar sample");
 
       if (!state.loaded) {
         state.loaded = true;
