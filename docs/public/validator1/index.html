@@ -638,7 +638,8 @@
           <dd>
             Age of the newest sidecar reading from the validator’s localhost
             admin RPC (version, peers, proposing, UNL gauges). Fresh is ≤120s.
-            Charts retain about seven days of hourly points; 30d / All show that
+            Charts retain the window advertised by history.json
+            (<span class="mono">window_days</span>); 30d / All show that
             retained window, not a fabricated longer series.
           </dd>
         </div>
@@ -746,6 +747,7 @@
       status: null,
       loaded: false,
       hover: { agree: null, peer: null },
+      windowDays: 7,
     };
 
     function dataOrigin() {
@@ -1109,7 +1111,7 @@
       var agree = filterPts(state.agree);
       var rangeLabel = state.range === "custom" ? "custom" : state.range;
       var retain = (state.range === "30d" || state.range === "all")
-        ? " · 7-day retained window"
+        ? (" · " + state.windowDays + "-day retained window")
         : "";
       var axisFrom = state.from;
       var axisTo = state.to != null ? state.to : Date.now();
@@ -1287,6 +1289,10 @@
       var origin = dataOrigin();
       var status = await jget(origin + "/status.json");
       var history = await jget(origin + "/history.json");
+      if (history && history.window_days != null) {
+        var wd = Number(history.window_days);
+        if (!isNaN(wd) && wd > 0) state.windowDays = wd;
+      }
       if (!status) {
         state.status = null;
         paintHealth(null);
