@@ -73,6 +73,31 @@ test("classifyHealth: missing status is Attention", () => {
   assert.equal(h.level, "attention");
 });
 
+test("classifyHealth: 4m after a 5m publish is still Healthy if sidecar was fresh at snapshot", () => {
+  const now = Date.parse("2026-08-16T19:04:14Z");
+  const h = classifyHealth(
+    base({
+      sample_time: "2026-08-16T19:00:16Z",
+      published_at: "2026-08-16T19:00:46Z",
+      sample_age_seconds: 30,
+    }),
+    now
+  );
+  assert.equal(h.level, "healthy");
+});
+
+test("classifyHealth: sidecar already stale at publish is Degraded", () => {
+  const now = Date.parse("2026-08-16T19:01:00Z");
+  const h = classifyHealth(
+    base({
+      sample_time: "2026-08-16T18:50:00Z",
+      published_at: "2026-08-16T19:00:46Z",
+    }),
+    now
+  );
+  assert.equal(h.level, "degraded");
+});
+
 test("classifyHealth: baked metrics_fresh is ignored when sample_time is stale", () => {
   const now = Date.parse("2026-08-16T16:40:00Z");
   const h = classifyHealth(
