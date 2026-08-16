@@ -1,5 +1,9 @@
+import sys
 import unittest
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from publish_public_status import AGREE_SNAP_MAX, HISTORY_DAYS, merge_agreement_snaps
 

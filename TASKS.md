@@ -20,7 +20,10 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
   - health pill + last-updated + hover charts + glossary + 30s poll
   - does **not** update the live URL until a www content PR + apply
 - **Mocks / plan:** `docs/mocks/…` · A1/D2 plan `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
-- **Later upgrades:** `docs/superpowers/plans/2026-08-16-validator1-status-later-upgrades.md` — Task 1 live (www applied). Task 2: 30d history on `feat/validator1-history-30d`. Tasks 3–4 not started. No React.
+- **Later upgrades:** `docs/superpowers/plans/2026-08-16-validator1-status-later-upgrades.md`
+  - Task 1 ship path: www apply of `validator1_index` + `validator1_status_logic` (verify with the curls above; do not freeze the codes here)
+  - Task 2: `feat/validator1-history-30d` (PR #55)
+  - Tasks 3–4 not started. No React.
 - **Verify A after apply (re-run; do not freeze):**
   ```bash
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/

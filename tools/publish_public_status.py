@@ -17,7 +17,8 @@ Accuracy:
 Performance:
   - Parallel Monitoring fetches (thread pool) + concurrent agreement HTTP.
   - Latest window 10m, pageSize=1 (only need newest point).
-  - History pageSize=800 (hourly points for HISTORY_DAYS; pager still used).
+  - History pageSize must exceed HISTORY_DAYS*24. history_points() reads
+    only timeSeries[0]; a paginated first series is silently truncated.
   - Version logs OFF by default (was ~25s wall with zero hit rate).
 
 Writes:
@@ -511,7 +512,7 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
             metric=name,
             align_seconds=HISTORY_ALIGN_S,
             aligner=aligner,
-            page_size=800,
+            page_size=10000,
             timeout=25.0,
         )
         return name, history_points(series), time.perf_counter() - t
