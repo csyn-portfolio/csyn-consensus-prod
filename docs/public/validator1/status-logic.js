@@ -36,6 +36,8 @@
       sampleMs != null
         ? (now - sampleMs) / 1000
         : status.sample_age_seconds;
+    // Browser clock a few seconds behind the publisher must not flip Healthy → Degraded.
+    if (sampleAge != null && sampleAge < 0 && sampleAge >= -60) sampleAge = 0;
     var pubAge = pubMs != null ? (now - pubMs) / 1000 : null;
     var fresh =
       sampleAge != null && sampleAge >= 0 && sampleAge <= thr;

@@ -99,6 +99,18 @@ test("classifyHealth: published_at older than 15m is Attention", () => {
   assert.equal(h.level, "attention");
 });
 
+test("classifyHealth: sample_time a few seconds in the future still Healthy", () => {
+  const now = Date.parse("2026-08-16T16:40:00Z");
+  const h = classifyHealth(
+    base({
+      sample_time: "2026-08-16T16:40:05Z",
+      published_at: "2026-08-16T16:39:50Z",
+    }),
+    now
+  );
+  assert.equal(h.level, "healthy");
+});
+
 test("classifyHealth: missing UNL or amendment gauges is Degraded not Healthy", () => {
   assert.equal(classifyHealth(base({ unl_active: null })).level, "degraded");
   assert.equal(classifyHealth(base({ amendment_blocked: null })).level, "degraded");

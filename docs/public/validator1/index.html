@@ -1211,6 +1211,8 @@
       var text = "Last updated " + when + (age != null ? " · " + formatAge(age) + " ago" : "");
       if (last) last.textContent = text;
       if (live) live.textContent = text;
+      // Re-evaluate health on the 1s tick so a failed fetch cannot pin Healthy.
+      paintHealth(st);
     }
 
     async function jget(url) {
