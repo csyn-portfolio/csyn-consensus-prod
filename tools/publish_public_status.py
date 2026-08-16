@@ -7,8 +7,8 @@ Accuracy:
     heartbeat boolean alone. Threshold: FRESH_SECONDS (120).
   - Version: deploy pin by default (no sidecar version metric today). Optional
     gcplogs probe never invents a version from third parties.
-  - History: 7d hourly ALIGN_MEAN — peers = mean peer count; proposing = mean
-    of 0/1 gauge ≈ fraction of each hour spent proposing.
+  - History: HISTORY_DAYS hourly ALIGN_MEAN — peers = mean peer count;
+    proposing = mean of 0/1 gauge ≈ fraction of each hour spent proposing.
   - Agreement %: network-observer scores from data.xrpl.org (XRPL.org Validator
     History Service) — NOT reproducible from localhost and NOT XRPScan.
     Windows: 1h / 24h / 30d. Daily report series when the API has them; else
@@ -17,7 +17,7 @@ Accuracy:
 Performance:
   - Parallel Monitoring fetches (thread pool) + concurrent agreement HTTP.
   - Latest window 10m, pageSize=1 (only need newest point).
-  - History pageSize=200 (≤168 hourly points for 7d).
+  - History pageSize=800 (hourly points for HISTORY_DAYS; pager still used).
   - Version logs OFF by default (was ~25s wall with zero hit rate).
 
 Writes:
@@ -62,10 +62,10 @@ FRESH_SECONDS = 120
 DEPLOY_PIN_VERSION = "3.3.0"
 # How far back to look for the latest raw gauge (sidecar cadence ~30s).
 LATEST_LOOKBACK = timedelta(minutes=10)
-HISTORY_DAYS = 7
+HISTORY_DAYS = 30
 HISTORY_ALIGN_S = 3600
 # Cap self-accumulated agreement snapshot series.
-AGREE_SNAP_MAX = 500
+AGREE_SNAP_MAX = 9000
 
 LATEST_METRICS = (
     "proposing",
@@ -511,7 +511,7 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
             metric=name,
             align_seconds=HISTORY_ALIGN_S,
             aligner=aligner,
-            page_size=200,
+            page_size=800,
             timeout=25.0,
         )
         return name, history_points(series), time.perf_counter() - t
