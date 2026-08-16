@@ -3,6 +3,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  freshness,
   classifyHealth,
   stateTone,
   agreementDelta,
@@ -97,6 +98,18 @@ test("classifyHealth: published_at older than 15m is Attention", () => {
     now
   );
   assert.equal(h.level, "attention");
+});
+
+test("freshness and classifyHealth agree on a future sample_time", () => {
+  const now = Date.parse("2026-08-16T16:40:00Z");
+  const st = base({
+    sample_time: "2026-08-16T16:45:00Z",
+    published_at: "2026-08-16T16:39:50Z",
+  });
+  const fr = freshness(st, now);
+  assert.equal(fr.fresh, true);
+  assert.equal(fr.sampleAge, 0);
+  assert.equal(classifyHealth(st, now).level, "healthy");
 });
 
 test("classifyHealth: sample_time a few seconds in the future still Healthy", () => {

@@ -2,7 +2,8 @@
 
 /**
  * Pure helpers for the validator1 public status page.
- * Loaded as a classic script in the browser (window.CsynStatus) and required by node:test.
+ * Loaded as a classic script in the browser (window.CsynStatus).
+ * Tests: csyn-consensus-prod docs/public/validator1/status-logic.test.js
  */
 (function (root) {
   function _a1h(status) {
@@ -21,34 +22,51 @@
     return isNaN(ms) ? null : ms;
   }
 
+  function freshness(status, nowMs) {
+    var now = nowMs != null ? nowMs : Date.now();
+    var thr = (status && status.fresh_threshold_seconds) || 120;
+    if (!status) {
+      return {
+        sampleAge: null,
+        pubAge: null,
+        fresh: false,
+        publishStale: true,
+        threshold: thr,
+      };
+    }
+    var sampleMs = _parseMs(status.sample_time);
+    var pubMs = _parseMs(status.published_at);
+    var sampleAge =
+      sampleMs != null ? (now - sampleMs) / 1000 : status.sample_age_seconds;
+    // Same clamp the tile used (Math.max(0, age)) — one derivation for pill and tile.
+    if (sampleAge != null && sampleAge < 0) sampleAge = 0;
+    var pubAge = pubMs != null ? (now - pubMs) / 1000 : null;
+    var fresh = sampleAge != null && sampleAge <= thr;
+    var publishStale = pubAge != null && pubAge > STALE_PUBLISH_SECONDS;
+    return {
+      sampleAge: sampleAge,
+      pubAge: pubAge,
+      fresh: fresh,
+      publishStale: publishStale,
+      threshold: thr,
+    };
+  }
+
   function classifyHealth(status, nowMs) {
     if (!status) {
       return { level: "attention", label: "Attention" };
     }
-    var now = nowMs != null ? nowMs : Date.now();
+    var fr = freshness(status, nowMs);
     var blocked = status.amendment_blocked === true;
     var unlDown = status.unl_active === false;
     var proposing = status.proposing === true;
-    var thr = status.fresh_threshold_seconds || 120;
-    var sampleMs = _parseMs(status.sample_time);
-    var pubMs = _parseMs(status.published_at);
-    var sampleAge =
-      sampleMs != null
-        ? (now - sampleMs) / 1000
-        : status.sample_age_seconds;
-    // Browser clock a few seconds behind the publisher must not flip Healthy → Degraded.
-    if (sampleAge != null && sampleAge < 0 && sampleAge >= -60) sampleAge = 0;
-    var pubAge = pubMs != null ? (now - pubMs) / 1000 : null;
-    var fresh =
-      sampleAge != null && sampleAge >= 0 && sampleAge <= thr;
-    var publishStale = pubAge != null && pubAge > STALE_PUBLISH_SECONDS;
-    if (blocked || unlDown || publishStale || (!proposing && !fresh)) {
+    if (blocked || unlDown || fr.publishStale || (!proposing && !fr.fresh)) {
       return { level: "attention", label: "Attention" };
     }
     var gaugesKnown =
       status.amendment_blocked === false && status.unl_active === true;
     var a1 = _a1h(status);
-    if (!proposing || !fresh || !gaugesKnown || a1 == null || a1 < 98) {
+    if (!proposing || !fr.fresh || !gaugesKnown || a1 == null || a1 < 98) {
       return { level: "degraded", label: "Degraded" };
     }
     return { level: "healthy", label: "Healthy" };
@@ -87,6 +105,7 @@
   }
 
   var api = {
+    freshness: freshness,
     classifyHealth: classifyHealth,
     stateTone: stateTone,
     agreementDelta: agreementDelta,
