@@ -61,18 +61,26 @@ The mainnet validator was **already applied from the sibling repo before the spl
   network_id main, UNL statically pinned, 5 fixed hubs (zaphod added, PR #9), log_level info. ✓
 - **Perimeter:** egress DENY-floor @65534 + only tcp:51235 (P2P) & tcp:443 (VIP);
   ingress only IAP-range→22 and P2P 0.0.0.0/0→51235. No public admin/RPC/WS. ✓
-- **Reserved P2P EIP** 34.174.33.70 IN_USE. Monitoring: **12 alert policies in code**
-  (10 live: down/secret-fail/stuck/poller-down/2×amendment/4×UNL; **+2 from PR #19** —
-  `validator_not_proposing` PAGE + `validator_low_peers` WARNING — merged to `main`
-  2026-06-30 but **NOT live until `apply.yml` is dispatched**). Channel pete@cloudsyn.net
-  (verificationStatus None — confirm email verified).
+- **Reserved P2P EIP** 34.174.33.70 IN_USE.
+- **Monitoring / alerting state is not recorded here.** It moved twice since this
+  block was written (PR #19 applied; poller → on-VM sidecar cutover). Verify:
+  ```bash
+  gcloud alpha monitoring policies list --project=csyn-ldg-validator-prod \
+    --format="value(displayName,enabled)"
+  gcloud alpha monitoring channels list  --project=csyn-ldg-validator-prod \
+    --format="value(displayName,type,enabled)"
+  ```
+  Alert *delivery* was confirmed empirically 2026-07-30 — see § *Alerting follow-up*
+  below. `verificationStatus` is absent from both the gcloud and REST v3 responses for
+  API-created email channels; that absence is an API artifact and is **not** evidence of
+  a delivery problem. Do not re-raise it.
 
 ### Known-deferred / gaps (not validator defects)
-- **Poller (agreement monitoring) is STAGED** — `poller_image_digest=""`, no Cloud
-  Run job. The 2 poller-derived alerts (agreement-degraded, poller-down) have no
-  data; log-based alerts (down/stuck) are live. Deploy poller to close the gap.
-- Notification channel email verification = None — confirm Pete's email is verified
-  or alerts won't deliver.
+- **Second notification path (Slack) is coded but not live.**
+  `google_monitoring_notification_channel` "Slack ${var.slack_channel_name} —
+  validator-prod" exists in `monitoring.tf`; the live channel list returns only the
+  email channel. Still gated on Pete's Slack token. Confirm with the
+  `channels list` command above.
 
 ## Repo operability — FIXED on branch `feat/modules-by-tag` (Claude 2026-06-20)
 CONSPLIT2 split was incomplete; the controllable parts are now resolved:
