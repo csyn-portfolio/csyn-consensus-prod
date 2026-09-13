@@ -242,9 +242,10 @@ ED42AEC58B701EEBB77356FFFEC26F83C1F0407263530F068C7C73D392C7E06FD1
 # Amendment votes: DefaultNo amendments (BatchV1_1 and the rest of the 3.3.0
 # institutional set) stay vetoed until we say otherwise. The durable IaC vote
 # is an rpc_startup `feature` command — NOT `[features]` (that force-enables
-# locally and can diverge on mainnet) and NOT a one-shot admin RPC (wallet.db
-# persists it, but a recreate from this file would re-apply DefaultNo).
-# xrpl.org: docs/infrastructure/configuration/configure-amendment-voting
+# locally and can diverge on mainnet). A one-shot admin RPC persists in
+# wallet.db on the data disk and survives a container recreate; rpc_startup
+# re-asserts the vote on every boot so a fresh disk / new VM still matches
+# this file. xrpl.org: docs/infrastructure/configuration/configure-amendment-voting
 # This is OUR published vote. Non-UNL validators do not count toward the
 # 80% UNL tally. tofu apply only stages metadata — recreate per
 # docs/runbooks/validator-recreate.md, then confirm with `feature BatchV1_1`
