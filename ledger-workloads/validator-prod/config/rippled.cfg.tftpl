@@ -238,8 +238,21 @@ ED42AEC58B701EEBB77356FFFEC26F83C1F0407263530F068C7C73D392C7E06FD1
 # info-level logging for mainnet operational visibility. The testnet tracking
 # node used `warning` which hid the consensus narrative (dev readiness gap #11).
 # A validator needs `info` to surface proposal/validation events in Cloud Logging.
+#
+# Amendment votes: DefaultNo amendments (BatchV1_1 and the rest of the 3.3.0
+# institutional set) stay vetoed until we say otherwise. The durable IaC vote
+# is an rpc_startup `feature` command — NOT `[features]` (that force-enables
+# locally and can diverge on mainnet). A one-shot admin RPC persists in
+# wallet.db on the data disk and survives a container recreate; rpc_startup
+# re-asserts the vote on every boot so a fresh disk / new VM still matches
+# this file. xrpl.org: docs/infrastructure/configuration/configure-amendment-voting
+# This is OUR published vote. Non-UNL validators do not count toward the
+# 80% UNL tally. tofu apply only stages metadata — recreate per
+# docs/runbooks/validator-recreate.md, then confirm with `feature BatchV1_1`
+# (vetoed must be false).
 [rpc_startup]
 ${"{"}  "command": "log_level", "severity": "info" ${"}"}
+${"{"}  "command": "feature", "feature": "BatchV1_1", "vetoed": false ${"}"}
 
 [ssl_verify]
 1
