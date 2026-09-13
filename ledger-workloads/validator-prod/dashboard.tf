@@ -29,7 +29,7 @@ resource "google_monitoring_dashboard" "validator" {
                 "Health from the on-VM **xrpl-sidecar** reading the node's localhost admin RPC every 30s — **zero external egress**.",
                 "**Healthy =** Proposing **1** · UNL active **1** · Amendment-blocked **0** · Peers **≥2**. Scorecards turn **red** on trouble.",
                 "UNL *days-to-expiry* is the validator-list refresh clock: the node stays trusted until the **latest** list expires (**max days**); **min days** is the early-warning that one publisher's list is going stale.",
-                "**External cross-check** (the network's view of us — *not* computable on-node): [xrpscan validator page](https://xrpscan.com/validator/nHUQEd51hNxF3vdVHJKewxZUzXqiP78agDL2bVSiA7Ja4dRFZUGq) · [network amendments](https://xrpscan.com/amendments)"
+                "**External cross-check** (the network's view of us — *not* computable on-node): [public status](https://validator1.cloudsyndicate.io/) · [network amendments](https://xrpscan.com/amendments). Explorer per-key pages keyed on the master key are not a PASS/FAIL gate ([VHS #503](https://github.com/ripple/validator-history-service/issues/503))."
               ])
             }
           }

@@ -24,6 +24,7 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
   ```
+- **Prospect URL:** send `https://validator1.cloudsyndicate.io/` — not the XRPScan master-key deep link. That URL 200s `Error`; “untrusted” there is non-UNL status. Tracker: https://github.com/ripple/validator-history-service/issues/503
 - **D2:** `docs/public/health/index.html` — next PR (www or Cloud Run); not blocking A
 - **C:** deferred
 
