@@ -48,8 +48,9 @@ variable "slack_channel_name" {
 
 variable "public_status_image_digest" {
   type        = string
-  default     = "sha256:8b090078a33c8082106c3897ee1eb747a5918df1a014132a28828c49adf404f5"
+  default     = "sha256:bd978e7f4d6b232f4c20abf547d286295a5746e90924fbbea6604fa9d07e47f1"
   description = "Immutable digest of validator1-status-publisher image in csyn-ldg-images. Empty disables Cloud Run Job + 5m Scheduler (CI plan stays green). Set after: gcloud builds submit --config=tools/cloudbuild.public-status.yaml tools/"
+  # 1.0.2 — DEPLOY_PIN_VERSION 3.4.0 (tag 1.0.2). Rollback: sha256:8b090078… (1.0.1, 3.3.0 pin).
 }
 
 # Purchase gate for the 1-year N2D commitment (commitment.tf). THIS VALUE IS THE ANSWER —
