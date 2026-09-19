@@ -279,6 +279,22 @@ def history_points(series: list) -> list[dict]:
     return out
 
 
+def vhs_reports_key(
+    rec: dict | None,
+    known_master: str = PUBLIC_VALIDATOR_MASTER_KEY,
+) -> str | None:
+    """Key for VHS /reports — master identity, never the ephemeral signing key.
+
+    data.xrpl.org list join can omit master_key (ripple/validator-history-service#503).
+    Signing-key /reports returns count=0; master-key /reports holds the daily series.
+    """
+    if rec:
+        mk = rec.get("master_key")
+        if isinstance(mk, str) and mk.startswith("nH"):
+            return mk
+    return known_master or None
+
+
 def _window_score(win: dict | None) -> dict | None:
     """Normalize {missed,total,score,incomplete} → pct fields. None if absent."""
     if not win or not isinstance(win, dict):
@@ -353,9 +369,10 @@ def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
     agreement = {
         "source": "data.xrpl.org",
         "source_detail": (
-            "XRPL.org Validator History Service — network-wide observer of "
-            "validation messages. Not XRPScan. Not our sidecar (agreement is "
-            "not measurable from localhost admin RPC alone)."
+            "XRPL.org Validator History Service — informational network observer "
+            "of validation messages, not a pass/fail of this node. Not XRPScan. "
+            "Not our sidecar (agreement is not measurable from localhost admin "
+            "RPC alone)."
         ),
         "signing_key": signing,
         "master_key": rec.get("master_key"),
@@ -372,11 +389,12 @@ def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
     }
 
     daily: list[dict] = []
-    if signing:
+    reports_key = vhs_reports_key(rec)
+    if reports_key:
         try:
             url = (
                 XRPL_ORG_VALIDATOR
-                + urllib.parse.quote(signing, safe="")
+                + urllib.parse.quote(reports_key, safe="")
                 + XRPL_ORG_REPORTS_SUFFIX
             )
             with urllib.request.urlopen(url, timeout=12) as resp:
