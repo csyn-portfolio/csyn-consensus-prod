@@ -5,7 +5,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from publish_public_status import AGREE_SNAP_MAX, HISTORY_DAYS, merge_agreement_snaps
+from publish_public_status import (
+    AGREE_SNAP_MAX,
+    HISTORY_DAYS,
+    PUBLIC_VALIDATOR_MASTER_KEY,
+    merge_agreement_snaps,
+    vhs_reports_key,
+)
 
 
 class TestHistoryWindow(unittest.TestCase):
@@ -32,6 +38,31 @@ class TestHistoryWindow(unittest.TestCase):
         )
         self.assertTrue(all((p["t"] or "") >= cutoff for p in out))
         self.assertEqual(out[-1]["v"], 100.0)
+
+
+SIGNING = "n9Lx3VU74ghkm29Gg5ay3xzynDhpUqaH8BLMFYc3MBrWT8pxKWk4"
+
+
+class VhsReportsKeyTests(unittest.TestCase):
+    """VHS /reports is keyed by master identity. Signing-key reports return count=0."""
+
+    def test_prefers_master_when_both_present(self):
+        rec = {"master_key": PUBLIC_VALIDATOR_MASTER_KEY, "signing_key": SIGNING}
+        self.assertEqual(vhs_reports_key(rec), PUBLIC_VALIDATOR_MASTER_KEY)
+
+    def test_uses_known_master_when_list_omits_master(self):
+        rec = {
+            "master_key": None,
+            "signing_key": SIGNING,
+            "validation_public_key": SIGNING,
+        }
+        self.assertEqual(vhs_reports_key(rec), PUBLIC_VALIDATOR_MASTER_KEY)
+
+    def test_never_returns_signing_key(self):
+        rec = {"signing_key": SIGNING, "validation_public_key": SIGNING}
+        key = vhs_reports_key(rec)
+        self.assertNotEqual(key, SIGNING)
+        self.assertEqual(key, PUBLIC_VALIDATOR_MASTER_KEY)
 
 
 if __name__ == "__main__":

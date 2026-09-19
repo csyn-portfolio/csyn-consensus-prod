@@ -30,7 +30,8 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
   ```
-- **Prospect URL:** send `https://validator1.cloudsyndicate.io/` — not the XRPScan master-key deep link. Tracker: https://github.com/ripple/validator-history-service/issues/503
+- **Prospect URL:** send `https://validator1.cloudsyndicate.io/` — not an explorer per-key URL. Tracker: https://github.com/ripple/validator-history-service/issues/503
+- **A1 copy (ledger review):** not on the default UNL; no “Domain verified” PASS; `xrpld`; VHS agreement labeled informational observer; publisher `/reports` by master key. Live GCS still needs the www content PR + apply.
 - **D2:** `docs/public/health/index.html` — next PR (www or Cloud Run); not blocking A
 - **C:** deferred
 
