@@ -59,8 +59,8 @@ XRPL_ORG_REPORTS_SUFFIX = "/reports"
 
 # Sidecar writes every ~30s; samples older than this are not "live".
 FRESH_SECONDS = 120
-# Known pin (prod cutover 2026-08-08). Prefer a future sidecar version gauge.
-DEPLOY_PIN_VERSION = "3.3.0"
+# Known pin. Prefer a sidecar version gauge when one exists.
+DEPLOY_PIN_VERSION = "3.4.0"
 # How far back to look for the latest raw gauge (sidecar cadence ~30s).
 LATEST_LOOKBACK = timedelta(minutes=10)
 HISTORY_DAYS = 30
@@ -603,16 +603,15 @@ def build_status(token: str, *, with_version_logs: bool) -> tuple[dict, dict, di
     else:
         ver, ver_source = DEPLOY_PIN_VERSION, "deploy_pin"
         ver_evidence = (
-            f"Pin {DEPLOY_PIN_VERSION} (prod cutover 2026-08-08). "
+            f"Pin {DEPLOY_PIN_VERSION}. "
             "No sidecar version metric; optional --with-version-logs found none."
             if not with_version_logs
             else (
-                f"No log match; pin {DEPLOY_PIN_VERSION} "
-                "(prod cutover 2026-08-08)."
+                f"No log match; pin {DEPLOY_PIN_VERSION}."
             )
         )
     if observed_ver and str(observed_ver).startswith(DEPLOY_PIN_VERSION[:3]):
-        # e.g. "3.3.0" from network observer — stronger than pin alone when equal.
+        # e.g. "3.4.0" from network observer — stronger than pin alone when equal.
         if str(observed_ver).startswith(DEPLOY_PIN_VERSION) or DEPLOY_PIN_VERSION in str(
             observed_ver
         ):
