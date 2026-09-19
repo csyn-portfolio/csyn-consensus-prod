@@ -9,31 +9,30 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 - [decision-pointer] CONSVAL1 → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/ (CONSVAL1)
 - [decision-pointer] CONSVAL2 (multi-region validator expansion — EverForge managed-validator product, CS anchor customer; SG asia-southeast1 first, EU deferred; firm geo-nodes in ledger/prod/validators; public-data-only ⇒ outside FedRAMP boundary; extends CONSVAL1+TOPO2) → owner: cs/cloud-syndicate-platform/docs/everforge-readiness/decisions/2026-06-21-multi-region-validator-expansion.md · index: ~/.ai-decisions.md
 
-## Public surfaces — A1 trust card + D2 health (2026-08-09)
+## Public surfaces — A1 trust card + D2 health
 
-- **Decision:** Ship **A1** then **D2**; defer **C** (directory). **A is OpenTofu**, not `gcloud cp`.
-- **A TF home (one home):** `cloud-syndicate-platform/shared/www` (live HTML object)
-  - objects: `validator1_index` + `validator1_toml` under `validator1-content/`
-  - `/` → `/index.html` rewrite in `gclb.tf` path_matcher `validator1`
-- **Design source (this repo):** `docs/public/validator1/index.html` + `status-logic.js`
-  - branch `feat/validator1-status-strip` (worktree `/Users/petermorse/pete-ai/claude/cs/csyn-consensus-prod-wt-validator1-status`)
-  - health pill + last-updated + hover charts + glossary + 30s poll
-  - does **not** update the live URL until a www content PR + apply
-- **Mocks / plan:** `docs/mocks/…` · A1/D2 plan `docs/superpowers/plans/2026-08-09-validator-trust-and-public-ai-ops.md`
-- **Later upgrades:** `docs/superpowers/plans/2026-08-16-validator1-status-later-upgrades.md`
-  - Task 1 ship path: www apply of `validator1_index` + `validator1_status_logic` (verify with the curls above; do not freeze the codes here)
-  - Task 2: `feat/validator1-history-30d` (PR #55)
-  - Tasks 3–4 not started. No React.
-- **Verify A after apply (re-run; do not freeze):**
+- **Decision:** Ship **A1** then **D2**; defer **C**. **A is OpenTofu** in `cloud-syndicate-platform/shared/www`.
+- **Prospect URL:** `https://validator1.cloudsyndicate.io/` — not an explorer per-key URL.
+- **VHS / XRPScan:** we cannot fix. https://github.com/ripple/validator-history-service/issues/503 — write-conflict + unqualified SQL. Patch analysis: https://github.com/ripple/validator-history-service/issues/503#issuecomment-5370441798 . Our note: https://github.com/ripple/validator-history-service/issues/503#issuecomment-5742602321
+- **Verify (re-run; do not freeze):**
   ```bash
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
-  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
-  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
+  curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/health.html
+  curl -sS https://validator1.cloudsyndicate.io/status.json
   ```
-- **Prospect URL:** send `https://validator1.cloudsyndicate.io/` — not an explorer per-key URL. Tracker: https://github.com/ripple/validator-history-service/issues/503
-- **A1 copy (ledger review):** not on the default UNL; no “Domain verified” PASS; `xrpld`; VHS agreement labeled informational observer; publisher `/reports` by master key. Live GCS still needs the www content PR + apply.
-- **D2:** `docs/public/health/index.html` — next PR (www or Cloud Run); not blocking A
 - **C:** deferred
+
+## Receive-brief (next session)
+
+Do **not** start: trust-card deslop, www apply, xrpld 3.4.0 build/pin/recreate, Cloud Run publisher 1.0.2, practice digest pin, 330-snap/AR cleanup.
+
+Re-verify before acting:
+```bash
+curl -sS https://validator1.cloudsyndicate.io/status.json
+gcloud logging read 'logName="projects/csyn-ldg-validator-prod/logs/gcplogs-docker-driver" AND jsonPayload.message:"Application starting. Version is"' --project=csyn-ldg-validator-prod --limit=1 --freshness=30d --format="value(timestamp,jsonPayload.message)"
+```
+
+Leftover (2026-09-19): 3.4.0 soak — keep `validator-pre-340-{boot,data}-20260919-1334` until ~2026-10-03 then Pete-gated boot-snap delete. Practice was started from TERMINATED; check power-scheduler. `pr:36` if still open. Plan `docs/superpowers/plans/2026-08-16-validator1-status-later-upgrades.md` tasks 3–4 not started.
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
@@ -547,10 +546,8 @@ Pete confirmed cutover complete 2026-08-08.
 - Soak window ≤14d from cutover (runbook boot-snapshot retention clock).
 
 ## Next
-- [ ] **After 3.3.0 soak PASS (~2026-08-22):** Pete-gated deletes per keep-latest
-  policy — superseded `validator-pre-recreate-20260804-2105` data snap and the
-  `validator-pre-330-boot-20260808-0218` boot snap (runbook: boot snaps only
-  while a binary upgrade is in soak).
+- [ ] **After 3.4.0 soak (~2026-10-03):** Pete-gated delete of `validator-pre-340-boot-20260919-1334` (keep latest data snap). Re-list first: `gcloud compute snapshots list --project=csyn-ldg-validator-prod`.
+- [x] ~~After 3.3.0 soak: delete old recreate/330 snaps~~ — done 2026-09-19.
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
   section above for the evidence and what it left open.
