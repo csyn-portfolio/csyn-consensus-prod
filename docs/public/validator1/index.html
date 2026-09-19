@@ -353,6 +353,46 @@
       color: var(--muted);
       line-height: 1.4;
     }
+    .glossary {
+      margin: 0 0 16px;
+      border: 1px solid rgba(28,58,102,0.65);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 4px 16px 4px;
+    }
+    .glossary summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 12px 0;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-weight: 600;
+    }
+    .glossary summary::-webkit-details-marker { display: none; }
+    .glossary summary::after {
+      content: " +";
+      color: var(--gold);
+    }
+    .glossary[open] summary::after { content: " −"; }
+    .glossary dl {
+      margin: 0 0 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .glossary dt {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--ink);
+    }
+    .glossary dd {
+      margin: 4px 0 0;
+      color: var(--muted2);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
     .marketing {
       border: 1px solid rgba(201,168,106,0.35);
       border-radius: 14px;
@@ -396,15 +436,15 @@
   </header>
 
   <main class="wrap">
-    <div class="eyebrow">XRPL mainnet · domain verified</div>
+    <div class="eyebrow">XRPL mainnet · not on the default UNL</div>
     <h1>Institutional validator identity</h1>
     <p class="lede">
-      Public attestation for the Cloud Syndicate mainnet validator —
+      Public identity for the Cloud Syndicate mainnet validator —
       operated under EverForge Consensus on Google Cloud.
     </p>
 
     <div class="status-row">
-      <span class="pill ok">Domain verified</span>
+      <span class="pill">Not on the default UNL</span>
       <span class="pill gold">EverForge Consensus</span>
       <span class="pill">Mainnet</span>
     </div>
@@ -425,7 +465,7 @@
       </div>
       <div class="row">
         <div class="k">Software</div>
-        <div class="v">rippled (production-managed release — see explorer for live build)</div>
+        <div class="v">xrpld (production-managed release)</div>
       </div>
       <div style="margin-top:14px">
         <div class="k" style="margin-bottom:6px;font-size:0.85rem">Master public key</div>
@@ -438,10 +478,13 @@
       </div>
       <p style="margin:12px 0 0;font-size:0.82rem;color:var(--muted);line-height:1.45">
         This domain is the public identity to share — not an explorer per-key URL.
-        XRPScan and livenet pages keyed on the master key error for validators that
-        are not on the default Unique Node List (UNL); “untrusted” there means not
-        on that list, not that this node is offline. Lists above and the TOML are
-        the identity source of truth.
+        Master-key pages on XRPScan and data.xrpl.org fail the master↔signing join
+        (<a href="https://github.com/ripple/validator-history-service/issues/503">validator-history-service#503</a>);
+        that is a registry lookup, not a down node. “Untrusted” on explorer pages
+        means not on the default Unique Node List (UNL), not that this node is
+        offline. Identity is this domain, the master key, and the toml. Explorers
+        are informational. Domain verification needs both the toml attestation
+        (linked above) and the validator’s signed manifest naming this domain.
       </p>
     </section>
 
@@ -455,9 +498,15 @@
         <div class="metric"><div class="ml">Agreement 24h</div><div class="mv muted" id="m-a24h">…</div><div class="mh" id="m-a24h-h"> </div></div>
         <div class="metric"><div class="ml">Agreement 30d</div><div class="mv muted" id="m-a30d">…</div><div class="mh" id="m-a30d-h"> </div></div>
         <div class="metric"><div class="ml">Amendment blocked</div><div class="mv muted" id="m-amend">…</div><div class="mh" id="m-amend-h"> </div></div>
-        <div class="metric"><div class="ml">UNL active</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h"> </div></div>
+        <div class="metric"><div class="ml">Publisher lists</div><div class="mv muted" id="m-unl">…</div><div class="mh" id="m-unl-h"> </div></div>
         <div class="metric"><div class="ml">Sample age</div><div class="mv muted" id="m-pub">…</div><div class="mh" id="m-pub-h"> </div></div>
       </div>
+      <p class="src-note" id="src-note">
+        Agreement is scored by the XRPL.org Validator History Service
+        (<span class="mono">data.xrpl.org</span>) — an informational observer,
+        not a pass/fail of this node. State, peers, and publisher-list gauges
+        are operator-published from the node’s sidecar.
+      </p>
 
       <div class="range-bar" role="group" aria-label="Chart date range">
         <span class="rl">Range</span>
@@ -491,6 +540,49 @@
       </div>
     </section>
 
+    <details class="glossary">
+      <summary>What these metrics mean</summary>
+      <dl>
+        <div>
+          <dt>Agreement</dt>
+          <dd>
+            Share of recent ledgers where this validator’s vote matched the ledger
+            the network accepted. Scored by the XRPL.org observer
+            (<span class="mono">data.xrpl.org</span>), not from this page’s host.
+            Informational — a registry can go dark while the node is proposing.
+            High agreement over a year is the recommended-list bar, not membership
+            of the default Unique Node List.
+          </dd>
+        </div>
+        <div>
+          <dt>Publisher lists</dt>
+          <dd>
+            Whether <em>this</em> node has a usable Unique Node List — the set of
+            validators it trusts to close ledgers — loaded and unexpired.
+            It does <em>not</em> mean Cloud Syndicate is on the default XRPL UNL.
+            This node is not on that list.
+          </dd>
+        </div>
+        <div>
+          <dt>State</dt>
+          <dd>
+            Operator-published from the node’s sidecar (localhost admin RPC).
+            <strong>Proposing</strong> means the node is issuing validations
+            (the healthy operating mode). <strong>Connected</strong> means it is
+            on the peer network but not validating.
+          </dd>
+        </div>
+        <div>
+          <dt>Sample age</dt>
+          <dd>
+            Age of the newest sidecar reading (version pin, peers, proposing,
+            publisher-list gauges). Fresh means the sidecar sample was ≤120s old
+            when this page’s snapshot was published.
+          </dd>
+        </div>
+      </dl>
+    </details>
+
     <section class="card">
       <h2>Contact &amp; security</h2>
       <div class="row">
@@ -511,8 +603,7 @@
       <div class="title">Managed ledger infrastructure</div>
       <p>
         EverForge Consensus is specialized digital-ledger hosting under SLOs —
-        institutional chain operations on Google Cloud, with compliance engineered
-        as evidence, not theatre. HIPAA / SOC / PCI aligned; FedRAMP Moderate is a
+        institutional chain operations on Google Cloud. FedRAMP Moderate is a
         <em>design baseline</em>, not an authorization we hold.
       </p>
       <a class="btn" href="https://www.cloudsyndicate.io/services/msp/consensus/">EverForge Consensus →</a>
@@ -938,11 +1029,11 @@
         return;
       }
       var pct = Number(win.pct);
-      setText(id, pct.toFixed(2) + "%", pct >= 98 ? "ok" : "warn");
-      var bits = [];
+      setText(id, pct.toFixed(2) + "%");
+      var bits = ["observer · informational"];
       if (win.missed != null && win.total != null) bits.push(win.missed + " missed / " + win.total);
       if (win.incomplete) bits.push("incomplete window");
-      setHint(hintId, bits.join(" · ") || " ");
+      setHint(hintId, bits.join(" · "));
     }
 
     async function jget(url) {
@@ -962,9 +1053,9 @@
         return;
       }
       setText("m-version", status.version || "—", status.version ? "ok" : "muted");
-      setHint("m-version-h", " ");
+      setHint("m-version-h", status.version_source || "deploy pin");
       setText("m-state", status.server_state || "unknown", status.proposing ? "ok" : "warn");
-      setHint("m-state-h", status.proposing ? "proposing" : "not proposing");
+      setHint("m-state-h", status.proposing ? "proposing · operator-published" : "not proposing · operator-published");
       if (status.peer_count != null) {
         setText("m-peers", String(status.peer_count), "ok");
         setHint("m-peers-h", " ");
@@ -979,14 +1070,14 @@
         setText("m-amend", "no", "ok"); setHint("m-amend-h", "clear");
       } else setText("m-amend", "—", "muted");
       if (status.unl_active === true) {
-        setText("m-unl", "active", "ok");
+        setText("m-unl", "usable", "ok");
         var uh = "";
         if (status.unl_publisher_lists_available != null) uh = status.unl_publisher_lists_available + " lists";
         if (status.unl_min_days_to_expiry != null)
           uh += (uh ? " · " : "") + "min " + Number(status.unl_min_days_to_expiry).toFixed(1) + "d";
-        setHint("m-unl-h", uh || "trusted set usable");
+        setHint("m-unl-h", uh || "subscribed lists usable");
       } else if (status.unl_active === false) {
-        setText("m-unl", "inactive", "warn"); setHint("m-unl-h", "trusted set not usable");
+        setText("m-unl", "not usable", "warn"); setHint("m-unl-h", "subscribed lists not usable");
       } else setText("m-unl", "—", "muted");
 
       var age = status.sample_age_seconds;

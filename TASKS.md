@@ -24,7 +24,14 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/index.html
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/.well-known/xrp-ledger.toml
   ```
-- **Prospect URL:** send `https://validator1.cloudsyndicate.io/` — not the XRPScan master-key deep link. That URL 200s `Error`; “untrusted” there is non-UNL status. Tracker: https://github.com/ripple/validator-history-service/issues/503
+- **Prospect URL:** send `https://validator1.cloudsyndicate.io/` — not an explorer per-key URL. Registry master↔signing join tracker: https://github.com/ripple/validator-history-service/issues/503
+- **A1 copy on this branch:** not on the default UNL; no “Domain verified” badge; `xrpld` not `rippled`; VHS agreement labeled informational; glossary restored; no HIPAA/SOC/PCI “aligned.”
+- **xrpld 3.4.0 watch:** tagged 2026-09-16 (XRPLF “upgrade ASAP”). Not this PR. Re-probe before acting:
+  ```bash
+  curl -sS https://validator1.cloudsyndicate.io/status.json
+  curl -sS -A csyn-radar https://api.xrpscan.com/api/v1/amendments
+  ```
+  Path: practice soak on the same digest as svc-rippled-dev, then prod recreate.
 - **D2:** `docs/public/health/index.html` — next PR (www or Cloud Run); not blocking A
 - **C:** deferred
 
