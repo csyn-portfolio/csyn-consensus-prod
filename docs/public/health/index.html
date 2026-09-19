@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Public validator health report · EverForge Consensus</title>
-  <meta name="description" content="Public-source-only health report for XRPL validators. No private GCP or admin access." />
+  <meta name="description" content="Public health checks for an XRPL validator: domain toml and landing page." />
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -110,7 +110,7 @@
         <div class="mark">CS</div>
         <div>
           <div class="name">Public health report</div>
-          <div class="sub">EverForge Consensus · public sources only</div>
+          <div class="sub">EverForge Consensus</div>
         </div>
       </div>
       <a href="https://validator1.cloudsyndicate.io/">validator1</a>
@@ -118,11 +118,11 @@
   </header>
 
   <main class="wrap">
-    <div class="eyebrow">Bounded public checks</div>
+    <div class="eyebrow">XRPL validator</div>
     <h1>Validator health report</h1>
     <p class="lede">
-      Checks only what is on the public internet: domain TOML, root HTTP status, and (when available) registry pages.
-      No private GCP APIs. No admin RPC.
+      Looks up this validator the way the network does: the domain’s
+      <span class="mono">xrp-ledger.toml</span> and the public landing page.
     </p>
 
     <div class="compose">
@@ -148,13 +148,10 @@
         <h3>Next steps</h3>
         <ol id="next"></ol>
       </div>
-      <div class="walls">
-        Hard walls: no Cloud Logging · no Secret Manager · no admin ports · no “FedRAMP authorized” claims.
-      </div>
     </article>
 
     <footer>
-      Cloud Syndicate, LLC · public data only · D2 report surface (client-side probes)
+      Cloud Syndicate, LLC
     </footer>
   </main>
 
@@ -222,8 +219,7 @@
 
         const ts = new Date().toISOString();
         $("title").textContent = domain;
-        $("stamp").textContent =
-          "Generated " + ts + " · browser probes · CORS may block some third-party APIs";
+        $("stamp").textContent = "Generated " + ts;
 
         const tomlUrl = "https://" + domain + "/.well-known/xrp-ledger.toml";
         const rootUrl = "https://" + domain + "/";
@@ -269,29 +265,20 @@
         }
         rows.appendChild(row("Human landing (/)", rootResult, "GET " + rootUrl, rootCls));
 
-        rows.appendChild(row(
-          "Private GCP / admin RPC",
-          "NOT QUERIED (hard wall)",
-          "—",
-          "ok"
-        ));
-
         if (tomlCls === "ok" && rootCls === "ok") {
-          li(findings, "Domain verification and human landing both present.");
+          li(findings, "Domain toml and public landing are both present.");
         } else if (tomlCls === "ok" && rootCls !== "ok") {
-          li(findings, "TOML verifies the domain, but the human root is missing or blocked — ship a static trust card as index.html.");
+          li(findings, "The toml is present, but the public landing page is missing or blocked.");
         } else if (tomlCls !== "ok") {
-          li(findings, "Domain TOML missing or incomplete — XRPL domain verification will fail explorers/registries.");
+          li(findings, "Domain toml is missing or incomplete — explorers will not treat this domain as verified.");
         }
         if (root.status === 0 || toml.status === 0) {
-          li(findings, "Some probes failed from the browser (CORS or network). Re-check with curl on a trusted workstation.");
+          li(findings, "Some public lookups did not complete from this browser.");
         }
 
         if (rootCls !== "ok") {
-          li(next, "Publish a static institutional landing at the domain root (same host as TOML).");
+          li(next, "Publish a public landing page at the domain root (same host as the toml).");
         }
-        li(next, "Keep admin RPC and private metrics off this domain.");
-        li(next, "Re-query UNL/agreement from explorers before any procurement claim — this report does not assert them.");
 
         report.classList.add("show");
         runBtn.disabled = false;
