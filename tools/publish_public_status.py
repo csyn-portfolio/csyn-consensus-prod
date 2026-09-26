@@ -59,8 +59,9 @@ XRPL_ORG_REPORTS_SUFFIX = "/reports"
 
 # Sidecar writes every ~30s; samples older than this are not "live".
 FRESH_SECONDS = 120
-# Known pin. Prefer a sidecar version gauge when one exists.
-DEPLOY_PIN_VERSION = "3.4.0"
+# Publisher version string. Matches the xrpld image pin. Verify the running
+# binary from the boot log, not from this constant.
+DEPLOY_PIN_VERSION = "3.4.1"
 # How far back to look for the latest raw gauge (sidecar cadence ~30s).
 LATEST_LOOKBACK = timedelta(minutes=10)
 HISTORY_DAYS = 30
