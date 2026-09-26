@@ -13,7 +13,7 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 - **Decision:** Ship **A1** then **D2**; defer **C**. **A is OpenTofu** in `cloud-syndicate-platform/shared/www`.
 - **Prospect URL:** `https://validator1.cloudsyndicate.io/` — not an explorer per-key URL.
-- **VHS / XRPScan:** we cannot fix. https://github.com/ripple/validator-history-service/issues/503 — write-conflict + unqualified SQL. Patch analysis: https://github.com/ripple/validator-history-service/issues/503#issuecomment-5370441798 . Our note: https://github.com/ripple/validator-history-service/issues/503#issuecomment-5742602321
+- **VHS / XRPScan:** ripple/validator-history-service#509 merged 2026-09-21. Re-check the master-key URL before treating the page as broken. Issue #503 may still be open.
 - **Verify (re-run; do not freeze):**
   ```bash
   curl -sS -o /dev/null -w "%{http_code}\n" https://validator1.cloudsyndicate.io/
@@ -24,15 +24,17 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 ## Receive-brief (next session)
 
-Do **not** start: trust-card deslop, www apply, xrpld 3.4.0 build/pin/recreate, Cloud Run publisher 1.0.2, practice digest pin, 330-snap/AR cleanup.
+Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, or deleting `validator-pre-341-*` / `dev-rippled-pre-341-data-20260926-1505`. Those are the current rollback snaps. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED).
 
 Re-verify before acting:
 ```bash
 curl -sS https://validator1.cloudsyndicate.io/status.json
 gcloud logging read 'logName="projects/csyn-ldg-validator-prod/logs/gcplogs-docker-driver" AND jsonPayload.message:"Application starting. Version is"' --project=csyn-ldg-validator-prod --limit=1 --freshness=30d --format="value(timestamp,jsonPayload.message)"
+gcloud compute snapshots list --project=csyn-ldg-validator-prod --format='table(name,status)'
+gcloud compute instances describe csyn-ldg-dev-rippled --project=csyn-ldg-svc-rippled-dev --zone=us-south1-a --format='value(status)'
 ```
 
-Leftover (2026-09-19): 3.4.0 soak — keep `validator-pre-340-{boot,data}-20260919-1334` until ~2026-10-03 then Pete-gated boot-snap delete. Practice was started from TERMINATED; check power-scheduler. `pr:36` if still open. Plan `docs/superpowers/plans/2026-08-16-validator1-status-later-upgrades.md` tasks 3–4 not started.
+Leftover: `pr:36` is still OPEN (external validation-visibility alert). `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback.
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
@@ -546,7 +548,8 @@ Pete confirmed cutover complete 2026-08-08.
 - Soak window ≤14d from cutover (runbook boot-snapshot retention clock).
 
 ## Next
-- [ ] **After 3.4.0 soak (~2026-10-03):** Pete-gated delete of `validator-pre-340-boot-20260919-1334` (keep latest data snap). Re-list first: `gcloud compute snapshots list --project=csyn-ldg-validator-prod`.
+- [x] ~~After 3.4.0 soak: delete `validator-pre-340-{boot,data}-20260919-1334`~~ — deleted 2026-09-26 with the older practice snaps. Kept `validator-pre-341-{boot,data}-20260926-1522` and `dev-rippled-pre-341-data-20260926-1505`.
+- [ ] **After 3.4.1 boot-snap clock (~2026-10-10):** Pete-gated delete of `validator-pre-341-boot-20260926-1522` only. Re-list first: `gcloud compute snapshots list --project=csyn-ldg-validator-prod`. Keep the 341 data snap.
 - [x] ~~After 3.3.0 soak: delete old recreate/330 snaps~~ — done 2026-09-19.
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
