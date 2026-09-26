@@ -5,7 +5,7 @@
 #     tools/
 substitutions:
   _IMAGE: us-south1-docker.pkg.dev/csyn-ldg-host-dev/csyn-ldg-images/validator1-status-publisher
-  _TAG: "1.0.2"
+  _TAG: "1.0.3"
 
 steps:
   - name: gcr.io/cloud-builders/docker
