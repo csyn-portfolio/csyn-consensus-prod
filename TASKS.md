@@ -24,7 +24,9 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 ## Receive-brief (next session)
 
-Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, or deleting `validator-pre-341-*` / `dev-rippled-pre-341-data-20260926-1505`. Those are the current rollback snaps. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED).
+Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, another pass on the validator page copy, or deleting `validator-pre-341-*` / `dev-rippled-pre-341-data-20260926-1505`. Those snaps are the current rollback. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED).
+
+Public page copy is shipped in `cloud-syndicate-platform` (`pr:253`, `pr:254`, main `b146aa3`). Do not put Google Cloud or another infrastructure provider back on https://validator1.cloudsyndicate.io/. EverForge Consensus stays, as the managed service only. `health.html` was not rewritten.
 
 Re-verify before acting:
 ```bash
@@ -34,7 +36,7 @@ gcloud compute snapshots list --project=csyn-ldg-validator-prod --format='table(
 gcloud compute instances describe csyn-ldg-dev-rippled --project=csyn-ldg-svc-rippled-dev --zone=us-south1-a --format='value(status)'
 ```
 
-Leftover: `pr:36` is still OPEN (external validation-visibility alert). `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback.
+Leftover: `pr:36` is still OPEN (external validation-visibility alert). `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback. `health.html` is unchanged.
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
