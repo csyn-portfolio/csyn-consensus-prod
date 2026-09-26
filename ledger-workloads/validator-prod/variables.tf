@@ -7,8 +7,9 @@ variable "machine_type" {
 variable "image_digest" {
   type        = string
   description = "Immutable digest of the xrpld (rippled) image in csyn-ldg-images. Pin by digest, not tag. The mainnet validator runs the SAME digest as svc-rippled-dev — a consensus node must run a reviewed, reproducible image. Default lets CI apply.yml apply without a -var; re-pin after any rebuild (a new build = a new digest even for the same version tag)."
-  # PIN: xrpld 3.4.0 — csyn-consensus-infra build-rippled-image.yml run 35444784996
-  # (smoke "xrpld version 3.4.0"). Rollback: sha256:2f984bdbff9c6848b740c79eee972322a0be3f1a1346f7f0745fe94a81cd916b (3.3.0).
+  # PIN: xrpld 3.4.1 — csyn-consensus-infra build-rippled-image.yml run 36250266582
+  # (smoke "xrpld version 3.4.1", git d147fccf). Same digest as svc-rippled-dev after
+  # that soak. Rollback: sha256:54e618a61ec839d917ad4c1cdc9be024b5679be536e9f75a9b88c2dbe18c3246 (3.4.0).
   # Verify RUNNING — never this comment. Daemon line is jsonPayload.message, not
   # textPayload; boots are rare so --freshness must span the last boot:
   #   gcloud logging read 'logName="projects/csyn-ldg-validator-prod/logs/gcplogs-docker-driver"
@@ -16,7 +17,7 @@ variable "image_digest" {
   #     --project=csyn-ldg-validator-prod --limit=1 --freshness=30d \
   #     --format="value(timestamp,jsonPayload.message)"
   # Continuous: gcloud storage cat gs://csyn-www-validator1-toml/status.json
-  default = "sha256:54e618a61ec839d917ad4c1cdc9be024b5679be536e9f75a9b88c2dbe18c3246"
+  default = "sha256:f37e99dd9101a024fe4da0400ff5a01792462fa9cb02f79e0ca69b49bf2c88f7"
 }
 
 variable "sidecar_image_digest" {

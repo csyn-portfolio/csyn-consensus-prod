@@ -248,11 +248,20 @@ ED42AEC58B701EEBB77356FFFEC26F83C1F0407263530F068C7C73D392C7E06FD1
 # this file. xrpl.org: docs/infrastructure/configuration/configure-amendment-voting
 # This is OUR published vote. Non-UNL validators do not count toward the
 # 80% UNL tally. tofu apply only stages metadata — recreate per
-# docs/runbooks/validator-recreate.md, then confirm with `feature BatchV1_1`
-# (vetoed must be false).
+# docs/runbooks/validator-recreate.md, then confirm with `feature` (vetoed
+# must be false) for each name below.
+# Yes: BatchV1_1 (XLS-56), fixBatchV1_2 (3.4.1 batch-wrapper fix),
+# PermissionDelegationV1_1 (XLS-75), ConfidentialTransfer (XLS-96),
+# LendingProtocol and LendingProtocolV1_1 (XLS-66).
+# Not the deprecated Batch or PermissionDelegation predecessors.
 [rpc_startup]
 ${"{"}  "command": "log_level", "severity": "info" ${"}"}
 ${"{"}  "command": "feature", "feature": "BatchV1_1", "vetoed": false ${"}"}
+${"{"}  "command": "feature", "feature": "fixBatchV1_2", "vetoed": false ${"}"}
+${"{"}  "command": "feature", "feature": "PermissionDelegationV1_1", "vetoed": false ${"}"}
+${"{"}  "command": "feature", "feature": "ConfidentialTransfer", "vetoed": false ${"}"}
+${"{"}  "command": "feature", "feature": "LendingProtocol", "vetoed": false ${"}"}
+${"{"}  "command": "feature", "feature": "LendingProtocolV1_1", "vetoed": false ${"}"}
 
 [ssl_verify]
 1
