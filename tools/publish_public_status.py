@@ -11,8 +11,12 @@ Accuracy:
     proposing = mean of 0/1 gauge ≈ fraction of each hour spent proposing.
   - Agreement %: network-observer scores from data.xrpl.org (XRPL.org Validator
     History Service) — NOT reproducible from localhost and NOT XRPScan.
-    Windows: 1h / 24h / 30d. Daily report series when the API has them; else
-    we accumulate agreement_1h snapshots into history.json on each publish.
+    Windows: 1h / 24h / 30d. A window is published without a percentage when
+    it has no ledgers, when a 1h total is above HOUR_LEDGER_CEILING, or when
+    a 24h/30d window repeats that 1h row. Every other window keeps the
+    observer's score. An empty daily report is not a 0% point. Daily report
+    series when the API has them; else we accumulate agreement_1h snapshots
+    into history.json on each publish. A withheld 1h does not append a snapshot.
 
 Performance:
   - Parallel Monitoring fetches (thread pool) + concurrent agreement HTTP.
@@ -68,6 +72,8 @@ HISTORY_DAYS = 30
 HISTORY_ALIGN_S = 3600
 # Cap self-accumulated agreement snapshot series.
 AGREE_SNAP_MAX = 9000
+# One hour of XRPL closes is well under this many ledgers. A day or a month is not.
+HOUR_LEDGER_CEILING = 2000
 
 LATEST_METRICS = (
     "proposing",
@@ -328,6 +334,118 @@ def _window_score(win: dict | None) -> dict | None:
     }
 
 
+def _as_int(value) -> int | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _hour_window_failed(hour: dict | None) -> bool:
+    """True when this 1h payload is not one hour of ledgers."""
+    if not isinstance(hour, dict):
+        return False
+    total = _as_int(hour.get("total"))
+    if total is None:
+        return False
+    return total <= 0 or total > HOUR_LEDGER_CEILING
+
+
+def agreement_window_usable(
+    win: dict | None, horizon: str, hour: dict | None = None
+) -> bool:
+    """True when win is a measurement for horizon.
+
+    Daily reports need a positive ledger count, including a partial day.
+    A 1h / 24h / 30d payload with no ledger count still publishes its score.
+    An empty count is not 0% agreement. A 1h count above HOUR_LEDGER_CEILING
+    is not one hour. A 24h or 30d row that repeats that failed 1h is the
+    same row. A low percentage with a fitting count stays.
+    """
+    if not isinstance(win, dict):
+        return False
+    total = _as_int(win.get("total"))
+    if horizon == "daily":
+        return total is not None and total > 0
+    if total is None:
+        return win.get("score") is not None or win.get("pct") is not None
+    if total <= 0:
+        return False
+    if horizon == "1h" and total > HOUR_LEDGER_CEILING:
+        return False
+    if horizon in ("24h", "30d") and _hour_window_failed(hour):
+        missed_h = _as_int(hour.get("missed")) if isinstance(hour, dict) else None
+        missed_w = _as_int(win.get("missed"))
+        total_h = _as_int(hour.get("total")) if isinstance(hour, dict) else None
+        if (
+            missed_h is not None
+            and missed_w is not None
+            and total_h == total
+            and missed_h == missed_w
+        ):
+            return False
+    return True
+
+
+def _count_shell(win: dict) -> dict | None:
+    """Ledger counts with no score, so a withheld window is not a percentage."""
+    total = _as_int(win.get("total"))
+    if total is None:
+        return None
+    return {
+        "missed": _as_int(win.get("missed")),
+        "total": total,
+        "incomplete": bool(win.get("incomplete")),
+    }
+
+
+def select_observer_window(
+    win: dict | None, horizon: str, hour: dict | None = None
+) -> dict | None:
+    """Observer score unchanged, or counts only when it is not a measurement."""
+    if agreement_window_usable(win, horizon, hour):
+        return _window_score(win)
+    if horizon == "daily" or not isinstance(win, dict):
+        return None
+    return _count_shell(win)
+
+
+def observer_windows(rec: dict) -> dict:
+    hour = rec.get("agreement_1h") or rec.get("agreement_1hour")
+    day = rec.get("agreement_24h") or rec.get("agreement_24hour")
+    month = rec.get("agreement_30day") or rec.get("agreement_30d")
+    return {
+        "agreement_1h": select_observer_window(hour, "1h"),
+        "agreement_24h": select_observer_window(day, "24h", hour),
+        "agreement_30d": select_observer_window(month, "30d", hour),
+    }
+
+
+def daily_agreement_points(reports: list | None) -> list[dict]:
+    daily: list[dict] = []
+    for r in reports or []:
+        if r.get("chain") and r.get("chain") not in ("main", "mainnet"):
+            continue
+        sc = select_observer_window(
+            {
+                "score": r.get("score"),
+                "missed": r.get("missed"),
+                "total": r.get("total"),
+                "incomplete": r.get("incomplete"),
+            },
+            "daily",
+        )
+        if not sc or sc.get("pct") is None:
+            continue
+        daily.append(
+            {"t": r.get("date"), "v": sc["pct"], "incomplete": sc["incomplete"]}
+        )
+    daily.sort(key=lambda p: p.get("t") or "")
+    return daily
+
+
 def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
     """Return (agreement_block, daily_report_points_pct, elapsed_s).
 
@@ -380,13 +498,7 @@ def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
         "domain": rec.get("domain"),
         "server_version_observed": rec.get("server_version"),
         "unl": rec.get("unl"),
-        "agreement_1h": _window_score(rec.get("agreement_1h") or rec.get("agreement_1hour")),
-        "agreement_24h": _window_score(
-            rec.get("agreement_24h") or rec.get("agreement_24hour")
-        ),
-        "agreement_30d": _window_score(
-            rec.get("agreement_30day") or rec.get("agreement_30d")
-        ),
+        **observer_windows(rec),
     }
 
     daily: list[dict] = []
@@ -400,17 +512,7 @@ def fetch_agreement_xrpl_org() -> tuple[dict | None, list[dict], float]:
             )
             with urllib.request.urlopen(url, timeout=12) as resp:
                 rep = json.load(resp)
-            for r in rep.get("reports") or []:
-                if r.get("chain") and r.get("chain") not in ("main", "mainnet"):
-                    continue
-                sc = _window_score(
-                    {"score": r.get("score"), "missed": r.get("missed"), "total": r.get("total"),
-                     "incomplete": r.get("incomplete")}
-                )
-                if not sc:
-                    continue
-                daily.append({"t": r.get("date"), "v": sc["pct"], "incomplete": sc["incomplete"]})
-            daily.sort(key=lambda p: p.get("t") or "")
+            daily = daily_agreement_points(rep.get("reports") or [])
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
             daily = []
 
