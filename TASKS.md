@@ -22,12 +22,6 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
   ```
 - **C:** deferred
 
-## Open — agreement window withhold
-
-An agreement tile shows the observer's own score when the ledger count fits that horizon, including a low percentage and a real day or month. An empty count, a 1h count above 2000 ledgers, or a 24h/30d row that repeats that 1h row is shown as unavailable and is published without a percentage.
-
-Page copy was not rewritten. Still open: apply `shared/www` in `cloud-syndicate-platform`, and apply `ledger-workloads/validator-prod`.
-
 ## Receive-brief (next session)
 
 Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, another pass on the validator page copy, or deleting `validator-pre-341-*` / `dev-rippled-pre-341-data-20260926-1505`. Those snaps are the current rollback. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED).
