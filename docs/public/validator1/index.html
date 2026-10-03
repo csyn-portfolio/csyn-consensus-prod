@@ -1162,8 +1162,11 @@
       });
     }
 
-    function setAgreementTile(id, hintId, win, prevPct) {
-      if (!win || win.pct == null) {
+    function setAgreementTile(id, hintId, win, prevPct, horizon, hour) {
+      var usable = S.agreementWindowUsable
+        ? S.agreementWindowUsable(win, horizon, hour)
+        : !!(win && win.pct != null);
+      if (!usable || !win || win.pct == null) {
         setText(id, "—", "muted");
         setHint(hintId, "unavailable");
         return;
@@ -1331,7 +1334,11 @@
         state.agreeRaw ||
         [];
       var ag = status.agreement || {};
-      if (ag.agreement_1h && ag.agreement_1h.pct != null) {
+      var liveWin = ag.agreement_1h;
+      var liveUsable = S.agreementWindowUsable
+        ? S.agreementWindowUsable(liveWin, "1h")
+        : !!(liveWin && liveWin.pct != null);
+      if (liveUsable && liveWin && liveWin.pct != null) {
         var liveT = status.sample_time || status.published_at || new Date().toISOString();
         var liveV = ag.agreement_1h.pct;
         var last = state.agreeRaw.length
@@ -1342,9 +1349,9 @@
         }
       }
       var prev1h = state.agreeRaw.length >= 2 ? state.agreeRaw[state.agreeRaw.length - 2].v : null;
-      setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h, prev1h);
-      setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h, null);
-      setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d, null);
+      setAgreementTile("m-a1h", "m-a1h-h", ag.agreement_1h, prev1h, "1h", null);
+      setAgreementTile("m-a24h", "m-a24h-h", ag.agreement_24h, null, "24h", ag.agreement_1h);
+      setAgreementTile("m-a30d", "m-a30d-h", ag.agreement_30d, null, "30d", ag.agreement_1h);
 
       if (status.amendment_blocked === true) {
         setText("m-amend", "blocked", "bad"); setHint("m-amend-h", "action required");

@@ -8,6 +8,8 @@ const {
   stateTone,
   agreementDelta,
   agreementYDomain,
+  agreementWindowUsable,
+  HOUR_LEDGER_CEILING,
 } = require("./status-logic.js");
 
 function base(over) {
@@ -172,6 +174,84 @@ test("agreementDelta: up / down / flat / first sample", () => {
   assert.equal(flat.dir, "flat");
   assert.equal(flat.text, "0.00");
   assert.equal(agreementDelta(99.9, null), null);
+});
+
+test("agreementWindowUsable: hour ceiling is 2000 ledgers", () => {
+  assert.equal(HOUR_LEDGER_CEILING, 2000);
+});
+
+test("agreementWindowUsable: a real hour keeps its score, including a low one", () => {
+  assert.equal(agreementWindowUsable({ pct: 99.818, missed: 2, total: 1100 }, "1h"), true);
+  assert.equal(agreementWindowUsable({ pct: 50, missed: 500, total: 1000 }, "1h"), true);
+  assert.equal(agreementWindowUsable({ pct: 100, total: 2000 }, "1h"), true);
+  assert.equal(agreementWindowUsable({ pct: 97.4 }, "1h"), true);
+});
+
+test("agreementWindowUsable: empty or oversized 1h is not a measurement", () => {
+  assert.equal(agreementWindowUsable({ pct: 0, missed: 0, total: 0 }, "1h"), false);
+  assert.equal(
+    agreementWindowUsable({ pct: 7.698, missed: 22495, total: 24371 }, "1h"),
+    false
+  );
+  assert.equal(agreementWindowUsable({ pct: 100, total: 2001 }, "1h"), false);
+  assert.equal(
+    agreementWindowUsable({ missed: 22495, total: 24371, incomplete: true }, "1h"),
+    false
+  );
+});
+
+test("agreementWindowUsable: a real day or month stays, a copied failed hour does not", () => {
+  const hour = { pct: 7.698, missed: 22495, total: 24371 };
+  assert.equal(
+    agreementWindowUsable({ pct: 99.1, missed: 200, total: 24000 }, "24h", hour),
+    true
+  );
+  assert.equal(
+    agreementWindowUsable({ pct: 96.022, missed: 22977, total: 577634 }, "30d", hour),
+    true
+  );
+  assert.equal(agreementWindowUsable({ pct: 7.698, missed: 22495, total: 24371 }, "24h", hour), false);
+  assert.equal(agreementWindowUsable({ pct: 96, missed: 20000, total: 500000 }, "30d", { pct: 99.9, missed: 1, total: 1000 }), true);
+  assert.equal(agreementWindowUsable({ pct: 99, missed: 11, total: 1100 }, "24h", { pct: 99, missed: 11, total: 1100 }), true);
+});
+
+test("classifyHealth: 1h that is not one hour of ledgers does not degrade", () => {
+  const h = classifyHealth(
+    base({
+      agreement: {
+        agreement_1h: { pct: 7.698, missed: 22495, total: 24371, incomplete: true },
+      },
+    })
+  );
+  assert.equal(h.level, "healthy");
+});
+
+test("classifyHealth: empty 1h rollup does not degrade", () => {
+  const h = classifyHealth(
+    base({ agreement: { agreement_1h: { pct: 0, missed: 0, total: 0 } } })
+  );
+  assert.equal(h.level, "healthy");
+});
+
+test("classifyHealth: withheld 1h shell without a percentage does not degrade", () => {
+  const h = classifyHealth(
+    base({
+      agreement: { agreement_1h: { missed: 22495, total: 24371, incomplete: true } },
+    })
+  );
+  assert.equal(h.level, "healthy");
+});
+
+test("classifyHealth: measured 1h under 98 still degrades", () => {
+  const h = classifyHealth(
+    base({ agreement: { agreement_1h: { pct: 97.4, missed: 26, total: 1000 } } })
+  );
+  assert.equal(h.level, "degraded");
+});
+
+test("classifyHealth: missing agreement stays Degraded", () => {
+  const h = classifyHealth(base({ agreement: {} }));
+  assert.equal(h.level, "degraded");
 });
 
 test("agreementYDomain: stays 95–100 when healthy; opens to include 90 and data when it drops", () => {

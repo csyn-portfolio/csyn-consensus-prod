@@ -22,6 +22,12 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
   ```
 - **C:** deferred
 
+## Open — agreement window withhold
+
+Local branch `fix/agreement-window-unavailable` (worktree, not pushed). An agreement tile shows the observer's own score when the ledger count fits that horizon, including a low percentage and a real day or month. An empty count, a 1h count above 2000 ledgers, or a 24h/30d row that repeats that 1h row is shown as unavailable and is published without a percentage.
+
+Page copy was not rewritten. Not merged and not applied. Live `https://validator1.cloudsyndicate.io/` changes only after the www mirror and the publisher ship. Pete owns that go-ahead.
+
 ## Receive-brief (next session)
 
 Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, another pass on the validator page copy, or deleting `validator-pre-341-*` / `dev-rippled-pre-341-data-20260926-1505`. Those snaps are the current rollback. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED).

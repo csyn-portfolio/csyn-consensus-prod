@@ -6,6 +6,46 @@
  * Tests: csyn-consensus-prod docs/public/validator1/status-logic.test.js
  */
 (function (root) {
+  // One hour of XRPL closes is well under this many ledgers. A day or a month is not.
+  var HOUR_LEDGER_CEILING = 2000;
+
+  function ledgerCount(value) {
+    if (value == null || value === "" || typeof value === "boolean") return null;
+    var n = Number(value);
+    if (!isFinite(n)) return null;
+    return Math.trunc(n);
+  }
+
+  function hourWindowFailed(hour) {
+    if (!hour) return false;
+    var total = ledgerCount(hour.total);
+    if (total == null) return false;
+    return total <= 0 || total > HOUR_LEDGER_CEILING;
+  }
+
+  function agreementWindowUsable(win, horizon, hour) {
+    if (!win) return false;
+    var total = ledgerCount(win.total);
+    if (horizon === "daily") return total != null && total > 0;
+    if (total == null) return win.pct != null || win.score != null;
+    if (total <= 0) return false;
+    if (horizon === "1h" && total > HOUR_LEDGER_CEILING) return false;
+    if ((horizon === "24h" || horizon === "30d") && hourWindowFailed(hour)) {
+      var missedH = ledgerCount(hour.missed);
+      var missedW = ledgerCount(win.missed);
+      var totalH = ledgerCount(hour.total);
+      if (
+        missedH != null &&
+        missedW != null &&
+        missedH === missedW &&
+        totalH === total
+      ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function _a1h(status) {
     var ag = status && status.agreement;
     var win = ag && ag.agreement_1h;
@@ -69,8 +109,16 @@
     }
     var gaugesKnown =
       status.amendment_blocked === false && status.unl_active === true;
-    var a1 = _a1h(status);
-    if (!proposing || !fr.fresh || !gaugesKnown || a1 == null || a1 < 98) {
+    var hour = status.agreement && status.agreement.agreement_1h;
+    // A window that is not one hour of ledgers is not a low score.
+    var unmeasured = !!(hour && !agreementWindowUsable(hour, "1h"));
+    var a1 = unmeasured ? null : _a1h(status);
+    if (
+      !proposing ||
+      !fr.fresh ||
+      !gaugesKnown ||
+      (!unmeasured && (a1 == null || a1 < 98))
+    ) {
       return { level: "degraded", label: "Degraded" };
     }
     return { level: "healthy", label: "Healthy" };
@@ -109,6 +157,8 @@
   }
 
   var api = {
+    HOUR_LEDGER_CEILING: HOUR_LEDGER_CEILING,
+    agreementWindowUsable: agreementWindowUsable,
     freshness: freshness,
     classifyHealth: classifyHealth,
     stateTone: stateTone,
