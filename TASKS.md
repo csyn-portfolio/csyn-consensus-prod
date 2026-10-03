@@ -24,9 +24,9 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 ## Open — agreement window withhold
 
-Local branch `fix/agreement-window-unavailable` (worktree, not pushed). An agreement tile shows the observer's own score when the ledger count fits that horizon, including a low percentage and a real day or month. An empty count, a 1h count above 2000 ledgers, or a 24h/30d row that repeats that 1h row is shown as unavailable and is published without a percentage.
+Branch `fix/agreement-window-unavailable`. An agreement tile shows the observer's own score when the ledger count fits that horizon, including a low percentage and a real day or month. An empty count, a 1h count above 2000 ledgers, or a 24h/30d row that repeats that 1h row is shown as unavailable and is published without a percentage.
 
-Page copy was not rewritten. Not merged and not applied. Live `https://validator1.cloudsyndicate.io/` changes only after the www mirror and the publisher ship. Pete owns that go-ahead.
+Page copy was not rewritten. Not merged and not applied. Live `https://validator1.cloudsyndicate.io/` changes only after the www mirror and the publisher ship.
 
 ## Receive-brief (next session)
 
