@@ -26,7 +26,7 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 An agreement tile shows the observer's own score when the ledger count fits that horizon, including a low percentage and a real day or month. An empty count, a 1h count above 2000 ledgers, or a 24h/30d row that repeats that 1h row is shown as unavailable and is published without a percentage.
 
-Page copy was not rewritten. Still open after this change: the www mirror in `cloud-syndicate-platform` `shared/www`, and the publisher image pin in `ledger-workloads/validator-prod`.
+Page copy was not rewritten. Still open: apply `shared/www` in `cloud-syndicate-platform`, and apply `ledger-workloads/validator-prod`.
 
 ## Receive-brief (next session)
 
