@@ -395,9 +395,10 @@ on-box signal. All were green throughout; none *could* have fired.
 Runner is GitHub Actions, not Cloud Run: the validator project's egress deny-floor
 is what retired the original poller, and this repo already has a WIF identity with
 internet. No VPC touched, no egress hole.
-Contract: exit 0 -> write 1 · exit 1 -> write 0 · exit 2 -> write NOTHING —
-plus `network_sees_us_heartbeat` = 1 on **every** run regardless of outcome, with a
-MetricAbsence policy on it.
+Contract: exit 0 with the probe line "SEEN on " writes 1. Exit 1 with the probe
+line "NOT SEEN:" writes 0. Exit 2 writes nothing. Any other exit, including a Node
+crash that also exits 1, writes nothing and fails the job.
+`network_sees_us_heartbeat` is 1 on every run, with a MetricAbsence policy on it.
 - `OPEN` **closed by design, recorded because it nearly shipped:** the verdict series
   is sparse by design, so a policy that treats its absence as healthy is silent when
   the *checker itself* is dark — a disabled workflow would have looked identical to a
@@ -584,8 +585,8 @@ Pete confirmed cutover complete 2026-08-08.
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
   section above for the evidence and what it left open.
-- [ ] **`pr:36` external-visibility alert** — merge, then Pete-gated `apply.yml`
-  (`configs=ledger-workloads/validator-prod`), then one
+- [ ] **`pr:36` external-visibility alert** — after this PR is on main, Pete-gated
+  `apply.yml` (`configs=ledger-workloads/validator-prod`), then one
   `gh workflow run network-visibility.yml` so the absence policy has a point to
   arm on. Gate state is on the PR body, not here.
 - [x] ~~Correct the two false operator-facing comments in

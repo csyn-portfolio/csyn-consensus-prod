@@ -16,9 +16,12 @@ name: network-visibility
 #
 # TWO metrics are written (see visibility.tf for why):
 #   network_sees_us            sparse — only when the probe reached a verdict
-#     exit 0 -> write 1   SEEN on >= 2 independent feeds
-#     exit 1 -> write 0   NOT SEEN while >= 2 feeds carried untrusted validations
+#     exit 0 and the probe printed "SEEN on " -> write 1
+#     exit 1 and the probe printed "NOT SEEN:" -> write 0
 #     exit 2 -> write NOTHING (inconclusive; a 0 here would be a lie)
+#     any other exit, including a crash that also exits 1 -> write NOTHING
+#       and fail the job. Node uses exit 1 for an uncaught exception, so exit 1
+#       alone is not a verdict.
 #   network_sees_us_heartbeat  dense — 1 on EVERY run, whatever happened above,
 #     so that "the checker is dark" is distinguishable from "the checker is quiet".
 #     Without it, a disabled workflow looks exactly like a healthy network.
@@ -135,22 +138,39 @@ jobs:
         run: ./.github/scripts/write-metric.sh network_sees_us_heartbeat 1
 
       - name: Write the verdict metric
-        if: steps.probe.outputs.code == '0' || steps.probe.outputs.code == '1'
+        id: verdict
         env:
           CODE: ${{ steps.probe.outputs.code }}
         run: |
+          set +e
+          ACTION="$(./.github/scripts/verdict-action.sh "$CODE" /tmp/probe.out)"
+          RC=$?
           set -euo pipefail
-          if [ "$CODE" = "0" ]; then VALUE=1; else VALUE=0; fi
-          ./.github/scripts/write-metric.sh network_sees_us "$VALUE"
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "rc=$RC" >> "$GITHUB_OUTPUT"
+          case "$ACTION" in
+            write-1) ./.github/scripts/write-metric.sh network_sees_us 1 ;;
+            write-0) ./.github/scripts/write-metric.sh network_sees_us 0 ;;
+            none) ;;
+            *) echo "::error::verdict-action returned '$ACTION'"; exit 1 ;;
+          esac
 
       - name: Report
         env:
           CODE: ${{ steps.probe.outputs.code }}
+          ACTION: ${{ steps.verdict.outputs.action }}
+          RC: ${{ steps.verdict.outputs.rc }}
         run: |
           cat /tmp/probe.out || true
-          case "$CODE" in
-            0) echo "::notice::SEEN on >=2 independent feeds — wrote network_sees_us=1" ;;
-            1) echo "::error::NOT SEEN while >=2 feeds carried untrusted validations — wrote network_sees_us=0. If a validator token was just rotated, set the VALIDATOR_SIGNING_KEY repo variable before treating this as real."; exit 1 ;;
-            2) echo "::notice::INCONCLUSIVE — no verdict point written (correct, not a failure). Heartbeat still written." ;;
-            *) echo "::error::probe exited $CODE (unexpected)"; exit 1 ;;
+          case "$ACTION" in
+            write-1) echo "::notice::SEEN — wrote network_sees_us=1" ;;
+            write-0) echo "::error::NOT SEEN — wrote network_sees_us=0. If a validator token was just rotated, set the VALIDATOR_SIGNING_KEY repo variable before treating this as real." ;;
+            none)
+              if [ "$CODE" = "2" ]; then
+                echo "::notice::INCONCLUSIVE — no verdict point written. Heartbeat still written."
+              else
+                echo "::error::probe exited $CODE without a verdict line — no network_sees_us point written"
+              fi
+              ;;
           esac
+          exit "$RC"
