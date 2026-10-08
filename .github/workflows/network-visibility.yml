@@ -51,6 +51,9 @@ concurrency:
 
 jobs:
   probe:
+    # Schedule only runs on the default branch. This also blocks a non-main
+    # workflow_dispatch from minting the probe's token.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -123,7 +126,7 @@ jobs:
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER_PLAN }}
-          service_account: ledger-apply@csyn-platform.iam.gserviceaccount.com
+          service_account: v1-net-visibility@csyn-ldg-validator-prod.iam.gserviceaccount.com
 
       # Heartbeat FIRST and always. If the verdict write below fails, liveness has
       # already landed, so a broken verdict path does not also blind the dark-probe

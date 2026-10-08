@@ -36,7 +36,7 @@ gcloud compute snapshots list --project=csyn-ldg-validator-prod --format='table(
 gcloud compute instances describe csyn-ldg-dev-rippled --project=csyn-ldg-svc-rippled-dev --zone=us-south1-a --format='value(status)'
 ```
 
-Leftover: `pr:36` is still OPEN (external validation-visibility alert). `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback. `health.html` is unchanged.
+Leftover: `pr:36` is the external-visibility alert. It is not live until `apply.yml` (configs=`ledger-workloads/validator-prod`) and one `gh workflow run network-visibility.yml` seed. `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback. `health.html` is unchanged.
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
@@ -405,16 +405,11 @@ MetricAbsence policy on it.
   heartbeat + absence pair is what separates "the network cannot see us" from "nobody
   is looking". Do not resolve a quiet visibility alert by widening its missing-data
   handling; the two questions are deliberately two policies.
-- **ACCEPTED RISK (Pete, 2026-08-04):** shipping with the owner-privileged identity
-  below rather than blocking on a substrate change. Recorded as a decision, not an
-  oversight; the follow-up is in Next.
-- `OBSERVED:` `ledger-apply@csyn-platform` holds `roles/owner` on
-  `csyn-ldg-validator-prod`, so no substrate IAM grant is needed to write the metric.
-- `OPEN: least privilege` — that means an unattended scheduled workflow assumes an
-  owner-privileged SA to write one metric point. A dedicated `roles/monitoring.metricWriter`
-  identity would be correct; it needs a substrate change (Pete-apply-only).
-- Not live until `apply.yml` is dispatched (metadata != live applies to alert
-  policies too — PR #19 sat merged-but-not-live for a month).
+- Writer is `v1-net-visibility` in the validator project (`roles/monitoring.metricWriter`
+  only). The workflow does not impersonate `ledger-apply`.
+- Not live until `apply.yml` is dispatched. Merging creates neither the policies
+  nor the service account. After apply, seed once:
+  `gh workflow run network-visibility.yml`.
 - **Post-apply seed is REQUIRED, not optional.** A MetricAbsence condition may not
   arm on a series that has never received a point, so right after the apply both
   policies can be quiet for the wrong reason. Dispatch the workflow once
@@ -589,13 +584,10 @@ Pete confirmed cutover complete 2026-08-08.
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
   section above for the evidence and what it left open.
-- [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
-  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
-- [ ] **Least-privilege follow-up for the visibility probe** — it writes its metric
-  as `ledger-apply@csyn-platform`, which holds `roles/owner` on the validator
-  project. A dedicated `roles/monitoring.metricWriter` identity is the correct
-  shape; it needs a substrate change (Pete-apply-only). Do not treat `pr:36` as
-  closing this.
+- [ ] **`pr:36` external-visibility alert** — merge, then Pete-gated `apply.yml`
+  (`configs=ledger-workloads/validator-prod`), then one
+  `gh workflow run network-visibility.yml` so the absence policy has a point to
+  arm on. Gate state is on the PR body, not here.
 - [x] ~~Correct the two false operator-facing comments in
   `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`~~ — landed in `pr:38`
   alongside the value change, so the file never described a posture it was not in.

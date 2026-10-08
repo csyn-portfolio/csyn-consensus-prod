@@ -28,13 +28,11 @@
 # whatever the probe returned, and a separate MetricAbsence policy fires when that
 # stops arriving. Sparse-by-design series need a liveness signal that is not sparse.
 #
-# ACCEPTED RISK (Pete, 2026-08-04): the workflow writes these points as
-# `ledger-apply@csyn-platform`, which holds roles/owner on this project — an
-# unattended schedule assuming an owner-privileged identity every 30 minutes to
-# write one number. Shipped knowingly to close the blind spot sooner; a dedicated
-# roles/monitoring.metricWriter identity is the correct shape and is tracked in
-# TASKS.md as a follow-up. This comment exists so the next reader finds a decision
-# rather than an oversight.
+# Identity: v1-net-visibility in this project, roles/monitoring.metricWriter only.
+# The workflow impersonates it through the same repo WIF principal this repo
+# already uses. It does not use ledger-apply. The impersonation binding is
+# created only after both descriptors exist, so a schedule tick cannot land a
+# point (and auto-create a descriptor) before OpenTofu owns the type.
 
 resource "google_monitoring_metric_descriptor" "network_sees_us" {
   project      = module.validator.project_id
@@ -134,4 +132,33 @@ resource "google_monitoring_alert_policy" "network_visibility_probe_dark" {
     mime_type = "text/markdown"
   }
   depends_on = [google_monitoring_metric_descriptor.network_sees_us_heartbeat]
+}
+
+# Writer for the two series above. metricWriter is timeSeries.create, not a
+# project owner. The WIF member is this repo's principal on the platform pool
+# (same principal ledger-apply trusts, in cloud-syndicate-platform
+# bootstrap/org-foundation/ledger-apply-sa.tf). Project number is csyn-platform's;
+# this root cannot data-source that project.
+resource "google_service_account" "network_visibility" {
+  project      = module.validator.project_id
+  account_id   = "v1-net-visibility"
+  display_name = "validator1 network-visibility probe"
+  description  = "GitHub Actions network-visibility workflow. Writes two custom metrics."
+}
+
+resource "google_project_iam_member" "network_visibility_metric_writer" {
+  project = module.validator.project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.network_visibility.email}"
+}
+
+resource "google_service_account_iam_member" "network_visibility_wif" {
+  service_account_id = google_service_account.network_visibility.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/projects/341505610865/locations/global/workloadIdentityPools/csyn-platform-pool/attribute.repository/csyn-portfolio/csyn-consensus-prod"
+
+  depends_on = [
+    google_monitoring_metric_descriptor.network_sees_us,
+    google_monitoring_metric_descriptor.network_sees_us_heartbeat,
+  ]
 }
