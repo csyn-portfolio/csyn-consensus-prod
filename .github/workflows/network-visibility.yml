@@ -1,0 +1,176 @@
+name: network-visibility
+
+# Asks the ONE question no on-box signal can answer: does the network still
+# receive our validations?
+#
+# Every alert in ledger-workloads/validator-prod/monitoring.tf reads a local
+# signal. During the 2026-08-04 scanner-invisibility investigation all 12 were
+# green and none *could* have fired, because none of them looks at the network's
+# view of us. This workflow closes that gap.
+#
+# Why GitHub Actions and not Cloud Run: the validator project's VPC egress
+# deny-floor permits only tcp:51235 and tcp:443 to the restricted VIP, which is
+# exactly why the original public-API Cloud Run poller was retired (see
+# sidecar.tf header). This repo already holds a WIF identity with internet
+# access, so the runner lives here. It touches no VPC and opens no egress hole.
+#
+# TWO metrics are written (see visibility.tf for why):
+#   network_sees_us            sparse — only when the probe reached a verdict
+#     exit 0 and the probe printed "SEEN on " -> write 1
+#     exit 1 and the probe printed "NOT SEEN:" -> write 0
+#     exit 2 -> write NOTHING (inconclusive; a 0 here would be a lie)
+#     any other exit, including a crash that also exits 1 -> write NOTHING
+#       and fail the job. Node uses exit 1 for an uncaught exception, so exit 1
+#       alone is not a verdict.
+#   network_sees_us_heartbeat  dense — 1 on EVERY run, whatever happened above,
+#     so that "the checker is dark" is distinguishable from "the checker is quiet".
+#     Without it, a disabled workflow looks exactly like a healthy network.
+#
+# A NOT-SEEN result FAILS this job on purpose. It is a real finding, and a green
+# check beside it would make the Actions list say "fine" while the metric says
+# otherwise. Both metric writes happen BEFORE the job fails.
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'   # every 30 min, offset off the hour to dodge scheduler pileups
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: 'Observation window per feed, seconds'
+        required: false
+        default: '70'
+      signing_key:
+        description: 'Override the ephemeral signing key (read .ephemeral_key from validator_info after a token rotation)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  id-token: write   # WIF
+
+concurrency:
+  group: network-visibility
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    # Schedule only runs on the default branch. This also blocks a non-main
+    # workflow_dispatch from minting the probe's token.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROJECT_ID: csyn-ldg-validator-prod
+      METRIC_LOCATION: us-south1
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Node 20+ is required: the script uses the global WebSocket, which is not
+      # available on Node 18.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      # Inputs never reach the shell as source text. workflow_dispatch inputs are
+      # attacker-influenced if anyone gains dispatch rights, and interpolating them
+      # straight into `run:` is script injection. They arrive as env vars and are
+      # validated against a strict pattern before use.
+      #
+      # SIGNING KEY, scheduled path: the probe matches the EPHEMERAL signing key, so
+      # a token rotation silently turns every scheduled run into a false NOT SEEN.
+      # A dispatch input only fixes one manual run. Set the repo variable
+      # VALIDATOR_SIGNING_KEY after any rotation so the SCHEDULE is fixed too; with
+      # it unset the script falls back to its committed default.
+      - name: Validate inputs
+        id: args
+        env:
+          SECONDS_IN: ${{ github.event.inputs.seconds }}
+          KEY_IN: ${{ github.event.inputs.signing_key }}
+          KEY_VAR: ${{ vars.VALIDATOR_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          SECS="${SECONDS_IN:-70}"
+          case "$SECS" in
+            ''|*[!0-9]*) echo "::error::seconds must be digits, got '$SECS'"; exit 1 ;;
+          esac
+          if [ "$SECS" -lt 20 ] || [ "$SECS" -gt 300 ]; then
+            echo "::error::seconds out of range 20-300: $SECS"; exit 1
+          fi
+          KEY="${KEY_IN:-${KEY_VAR:-}}"
+          if [ -n "$KEY" ]; then
+            case "$KEY" in
+              n9[1-9A-HJ-NP-Za-km-z]*) : ;;
+              *) echo "::error::signing key must be a base58 n9... validator key"; exit 1 ;;
+            esac
+            if [ "${#KEY}" -lt 50 ] || [ "${#KEY}" -gt 60 ]; then
+              echo "::error::signing key length implausible: ${#KEY}"; exit 1
+            fi
+          fi
+          echo "seconds=$SECS" >> "$GITHUB_OUTPUT"
+          echo "key=$KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Probe the validations stream
+        id: probe
+        continue-on-error: true   # exit 1 and 2 are outcomes; the job verdict is set at the end
+        env:
+          SECS: ${{ steps.args.outputs.seconds }}
+          KEY: ${{ steps.args.outputs.key }}
+        run: |
+          set +e
+          if [ -n "$KEY" ]; then
+            node tools/network-sees-validator.mjs --seconds "$SECS" --signing-key "$KEY" | tee /tmp/probe.out
+          else
+            node tools/network-sees-validator.mjs --seconds "$SECS" | tee /tmp/probe.out
+          fi
+          echo "code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      # Auth is UNCONDITIONAL: the heartbeat is written on every run, including
+      # inconclusive ones, so there is always a point to write.
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER_PLAN }}
+          service_account: v1-net-visibility@csyn-ldg-validator-prod.iam.gserviceaccount.com
+
+      # Heartbeat FIRST and always. If the verdict write below fails, liveness has
+      # already landed, so a broken verdict path does not also blind the dark-probe
+      # alert — which is the whole point of having two metrics.
+      - name: Write the heartbeat
+        run: ./.github/scripts/write-metric.sh network_sees_us_heartbeat 1
+
+      - name: Write the verdict metric
+        id: verdict
+        env:
+          CODE: ${{ steps.probe.outputs.code }}
+        run: |
+          set +e
+          ACTION="$(./.github/scripts/verdict-action.sh "$CODE" /tmp/probe.out)"
+          RC=$?
+          set -euo pipefail
+          echo "action=$ACTION" >> "$GITHUB_OUTPUT"
+          echo "rc=$RC" >> "$GITHUB_OUTPUT"
+          case "$ACTION" in
+            write-1) ./.github/scripts/write-metric.sh network_sees_us 1 ;;
+            write-0) ./.github/scripts/write-metric.sh network_sees_us 0 ;;
+            none) ;;
+            *) echo "::error::verdict-action returned '$ACTION'"; exit 1 ;;
+          esac
+
+      - name: Report
+        env:
+          CODE: ${{ steps.probe.outputs.code }}
+          ACTION: ${{ steps.verdict.outputs.action }}
+          RC: ${{ steps.verdict.outputs.rc }}
+        run: |
+          cat /tmp/probe.out || true
+          case "$ACTION" in
+            write-1) echo "::notice::SEEN — wrote network_sees_us=1" ;;
+            write-0) echo "::error::NOT SEEN — wrote network_sees_us=0. If a validator token was just rotated, set the VALIDATOR_SIGNING_KEY repo variable before treating this as real." ;;
+            none)
+              if [ "$CODE" = "2" ]; then
+                echo "::notice::INCONCLUSIVE — no verdict point written. Heartbeat still written."
+              else
+                echo "::error::probe exited $CODE without a verdict line — no network_sees_us point written"
+              fi
+              ;;
+          esac
+          exit "$RC"

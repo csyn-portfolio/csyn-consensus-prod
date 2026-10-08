@@ -36,7 +36,7 @@ gcloud compute snapshots list --project=csyn-ldg-validator-prod --format='table(
 gcloud compute instances describe csyn-ldg-dev-rippled --project=csyn-ldg-svc-rippled-dev --zone=us-south1-a --format='value(status)'
 ```
 
-Leftover: `pr:36` is still OPEN (external validation-visibility alert). `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback. `health.html` is unchanged.
+Leftover: `pr:36` is the external-visibility alert. It is not live until `apply.yml` (configs=`ledger-workloads/validator-prod`) and one `gh workflow run network-visibility.yml` seed. `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. Boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback. `health.html` is unchanged.
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
@@ -382,11 +382,40 @@ on-box signal. All were green throughout; none *could* have fired.
 
 - **Signal:** `tools/network-sees-validator.mjs` on a schedule from an egress-capable
   runner (the validator cannot — deny-floor) → `custom.googleapis.com/xrpl/validator/network_sees_us`.
-- **Condition:** page only on exit 1 (>= 2 feeds carried untrusted validations and
+- **Condition:** WARN only on exit 1 (>= 2 feeds carried untrusted validations and
   none showed us) sustained across >= 3 runs. Exit 2 must NEVER page.
 - **Severity:** WARNING. `proposing` already pages for the validating outcome.
 - **Do NOT** implement by scraping xrpscan/VHS — that design would have fired a 63h
   false alarm on the cohort break above while the validator was healthy.
+
+**Implemented** (branch `feat/network-visibility-alert`):
+`ledger-workloads/validator-prod/visibility.tf` (metric descriptor + WARNING policy,
+5400s sustained, `EVALUATION_MISSING_DATA_INACTIVE`) and
+`.github/workflows/network-visibility.yml` (every 30 min + `workflow_dispatch`).
+Runner is GitHub Actions, not Cloud Run: the validator project's egress deny-floor
+is what retired the original poller, and this repo already has a WIF identity with
+internet. No VPC touched, no egress hole.
+Contract: exit 0 with the probe line "SEEN on " writes 1. Exit 1 with the probe
+line "NOT SEEN:" writes 0. Exit 2 writes nothing. Any other exit, including a Node
+crash that also exits 1, writes nothing and fails the job.
+`network_sees_us_heartbeat` is 1 on every run, with a MetricAbsence policy on it.
+- `OPEN` **closed by design, recorded because it nearly shipped:** the verdict series
+  is sparse by design, so a policy that treats its absence as healthy is silent when
+  the *checker itself* is dark — a disabled workflow would have looked identical to a
+  healthy network. That is the 2026-08-04 blind spot rebuilt one layer up. The
+  heartbeat + absence pair is what separates "the network cannot see us" from "nobody
+  is looking". Do not resolve a quiet visibility alert by widening its missing-data
+  handling; the two questions are deliberately two policies.
+- Writer is `v1-net-visibility` in the validator project (`roles/monitoring.metricWriter`
+  only). The workflow does not impersonate `ledger-apply`.
+- Not live until `apply.yml` is dispatched. Merging creates neither the policies
+  nor the service account. After apply, seed once:
+  `gh workflow run network-visibility.yml`.
+- **Post-apply seed is REQUIRED, not optional.** A MetricAbsence condition may not
+  arm on a series that has never received a point, so right after the apply both
+  policies can be quiet for the wrong reason. Dispatch the workflow once
+  (`gh workflow run network-visibility.yml`) and confirm a heartbeat point landed
+  before treating silence as coverage.
 
 ## Option A applied and live-verified — 2026-08-04
 
@@ -556,8 +585,10 @@ Pete confirmed cutover complete 2026-08-08.
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
   section above for the evidence and what it left open.
-- [ ] **`pr:36` external-visibility alert** — T2 dual-gate (Grok), then merge, then
-  Pete-gated `apply.yml` dispatch. Gate state is on the PR body, not here.
+- [ ] **`pr:36` external-visibility alert** — after this PR is on main, Pete-gated
+  `apply.yml` (`configs=ledger-workloads/validator-prod`), then one
+  `gh workflow run network-visibility.yml` so the absence policy has a point to
+  arm on. Gate state is on the PR body, not here.
 - [x] ~~Correct the two false operator-facing comments in
   `ledger-workloads/validator-prod/config/rippled.cfg.tftpl`~~ — landed in `pr:38`
   alongside the value change, so the file never described a posture it was not in.
