@@ -164,11 +164,15 @@ true
 #     still receive every transaction. Cuts OUR egress directly.
 #   tx_metrics: count relay decisions so the saving can be attributed.
 #   vp_base_squelch_enable: we ask peers to stop sending duplicate validator
-#     messages. That cuts our INGRESS (not billed) and CPU. Our egress falls only
-#     when other operators squelch us, which PeerImp::onMessage(TMSquelch) honours
-#     regardless of this flag. Enabled to be a good network citizen, not for cost.
-#   Never also set the deprecated vp_enable alongside vp_base_squelch_enable:
-#   Config.cpp throws and the node does not boot.
+#     messages. That cuts our INGRESS (not billed) and CPU. Incoming squelches of
+#     OTHER validators' keys can trim what we relay, with or without this flag
+#     (PeerImp::onMessage(TMSquelch)); a squelch of our own key is discarded, so
+#     our own validations and proposals always go out. Enabled for the network,
+#     not for cost.
+#   BOOT SAFETY: these keys parse with boost::lexical_cast<bool>, so use 1 / 0.
+#   `tx_enable=true` THROWS at load. ([compression] above uses beast's cast and
+#   accepts true.) Never also set the deprecated vp_enable alongside
+#   vp_base_squelch_enable: Config.cpp throws and the node does not boot.
 [reduce_relay]
 vp_base_squelch_enable=1
 tx_enable=1
