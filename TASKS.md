@@ -575,6 +575,16 @@ Pete confirmed cutover complete 2026-08-08.
   closes, unbroken @ 2026-08-08T18:06Z`.
 - Soak window ≤14d from cutover (runbook boot-snapshot retention clock).
 
+## Egress levers — live 2026-11-08, measuring until ~2026-11-15
+
+`pr:81` (`6ccbd9b`) turned on `[compression]` and `[reduce_relay]` `vp_base_squelch_enable` / `tx_enable` / `tx_metrics`. Apply run 42510881343, snapshot `validator-pre-recreate-20261108-1837`, reset 18:40:04Z, proposing 18:47:10Z, network-sees 3/3.
+Only `tx_enable` and compression can lower our egress; squelching lowers ingress. Rationale and source lines are in the config comment, not here.
+
+- [ ] **~2026-11-15: compare egress per peer per day** against the 2026-11-01..07 baseline (~150 GiB/day over ~38 peers). Daily `compute.googleapis.com/instance/network/sent_bytes_count` ÷ daily mean `custom.googleapis.com/xrpl/validator/peer_count`. Raw egress is drifting up with network volume; compare per peer, not raw. Attribution: `xrpld tx_reduce_relay` over IAP (`txr_selected_cnt`, `txr_suppressed_cnt`).
+- [ ] Health must hold the whole week: proposing, `validator_low_peers` quiet, network-visibility alert green. Rollback = revert `pr:81`, apply, reset.
+- [ ] Then decide the network tier (Standard ~29% cheaper per GiB, IP changes) and the region/CUD row below, using the post-lever egress figure. Analysis: `docs/finops/2026-11-07-us-region-cud.md`.
+- [ ] Pete decision: delete `validator-pre-341-{boot,data}-20260926-1522` now that a newer data snapshot exists (runbook keep-latest).
+
 ## Next
 - [x] ~~After 3.4.0 soak: delete `validator-pre-340-{boot,data}-20260919-1334`~~ — deleted 2026-09-26 with the older practice snaps. Kept `validator-pre-341-{boot,data}-20260926-1522` and `dev-rippled-pre-341-data-20260926-1505`.
 - [ ] **After 3.4.1 boot-snap clock (~2026-10-10):** Pete-gated delete of `validator-pre-341-boot-20260926-1522` only. Re-list first: `gcloud compute snapshots list --project=csyn-ldg-validator-prod`. Keep the 341 data snap.
