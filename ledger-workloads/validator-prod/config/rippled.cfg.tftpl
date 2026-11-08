@@ -146,6 +146,38 @@ advisory_delete=0
 [peers_in_max]
 10
 
+# EGRESS LEVERS (Pete, 2026-11-08). Internet egress is ~half the bill and every
+# peer receives roughly the same relay stream, so egress tracks peer count.
+# Defaults verified on the DEPLOYED tag, XRPLF/rippled 3.4.1:
+#   src/xrpld/core/Config.h: compression = false, vpReduceRelayBaseSquelchEnable =
+#   false, txReduceRelayEnable = false, txReduceRelayMetrics = false,
+#   txReduceRelayMinPeers = 20, txRelayPercentage = 25.
+#
+# [compression] LZ4 on peer links. Applies only to links where the peer ALSO
+# enabled it (Handshake.cpp negotiates per link). Costs CPU, which this box has spare.
+[compression]
+true
+
+# [reduce_relay]
+#   tx_enable: relay each transaction to minPeers + 25% of the peers above that,
+#     instead of to all of them (OverlayImpl::relay). Peers without the feature
+#     still receive every transaction. Cuts OUR egress directly.
+#   tx_metrics: count relay decisions so the saving can be attributed.
+#   vp_base_squelch_enable: we ask peers to stop sending duplicate validator
+#     messages. That cuts our INGRESS (not billed) and CPU. Incoming squelches of
+#     OTHER validators' keys can trim what we relay, with or without this flag
+#     (PeerImp::onMessage(TMSquelch)); a squelch of our own key is discarded, so
+#     our own validations and proposals always go out. Enabled for the network,
+#     not for cost.
+#   BOOT SAFETY: these keys parse with boost::lexical_cast<bool>, so use 1 / 0.
+#   `tx_enable=true` THROWS at load. ([compression] above uses beast's cast and
+#   accepts true.) Never also set the deprecated vp_enable alongside
+#   vp_base_squelch_enable: Config.cpp throws and the node does not boot.
+[reduce_relay]
+vp_base_squelch_enable=1
+tx_enable=1
+tx_metrics=1
+
 # Curated mainnet hub peers for outbound bootstrap reliability.
 # [ips_fixed] peers bypass slot accounting and stay connected regardless of slot
 # pressure, so these stay the RELIABLE floor even now that discovery is on — they
