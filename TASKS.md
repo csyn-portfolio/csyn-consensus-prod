@@ -535,9 +535,11 @@ here — check console for MTD.
 ### Follow-ups from this audit
 - [x] ~~Delete `validator-pre-321-{boot,data}-20260801-1917`~~ — DONE 2026-08-05
   (unused; keep-latest = `validator-pre-recreate-20260804-2105`).
-- [ ] Pete (console): purchase resource-based CUD (n2d family, us-south1, 8 vCPU +
-  64 GB RAM) 1yr or 3yr — largest single saving; see financial report in session /
-  PR body. Grok recommends only; no purchase from harness.
+- [ ] **Pete decision: region, then CUD.** A resource CUD is region-locked, so choose
+  the region first. Options and $/mo per region with no / 1-yr / 3-yr CUD:
+  `docs/finops/2026-11-07-us-region-cud.md` (model `tools/finops/us_region_model.py`).
+  Purchase stays the gated `enable_n2d_cud` path in `commitment.tf`; never from a harness.
+  Whether one exists: `gcloud compute commitments list --project=csyn-ldg-validator-prod`.
 - [ ] Optional later: disable leftover unused APIs on `csyn-ldg-validator-prod`
   (`run`, `cloudscheduler`, `pubsub`, `containerregistry`, `cloudtrace`) after
   confirming nothing in sibling modules re-enables them on apply — $0 until used.

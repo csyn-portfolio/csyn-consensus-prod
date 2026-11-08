@@ -1,0 +1,3878 @@
+[
+ {
+  "name": "services/6F81-5844-456A/skus/011F-F649-4A0D",
+  "skuId": "011F-F649-4A0D",
+  "description": "N2D AMD Instance Core running in Salt Lake City",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 33034000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/02B2-13AB-C4A0",
+  "skuId": "02B2-13AB-C4A0",
+  "description": "Commitment v1: N2D AMD Ram in Americas for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2322000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/04EB-F366-1883",
+  "skuId": "04EB-F366-1883",
+  "description": "Commitment v1: N2D AMD Cpu in Dallas for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 20444680
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/0589-AA00-68BD",
+  "skuId": "0589-AA00-68BD",
+  "description": "SSD backed PD Capacity in Los Angeles",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 204000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/0AF5-CCCB-4E2C",
+  "skuId": "0AF5-CCCB-4E2C",
+  "description": "Commitment v1: N2D AMD Ram in Salt Lake City for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2789000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/0B02-AF95-B42A",
+  "skuId": "0B02-AF95-B42A",
+  "description": "Commitment v1: N2D AMD Ram in Virginia for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1775000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/0E37-3202-AA60",
+  "skuId": "0E37-3202-AA60",
+  "description": "SSD backed PD Capacity in Columbus",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 170000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/0E8D-9FEF-852D",
+  "skuId": "0E8D-9FEF-852D",
+  "description": "N2D AMD Instance Core running in Las Vegas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 30976000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/0F89-58FD-2FD3",
+  "skuId": "0F89-58FD-2FD3",
+  "description": "Network Internet Data Transfer Out from Columbus to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/1A51-8906-72EB",
+  "skuId": "1A51-8906-72EB",
+  "description": "Network Internet Data Transfer Out from Virginia to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/1F6A-F642-D6E3",
+  "skuId": "1F6A-F642-D6E3",
+  "description": "Commitment v1: N2D AMD Ram in Las Vegas for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2485000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/1F87-1D2D-DFB2",
+  "skuId": "1F87-1D2D-DFB2",
+  "description": "Commitment v1: N2D AMD Ram in Columbus for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1659000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/1FEE-CE8E-2D35",
+  "skuId": "1FEE-CE8E-2D35",
+  "description": "N2D AMD Instance Ram running in Los Angeles",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 4427000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/2540-FD54-92D3",
+  "skuId": "2540-FD54-92D3",
+  "description": "N2D AMD Instance Core running in Los Angeles",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 33034000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/2623-976D-48E0",
+  "skuId": "2623-976D-48E0",
+  "description": "Network Internet Data Transfer Out from Columbus to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/296B-A47C-3667",
+  "skuId": "296B-A47C-3667",
+  "description": "N2D AMD Instance Ram running in Dallas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 4349480
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/29DE-E9FE-7872",
+  "skuId": "29DE-E9FE-7872",
+  "description": "N2D AMD Instance Core running in Dallas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 32452360
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/2C08-0DED-36F3",
+  "skuId": "2C08-0DED-36F3",
+  "description": "N2D AMD Instance Core running in Columbus",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 27502000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/3080-B456-59FC",
+  "skuId": "3080-B456-59FC",
+  "description": "Commitment v1: N2D AMD Ram in Americas for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1659000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/3170-81B7-609A",
+  "skuId": "3170-81B7-609A",
+  "description": "Network Internet Data Transfer Out from Las Vegas to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/378D-6896-1041",
+  "skuId": "378D-6896-1041",
+  "description": "Network Internet Data Transfer Out from Americas to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/4128-2E60-87E4",
+  "skuId": "4128-2E60-87E4",
+  "description": "Network Internet Data Transfer Out from Columbus to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/46C4-6958-048B",
+  "skuId": "46C4-6958-048B",
+  "description": "Commitment v1: N2D AMD Cpu in Americas for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 17326000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/49C0-5C14-F72A",
+  "skuId": "49C0-5C14-F72A",
+  "description": "Commitment v1: N2D AMD Ram in Virginia for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2485000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/4AF8-4541-4752",
+  "skuId": "4AF8-4541-4752",
+  "description": "Commitment v1: N2D AMD Cpu in Americas for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 12376000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/5535-6D2D-4B50",
+  "skuId": "5535-6D2D-4B50",
+  "description": "N2D AMD Instance Ram running in Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 3686000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/5542-CBC0-D2BE",
+  "skuId": "5542-CBC0-D2BE",
+  "description": "Commitment v1: N2D AMD Ram in Los Angeles for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2789000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/5682-8AD5-97D9",
+  "skuId": "5682-8AD5-97D9",
+  "description": "N2D AMD Instance Ram running in Columbus",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 3686000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6027-9245-D64F",
+  "skuId": "6027-9245-D64F",
+  "description": "Commitment v1: N2D AMD Ram in Salt Lake City for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1992000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6122-A498-C2E4",
+  "skuId": "6122-A498-C2E4",
+  "description": "Network Internet Data Transfer Out from Dallas to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6705-13F0-2D9B",
+  "skuId": "6705-13F0-2D9B",
+  "description": "Network Internet Data Transfer Out from Los Angeles to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6723-40D7-8BDC",
+  "skuId": "6723-40D7-8BDC",
+  "description": "Commitment - dollar based v1: GCE for 3 years",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "Flexible",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "global"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 5400000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/67B5-967D-4144",
+  "skuId": "67B5-967D-4144",
+  "description": "Network Internet Data Transfer Out from Salt Lake City to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6A0C-F783-3754",
+  "skuId": "6A0C-F783-3754",
+  "description": "SSD backed PD Capacity in Salt Lake City",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 204000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6B44-88D5-C8C4",
+  "skuId": "6B44-88D5-C8C4",
+  "description": "Commitment v1: N2D AMD Cpu in Las Vegas for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 18539000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/6E35-6E9F-5FAA",
+  "skuId": "6E35-6E9F-5FAA",
+  "description": "Commitment v1: N2D AMD Cpu in Los Angeles for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 20811000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/7056-1AC9-F0A4",
+  "skuId": "7056-1AC9-F0A4",
+  "description": "Commitment v1: N2D AMD Ram in Dallas for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2739960
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/706B-9D5D-1176",
+  "skuId": "706B-9D5D-1176",
+  "description": "Network Internet Data Transfer Out from Las Vegas to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/7226-E677-056F",
+  "skuId": "7226-E677-056F",
+  "description": "Network Internet Data Transfer Out from Las Vegas to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/75B0-B95E-76A8",
+  "skuId": "75B0-B95E-76A8",
+  "description": "SSD backed PD Capacity in Virginia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 187000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/809C-1E3B-306E",
+  "skuId": "809C-1E3B-306E",
+  "description": "N2D AMD Instance Core running in Virginia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 30976000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/85E4-6F60-F26B",
+  "skuId": "85E4-6F60-F26B",
+  "description": "Commitment v1: N2D AMD Cpu in Columbus for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 17326000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/8C8F-00CB-59FE",
+  "skuId": "8C8F-00CB-59FE",
+  "description": "Commitment v1: N2D AMD Ram in Los Angeles for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1992000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/8EA7-73CA-4618",
+  "skuId": "8EA7-73CA-4618",
+  "description": "Network Internet Data Transfer Out from Las Vegas to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/919D-B2CA-C1AB",
+  "skuId": "919D-B2CA-C1AB",
+  "description": "Commitment v1: N2D AMD Cpu in Los Angeles for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 14866000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/9217-116C-69FF",
+  "skuId": "9217-116C-69FF",
+  "description": "Network Internet Data Transfer Out from Los Angeles to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/9217-6E6E-FB9B",
+  "skuId": "9217-6E6E-FB9B",
+  "description": "Commitment v1: N2D AMD Cpu in Salt Lake City for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 14866000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/96D6-65DA-927E",
+  "skuId": "96D6-65DA-927E",
+  "description": "Network Internet Data Transfer Out from Dallas to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/9778-07FB-B37C",
+  "skuId": "9778-07FB-B37C",
+  "description": "Network Internet Data Transfer Out from Salt Lake City to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/98E9-BA44-DDD2",
+  "skuId": "98E9-BA44-DDD2",
+  "description": "N2D AMD Instance Ram running in Salt Lake City",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 4427000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/9BCB-C987-5DAB",
+  "skuId": "9BCB-C987-5DAB",
+  "description": "Network Internet Data Transfer Out from Virginia to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/9DB8-BE55-4503",
+  "skuId": "9DB8-BE55-4503",
+  "description": "Network Internet Data Transfer Out from Salt Lake City to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/A03E-E620-7389",
+  "skuId": "A03E-E620-7389",
+  "description": "N2D AMD Instance Core running in Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 27502000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/ABD2-309F-B86A",
+  "skuId": "ABD2-309F-B86A",
+  "description": "N2D AMD Instance Ram running in Las Vegas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 4151000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/B188-61DD-52E4",
+  "skuId": "B188-61DD-52E4",
+  "description": "SSD backed PD Capacity",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1",
+   "asia-east1",
+   "europe-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 170000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/B290-3774-A052",
+  "skuId": "B290-3774-A052",
+  "description": "Network Internet Data Transfer Out from Virginia to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/C018-EF25-367F",
+  "skuId": "C018-EF25-367F",
+  "description": "Network Internet Data Transfer Out from Los Angeles to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/C1F7-3E62-74BB",
+  "skuId": "C1F7-3E62-74BB",
+  "description": "Commitment v1: N2D AMD Ram in Columbus for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 2322000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/C357-5123-3B4E",
+  "skuId": "C357-5123-3B4E",
+  "description": "Commitment v1: N2D AMD Cpu in Las Vegas for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 13242000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/CF9E-3EFB-D09B",
+  "skuId": "CF9E-3EFB-D09B",
+  "description": "SSD backed PD Capacity in Las Vegas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 187000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/D144-676A-CEE8",
+  "skuId": "D144-676A-CEE8",
+  "description": "Commitment v1: N2D AMD Cpu in Virginia for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 13242000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/D293-6255-369A",
+  "skuId": "D293-6255-369A",
+  "description": "N2D AMD Instance Ram running in Virginia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 4151000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/D9C6-16DF-4821",
+  "skuId": "D9C6-16DF-4821",
+  "description": "Commitment v1: N2D AMD Ram in Dallas for 3 Years",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1957620
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/DBD1-66F6-9AFE",
+  "skuId": "DBD1-66F6-9AFE",
+  "description": "SSD backed PD Capacity in Dallas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Storage",
+   "resourceGroup": "SSD",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.mo",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 200600000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte month",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 2787004278374400.0
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/DFA5-B5C6-36D6",
+  "skuId": "DFA5-B5C6-36D6",
+  "description": "Network Internet Data Transfer Out from Americas to EMEA",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/E028-0D63-94A1",
+  "skuId": "E028-0D63-94A1",
+  "description": "Commitment v1: N2D AMD Cpu in Salt Lake City for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 20811000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/E0FE-30A7-9D30",
+  "skuId": "E0FE-30A7-9D30",
+  "description": "Network Internet Data Transfer Out from Dallas to Apac(Excluding Korea and Indonesia)",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 85000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/E36E-BAA8-0EB4",
+  "skuId": "E36E-BAA8-0EB4",
+  "description": "Commitment v1: N2D AMD Ram in Las Vegas for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "RAM",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-west4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy.h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 1775000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte hour",
+     "baseUnit": "By.s",
+     "baseUnitDescription": "byte second",
+     "baseUnitConversionFactor": 3865470566400
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/E416-CA19-047B",
+  "skuId": "E416-CA19-047B",
+  "description": "Network Internet Data Transfer Out from Virginia to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/E6EE-8CA6-6FA0",
+  "skuId": "E6EE-8CA6-6FA0",
+  "description": "Network Internet Data Transfer Out from Dallas to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/E721-EE8C-D29D",
+  "skuId": "E721-EE8C-D29D",
+  "description": "Commitment v1: N2D AMD Cpu in Columbus for 3 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 12376000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/EB55-92E0-41A2",
+  "skuId": "EB55-92E0-41A2",
+  "description": "Network Internet Data Transfer Out from Los Angeles to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west2"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/EB5B-800B-B4E5",
+  "skuId": "EB5B-800B-B4E5",
+  "description": "Commitment v1: N2D AMD Cpu in Dallas for 3 Years",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit3Yr"
+  },
+  "serviceRegions": [
+   "us-south1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 14603680
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/ECB4-77C6-03FA",
+  "skuId": "ECB4-77C6-03FA",
+  "description": "Commitment v1: N2D AMD Cpu in Virginia for 1 Year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "CPU",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "us-east4"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 18539000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/F268-85E6-2825",
+  "skuId": "F268-85E6-2825",
+  "description": "Network Internet Data Transfer Out from Columbus to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-east5"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/F274-1692-F213",
+  "skuId": "F274-1692-F213",
+  "description": "Network Internet Data Transfer Out from Americas to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 0
+       }
+      },
+      {
+       "startUsageAmount": 1,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/F61D-4D51-AAFC",
+  "skuId": "F61D-4D51-AAFC",
+  "description": "Commitment - dollar based v1: GCE for 1 year",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Compute",
+   "resourceGroup": "Flexible",
+   "usageType": "Commit1Yr"
+  },
+  "serviceRegions": [
+   "global"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "h",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 7200000
+       }
+      }
+     ],
+     "usageUnitDescription": "hour",
+     "baseUnit": "s",
+     "baseUnitDescription": "second",
+     "baseUnitConversionFactor": 3600
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/F961-DDD5-6A3A",
+  "skuId": "F961-DDD5-6A3A",
+  "description": "Network Internet Data Transfer Out from Salt Lake City to Americas",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-west3"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 120000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 110000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 80000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ },
+ {
+  "name": "services/6F81-5844-456A/skus/FDBC-6E3B-D4D8",
+  "skuId": "FDBC-6E3B-D4D8",
+  "description": "Network Internet Data Transfer Out from Americas to Australia",
+  "category": {
+   "serviceDisplayName": "Compute Engine",
+   "resourceFamily": "Network",
+   "resourceGroup": "PremiumInternetEgress",
+   "usageType": "OnDemand"
+  },
+  "serviceRegions": [
+   "us-central1",
+   "us-east1",
+   "us-west1"
+  ],
+  "pricingInfo": [
+   {
+    "summary": "",
+    "pricingExpression": {
+     "usageUnit": "GiBy",
+     "displayQuantity": 1,
+     "tieredRates": [
+      {
+       "startUsageAmount": 0,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 190000000
+       }
+      },
+      {
+       "startUsageAmount": 1024,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 180000000
+       }
+      },
+      {
+       "startUsageAmount": 10240,
+       "unitPrice": {
+        "currencyCode": "USD",
+        "units": "0",
+        "nanos": 150000000
+       }
+      }
+     ],
+     "usageUnitDescription": "gibibyte",
+     "baseUnit": "By",
+     "baseUnitDescription": "byte",
+     "baseUnitConversionFactor": 1073741824
+    },
+    "aggregationInfo": {
+     "aggregationLevel": "ACCOUNT",
+     "aggregationInterval": "MONTHLY",
+     "aggregationCount": 1
+    },
+    "currencyConversionRate": 1,
+    "effectiveTime": "2026-11-07T08:00:00Z"
+   }
+  ],
+  "serviceProviderName": "Google"
+ }
+]
