@@ -24,7 +24,9 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 ## Receive-brief (next session)
 
-Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, another pass on the validator page copy, deleting `validator-pre-341-*` / `dev-rippled-pre-341-data-20260926-1505`, or another `apply.yml` / `network-visibility.yml` dispatch for the external-visibility alert. Those snaps are the current rollback. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED). The alert is the checked `pr:36` row under Next.
+Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, another pass on the validator page copy, deleting `dev-rippled-pre-341-data-20260926-1505`, another `apply.yml` / `network-visibility.yml` dispatch for the external-visibility alert, or another apply / reset for `pr:81` (egress levers, live 2026-11-08). The prod rollback snapshot is `validator-pre-recreate-20261108-1837`; the 341 prod snaps were deleted 2026-11-08.
+
+**Next is the one-week egress check** in "Egress levers — live 2026-11-08" below (on Pete's calendar, Mon 2026-11-16). After it: the network-tier and region/CUD decision. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED). The alert is the checked `pr:36` row under Next.
 
 Public page copy is shipped in `cloud-syndicate-platform` (`pr:253`, `pr:254`, main `b146aa3`). Do not put Google Cloud or another infrastructure provider back on https://validator1.cloudsyndicate.io/. EverForge Consensus stays, as the managed service only. `health.html` was not rewritten.
 
@@ -36,7 +38,7 @@ gcloud compute snapshots list --project=csyn-ldg-validator-prod --format='table(
 gcloud compute instances describe csyn-ldg-dev-rippled --project=csyn-ldg-svc-rippled-dev --zone=us-south1-a --format='value(status)'
 ```
 
-Leftover: boot snap `validator-pre-341-boot-20260926-1522` stays until the 14-day soak clock from 2026-09-26 (~2026-10-10), then Pete-gated delete. Keep the 341 data snap as the latest recreate rollback. `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. `health.html` is unchanged. The external-visibility alert is closed under Next; do not start it.
+Leftover: the only prod snapshot is `validator-pre-recreate-20261108-1837` (pre-egress-levers rollback); re-list with `gcloud compute snapshots list --project=csyn-ldg-validator-prod`. `SingleAssetVault` (XLS-65) was not voted; LendingProtocol does not enable without it. `health.html` is unchanged. The external-visibility alert is closed under Next; do not start it.
 
 ## State (post-CONSPLIT2)
 - This repo owns `ledger-workloads/validator-prod` + future prod/mainnet roots only.
@@ -583,11 +585,11 @@ Only `tx_enable` and compression can lower our egress; squelching lowers ingress
 - [ ] **~2026-11-15: compare egress per peer per day** against the 2026-11-01..07 baseline (~150 GiB/day over ~38 peers). Daily `compute.googleapis.com/instance/network/sent_bytes_count` ÷ daily mean `custom.googleapis.com/xrpl/validator/peer_count`. Raw egress is drifting up with network volume; compare per peer, not raw. Attribution: `xrpld tx_reduce_relay` over IAP (`txr_selected_cnt`, `txr_suppressed_cnt`).
 - [ ] Health must hold the whole week: proposing, `validator_low_peers` quiet, network-visibility alert green. Rollback = revert `pr:81`, apply, reset.
 - [ ] Then decide the network tier (Standard ~29% cheaper per GiB, IP changes) and the region/CUD row below, using the post-lever egress figure. Analysis: `docs/finops/2026-11-07-us-region-cud.md`.
-- [ ] Pete decision: delete `validator-pre-341-{boot,data}-20260926-1522` now that a newer data snapshot exists (runbook keep-latest).
+- [x] ~~Delete `validator-pre-341-{boot,data}-20260926-1522`~~ — deleted 2026-11-08 (Pete), after `validator-pre-recreate-20261108-1837` was READY.
 
 ## Next
 - [x] ~~After 3.4.0 soak: delete `validator-pre-340-{boot,data}-20260919-1334`~~ — deleted 2026-09-26 with the older practice snaps. Kept `validator-pre-341-{boot,data}-20260926-1522` and `dev-rippled-pre-341-data-20260926-1505`.
-- [ ] **After 3.4.1 boot-snap clock (~2026-10-10):** Pete-gated delete of `validator-pre-341-boot-20260926-1522` only. Re-list first: `gcloud compute snapshots list --project=csyn-ldg-validator-prod`. Keep the 341 data snap.
+- [x] ~~After 3.4.1 boot-snap clock: delete the 341 boot snap~~ — both 341 snaps deleted 2026-11-08; see the egress-levers section.
 - [x] ~~After 3.3.0 soak: delete old recreate/330 snaps~~ — done 2026-09-19.
 - [x] ~~`peer_private 0`~~ — shipped as `pr:38` (`pr:35` could not be reopened
   after its branch was deleted), applied and loaded 2026-08-04. See the post-apply
