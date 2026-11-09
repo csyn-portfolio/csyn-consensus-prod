@@ -94,7 +94,7 @@
 # spend to another Compute Engine family. It was not chosen because the validator's
 # roadmap keeps it on N2D, and on N2D it saves about $35 a month less.
 #
-# Not hedged by committing a fraction of the instance. Break-even is 9.35 months at 100%
+# Not hedged by committing a fraction of the instance. Break-even is month 20.3 of 36 at 100%
 # and identical at 50% — payoff and loss scale together, so a partial commit shrinks both
 # and moves the decision not at all. That is variance reduction, not risk mitigation.
 #
