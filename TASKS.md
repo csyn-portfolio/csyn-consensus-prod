@@ -26,7 +26,7 @@ Durable task state + cross-repo decision pointers for the Consensus ledger
 
 Do **not** start: xrpld 3.4.1 build, practice pin, prod recreate, publisher 1.0.3, another pass on the validator page copy, deleting `dev-rippled-pre-341-data-20260926-1505`, another `apply.yml` / `network-visibility.yml` dispatch for the external-visibility alert, or another apply / reset for `pr:81` (egress levers, live 2026-11-08). The prod rollback snapshot is `validator-pre-recreate-20261108-1837`; the 341 prod snaps were deleted 2026-11-08.
 
-**Next is the one-week egress check** in "Egress levers — live 2026-11-08" below (on Pete's calendar, Mon 2026-11-16). After it: the network-tier and region/CUD decision. 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED). The alert is the checked `pr:36` row under Next.
+**Next is the one-week egress check** in "Egress levers — live 2026-11-08" below (on Pete's calendar, Mon 2026-11-16). After it: the region/CUD decision (network tier is decided: stays Premium). 3.4.0 and older recreate snaps were deleted 2026-09-26. Practice VM `csyn-ldg-dev-rippled` was stopped (TERMINATED). The alert is the checked `pr:36` row under Next.
 
 Public page copy is shipped in `cloud-syndicate-platform` (`pr:253`, `pr:254`, main `b146aa3`). Do not put Google Cloud or another infrastructure provider back on https://validator1.cloudsyndicate.io/. EverForge Consensus stays, as the managed service only. `health.html` was not rewritten.
 
@@ -523,7 +523,7 @@ exactly **1** latest soak-passed `validator-pre-recreate-*` data snap for fast r
 | Lever | Order of $ | Notes |
 |-------|------------|--------|
 | **1yr/3yr CUD for n2d (8 vCPU + 64 GB) in us-south1** | **~$100–225/mo** | No commitments found on this project. Validator is 24×7 STANDARD forever — textbook CUD. Code comment already assumes ~$326/mo 1yr CUD shape. |
-| P2P internet egress (Premium tier) | variable, often #2 after VM | Required for overlay; do **not** switch to Standard tier for a few $/mo. Peer cap work already bounds fan-out. |
+| P2P internet egress (Premium tier) | variable, often #2 after VM | Stays Premium: decided 2026-11-09, reasons in the Egress levers section. Peer cap work already bounds fan-out. |
 | pd-ssd 170 GB | ~$29/mo | Right type (n2d + CMEK + IOPS). Shrink only after measuring NuDB fill — not done this audit. |
 | Snapshots | ~$0.50/mo now | Hygiene > dollars; policy above. |
 | Cloud Logging (info-level xrpld) | ~20 GB/mo est. → inside free 50 GB | Leave `info` — heartbeat alerts need continuous presence. |
@@ -584,7 +584,8 @@ Only `tx_enable` and compression can lower our egress; squelching lowers ingress
 
 - [ ] **~2026-11-15: compare egress per peer per day** against the 2026-11-01..07 baseline (~150 GiB/day over ~38 peers). Daily `compute.googleapis.com/instance/network/sent_bytes_count` ÷ daily mean `custom.googleapis.com/xrpl/validator/peer_count`. Raw egress is drifting up with network volume; compare per peer, not raw. Attribution: `xrpld tx_reduce_relay` over IAP (`txr_selected_cnt`, `txr_suppressed_cnt`).
 - [ ] Health must hold the whole week: proposing, `validator_low_peers` quiet, network-visibility alert green. Rollback = revert `pr:81`, apply, reset.
-- [ ] Then decide the network tier (Standard ~29% cheaper per GiB, IP changes) and the region/CUD row below, using the post-lever egress figure. Analysis: `docs/finops/2026-11-07-us-region-cud.md`.
+- [x] Network tier: **stay Premium** (Pete, 2026-11-09). Standard would save egress per GiB but costs this node on reliability and SLA: the Compute Engine SLA (https://cloud.google.com/compute/sla, read 2026-11-09) gives a single instance like this one 99.9% on Premium, and its Standard Tier section lists only instances in multiple zones and load balancing, with no single-instance row; egress to Europe and Asia peers leaves Google's network in Dallas and rides transit providers (peer isolation is the failure that paged on 2026-07-31); the reserved IP cannot change tier (an address cannot move between tier pools), so moving means a new IP and an outage (this IP is the node's only path to the network, `address.tf`); moving back is another outage, and gets `34.174.33.70` back only if the Premium reservation is kept rather than released. Source: https://docs.cloud.google.com/network-tiers/docs/overview and https://docs.cloud.google.com/network-tiers/docs/using-network-service-tiers (read 2026-11-09). Live tier: `gcloud compute addresses list --project=csyn-ldg-validator-prod --format='value(name,networkTier)'`.
+- [ ] Then decide the region/CUD row above ("Pete decision: region, then CUD"), using the post-lever egress figure. Analysis: `docs/finops/2026-11-07-us-region-cud.md`.
 - [x] ~~Delete `validator-pre-341-{boot,data}-20260926-1522`~~ — deleted 2026-11-08 (Pete), after `validator-pre-recreate-20261108-1837` was READY.
 
 ## Next
