@@ -1,4 +1,4 @@
-# Committed use discount — 1 year, resource-based, N2D, us-south1.
+# Committed use discount — 3 years, resource-based, N2D, us-south1.
 #
 # WHETHER AN APPLY OF THIS ROOT BUYS ANYTHING IS NOT STATED HERE. It is `enable_n2d_cud`
 # in variables.tf, and whether the commitment already exists. Read both — do not trust a
@@ -30,7 +30,7 @@
 # us-south1 on this project needs another quota request.
 #
 # ONE-WAY DOOR. A commitment is irrevocable, non-cancellable and non-transferable.
-# Applying this resource spends $2,928 over twelve months whether or not the instance
+# Applying this resource spends $6,363 over thirty-six months whether or not the instance
 # it was bought for still exists. Deleting the VM does not stop the charge; deleting
 # this resource does not stop the charge either. Treat the apply like a purchase order,
 # because it is one — enable_n2d_cud in variables.tf is what makes it a deliberate one.
@@ -46,15 +46,15 @@
 # request either, so the lifecycle guard just fails at plan time instead of mid-apply.
 #
 # AFTER THE PURCHASE, `enable_n2d_cud = true` must LIVE IN COMMITTED CONFIG for the whole
-# twelve months. It is not a momentary buy-once toggle. The trap, which does not require
+# thirty-six months. It is not a momentary buy-once toggle. The trap, which does not require
 # anyone to flip anything back: purchase via a one-shot `apply -var enable_n2d_cud=true`
 # without committing `true`, and state then holds `[0]` while config says `count = 0` — so
 # the next routine apply of this root proposes the destroy and hits `prevent_destroy`.
 # Same breakage, reached without `true` ever appearing in git. Commit the flag.
 #
 # The escape, if this root ever does get stuck: `tofu state rm
-# 'google_compute_region_commitment.n2d_validator_1yr[0]'` detaches management. Billing
-# continues — correctly, because the obligation is real — and drift detection on a $2,928
+# 'google_compute_region_commitment.n2d_validator_3yr[0]'` detaches management. Billing
+# continues — correctly, because the obligation is real — and drift detection on a $6,363
 # object is lost, so prefer restoring the flag over the state surgery.
 #
 # ---------------------------------------------------------------------------------
@@ -68,31 +68,33 @@
 #
 # The MEMORY amount is 65536 and the unit is the provider's "MB", which follows GCP's own
 # memoryMb convention above rather than decimal megabytes. This was verified rather than
-# assumed: an off-by-1024 here buys a 64 MB commitment, or a 64 TB one, for a full year.
+# assumed: an off-by-1024 here buys a 64 MB commitment, or a 64 TB one, for three years.
 # 65536 is also a multiple of 256, which the provider schema requires.
 #
 # ---------------------------------------------------------------------------------
-# Why 1 year and not 3, and why resource-based and not flexible.
-#   OBSERVED: Cloud Billing Catalog API, service 6F81-5844-456A, us-south1, effective
-#     2026-08-11 -> N2D Core on-demand $0.03245236/hr vs $0.02044468 (1yr, 37.00%) vs
-#     $0.01460368 (3yr, 55.00%); N2D Ram $0.00434948/GiB-hr vs $0.00273996 (37.00%) vs
-#     $0.00195762 (54.99%) @ 2026-08-11
-#   OBSERVED: N2D Core+RAM in Dallas, invoice month 202607 -> $387.35 at list with a
-#     -$74.05 sustained-use credit already applied, i.e. 19.1% of an N2D ceiling of 20% @ 2026-08-11
+# Why 3 years, resource-based. Decided by Pete 2026-11-09, staying in us-south1. The
+# region comparison is docs/finops/2026-11-07-us-region-cud.md.
+#   OBSERVED: Cloud Billing Catalog API, service 6F81-5844-456A, effective
+#     2026-11-09T08:00:00Z -> "N2D AMD Instance Core running in Dallas" $0.03245236/hr,
+#     "Commitment v1: N2D AMD Cpu in Dallas for 1 Year" $0.02044468, "... for 3 Years"
+#     $0.01460368; Ram $0.00434948/GiB-hr on demand, $0.00273996 1yr, $0.00195762 3yr
+#     @ 2026-11-09
 #
-# CUDs REPLACE sustained-use discounts on covered usage; they do not stack. So the real
-# gain is 37% against the 19.1% already being earned for free — about $69/mo, not the
-# $143/mo the headline rate suggests. Worth having, but half the apparent prize.
+# CUDs REPLACE sustained-use discounts on covered usage; they do not stack. Against
+# on-demand with the full 20% N2D sustained-use discount, a 730-hour month of 8 vCPU +
+# 64 GiB costs $314.19. The 3-year commitment costs $176.75 a month ($6,363 over the
+# term) and saves $137.44 a month; the 1-year would have cost $247.41 and saved $66.78.
 #
-# Three-year was rejected on judgment, not arithmetic: its break-even is proportionally
-# more forgiving (20 of 36 months against 12-month's 9.3 of 12), but this workload sits on
-# a regulated-MSP roadmap with a Confidential-VM rebuild, a possible region move and a
-# possible C4/C4D migration all live inside a 36-month window, against two months of
-# operating history. Flexible/spend-based was rejected on price: 28%/46% for
-# general-purpose, nine points worse on both terms, buying portability that only pays off
-# in the one scenario where we would rather not have committed at all.
+# The risk Pete accepted: if the validator leaves N2D or us-south1 entirely, every month
+# after that is a stranded $176.75. Leaving at month m nets 137.44*m - 176.75*(36-m), so
+# the commitment is a loss if the move happens before month 20.3 of 36. A Confidential VM
+# rebuild and a resize up both stay on N2D (see below); a C4/C4D/N4D migration does not.
 #
-# Not hedged by committing a fraction of the instance. Break-even is 9.35 months at 100%
+# Flexible (spend-based) 3-year was the alternative: 46% instead of 55%, and it follows the
+# spend to another Compute Engine family. It was not chosen because the validator's
+# roadmap keeps it on N2D, and on N2D it saves about $35 a month less.
+#
+# Not hedged by committing a fraction of the instance. Break-even is month 20.3 of 36 at 100%
 # and identical at 50% — payoff and loss scale together, so a partial commit shrinks both
 # and moves the decision not at all. That is variance reduction, not risk mitigation.
 #
@@ -131,16 +133,16 @@
 #   FROM `<billing-export>.gcp_billing_export_resource_v1_*`
 #   WHERE service.description = 'Compute Engine' AND sku.description LIKE '%N2D%Dallas%'
 #   GROUP BY 1,2 ORDER BY 1,2;
-resource "google_compute_region_commitment" "n2d_validator_1yr" {
+resource "google_compute_region_commitment" "n2d_validator_3yr" {
   count = var.enable_n2d_cud ? 1 : 0
 
   project = module.validator.project_id
-  name    = "csyn-ldg-n2d-us-south1-1yr"
+  name    = "csyn-ldg-n2d-us-south1-3yr"
   # Taken from the validator's own subnet rather than a literal, so the commitment
   # cannot silently end up in a different region from the instance it was bought for.
   # A region-locked commitment pointed at the wrong region is a full-term write-off.
   region   = google_compute_subnetwork.validator.region
-  plan     = "TWELVE_MONTH"
+  plan     = "THIRTY_SIX_MONTH"
   type     = "GENERAL_PURPOSE_N2D"
   category = "MACHINE"
 
