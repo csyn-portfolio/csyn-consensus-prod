@@ -32,7 +32,8 @@ resource "google_compute_subnetwork" "validator" {
   # force-new and the plan replaced the subnet under the running validator. Not
   # omitting log_config: the live config stays (no diff). filter_expr is the
   # generation filter, so "false" means no records and no Networking Telemetry
-  # charge; the other three settings are the cheapest values if it is ever relaxed.
+  # charge. Interval and metadata are the cheapest values if it is ever relaxed;
+  # flow_sampling is the API default 0.5 (0.0 is the minimum).
   log_config {
     filter_expr          = "false"
     aggregation_interval = "INTERVAL_15_MIN"
