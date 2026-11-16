@@ -8,13 +8,19 @@
 # Premium Tier, 34.174.33.70, attached today. The Standard Tier move below
 # (Pete, 2026-11-16) is two PRs: this one reserves the Standard address; the next
 # swaps validator.tf to it. Keep this address reserved after the swap so a
-# rollback gets the same IP back.
+# rollback gets the same IP back (unattached: $0.0118/hr in Dallas, about $8.60/mo,
+# Cloud Billing Catalog 2026-11-16). prevent_destroy: Premium and Standard are
+# separate pools, so a stray network_tier edit here would replace (release) it.
 resource "google_compute_address" "validator_p2p" {
   project      = module.validator.project_id
   name         = "csyn-ldg-validator-p2p"
   region       = "us-south1"
   address_type = "EXTERNAL"
   description  = "XRPL mainnet validator P2P reserved IP."
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Standard Tier P2P IP (Pete, 2026-11-16): internet egress is about half the
