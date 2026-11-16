@@ -10,10 +10,13 @@
 # Everything else is kept: the consensus narrative (Entering consensus, We closed
 # at, Proposers, mode changes), every ERR and other WRN, and the startup banner.
 #
-# The two absence alerts in monitoring.tf keep their input even without relying on
-# how log-based metrics treat excluded entries: a 3-minute live sample left 550
-# LedgerConsensus lines (validator/consensus_activity) and 822 lines total
-# (validator/log_presence) after this filter.
+# The two absence alerts in monitoring.tf are safe twice over. Project-level
+# log-based metrics (no bucket_name) are "calculated from both included and excluded
+# logs" (https://docs.cloud.google.com/logging/docs/logs-based-metrics), and a
+# 3-minute live sample still left 550 LedgerConsensus lines
+# (validator/consensus_activity) and 822 lines total (validator/log_presence) after
+# this filter. Never add bucket_name to those metrics: bucket-scoped metrics only
+# see stored entries, so the excluded lines would vanish from them.
 #
 # Rollback: set disabled = true (or remove) and apply. Excluded lines are not
 # stored anywhere; the node's own view is via admin RPC over IAP.
