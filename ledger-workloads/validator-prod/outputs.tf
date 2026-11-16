@@ -20,5 +20,5 @@ output "validator_token_secret" {
 
 output "validator_p2p_ip" {
   description = "Reserved external P2P IP for the validator VM (sprint Task 9) and the validator.cloudsyndicate.io domain record (Task 11)."
-  value       = google_compute_address.validator_p2p.address
+  value       = google_compute_address.validator_p2p_std.address
 }

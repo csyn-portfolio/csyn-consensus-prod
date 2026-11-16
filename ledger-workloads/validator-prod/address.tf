@@ -5,11 +5,11 @@
 # ledger_prod_vm_external_ip) is applied first. Keep `description` STABLE — editing
 # it forces destroy+recreate of the reserved IP (immutable-field landmine, readiness #8).
 #
-# Premium Tier, 34.174.33.70, attached today. The Standard Tier move below
-# (Pete, 2026-11-16) is two PRs: this one reserves the Standard address; the next
-# swaps validator.tf to it. Keep this address reserved after the swap so a
-# rollback gets the same IP back (unattached: $0.0118/hr in Dallas, about $8.60/mo,
-# Cloud Billing Catalog 2026-11-16). prevent_destroy: Premium and Standard are
+# Premium Tier, 34.174.33.70. Detached by the Standard Tier move below (Pete,
+# 2026-11-16) and kept reserved so a rollback gets the same IP back: point
+# validator.tf at this address with external_ip_network_tier = PREMIUM.
+# Unattached it costs $0.0118/hr in Dallas, about $8.60/mo (Cloud Billing Catalog,
+# 2026-11-16). prevent_destroy: Premium and Standard are
 # separate pools, so a stray network_tier edit here would replace (release) it.
 resource "google_compute_address" "validator_p2p" {
   project      = module.validator.project_id
@@ -27,8 +27,8 @@ resource "google_compute_address" "validator_p2p" {
 # validator bill, and Standard prices it per source region ($0.085/GiB after 200
 # free GiB/month from Dallas) instead of per destination ($0.11-0.19/GiB), about
 # $139/mo less at the 2026-11-09..15 volume. An address cannot change tier, so
-# this is a new IP; validator.tf attaches it with a matching access-config tier
-# in the follow-up PR.
+# this is a new IP (34.0.146.147), attached by validator.tf with a matching
+# access-config tier.
 # Same immutable-description landmine as above.
 resource "google_compute_address" "validator_p2p_std" {
   project      = module.validator.project_id

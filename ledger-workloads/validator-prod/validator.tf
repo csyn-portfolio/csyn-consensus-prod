@@ -135,8 +135,10 @@ module "node" {
   subnetwork            = google_compute_subnetwork.validator.id # csyn-ldg-validator-us-south1, 10.60.0.0/28
   network_ip            = "10.60.0.4"                            # static host in /28
   internal_ingress_cidr = "10.60.0.0/28"
-  external_ip           = google_compute_address.validator_p2p.address
-  service_account_email = module.validator.workload_sa
+  external_ip           = google_compute_address.validator_p2p_std.address
+  # Must match the address's tier (address.tf). Rollback: validator_p2p + PREMIUM.
+  external_ip_network_tier = "STANDARD"
+  service_account_email    = module.validator.workload_sa
 
   image_ref         = local.validator_image
   rippled_cfg       = local.validator_cfg
@@ -152,5 +154,5 @@ module "node" {
   # fail-closed; takes effect on the next instance reset (every-boot recreate).
   enable_gcplogs = true
 
-  depends_on = [google_compute_address.validator_p2p, time_sleep.apis]
+  depends_on = [google_compute_address.validator_p2p_std, time_sleep.apis]
 }
