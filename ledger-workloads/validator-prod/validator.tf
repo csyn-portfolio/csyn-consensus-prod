@@ -102,7 +102,7 @@ locals {
 
 module "node" {
   # CONSPLIT2: pinned git tag from the sibling practice repo (one home). Self-contained.
-  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-node?ref=v0.2.0"
+  source = "git::https://github.com/csyn-portfolio/csyn-consensus-infra.git//modules/ledger-node?ref=v0.3.0"
 
   name       = "csyn-ldg-validator"
   project_id = module.validator.project_id
